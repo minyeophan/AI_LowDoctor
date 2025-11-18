@@ -1,6 +1,6 @@
 # AI_LawDoctor 코드 작성 가이드라인
 
-> 이 문서는 AI_LAWDOCTOR 프로젝트의 팀원들이 코드를 작성할 때 규칙과 구조를 통일하기 위해 작성되었습니다.  
+> 이 문서는 AI_LawDoctor 프로젝트의 팀원들이 코드를 작성할 때 규칙과 구조를 통일하기 위해 작성되었습니다.  
 > 목적은 협업 시 일관성 유지, 유지보수 편의성 확보, 커뮤니케이션 효율화입니다.
 
 ---
@@ -39,7 +39,7 @@ src/</br>
   }
 }
 ```
-#에러 응답
+### 에러 응답
 ```json
 {
   "status": "error",
@@ -68,23 +68,37 @@ src/</br>
 
 ## 5. AI 파트 작성 규칙 (Python)
 
-분석 함수는 다음 형식으로 유지:
+### 분석 함수 기본 구조:
+```python
 def analyze_contract(text: str) -> dict:
     """
     계약서 텍스트를 받아 위험 조항을 분석합니다.
     """
-- OCR 관련 코드는 AI/ocr/ 아래에 분리
-- requirements.txt는 패키지 추가 시 항상 업데이트
+```
+- OCR 관련 코드는 AI/ocr/ 폴더 아래에 분리
+- 모델 추론, API 호출 로직은 AI/analysis/ 안에 정리
+- 새로운 패키지 추가 시 requirements.txt에 반드시 반영
+- 공통 설정이 필요한 경우 .env 사용 (예: OPENAI_API_KEY)
+### API 키 설정 (.env)
+
+이 프로젝트는 OpenAI API를 사용합니다.  
+개발자가 직접 테스트하거나 연동할 경우, 아래처럼 `.env` 파일을 생성해 주세요:
+
+```env
+OPENAI_API_KEY=sk-...
+```
 
 ## 6. 코드 스타일 통일
-#JavaScript (Node.js)
-- 세미콜론 사용 (통일)
-- const, let 구분
-- ESLint 사용 권장 (추후 .eslintrc.json 도입)
+### JavaScript (Node.js)
+- 세미콜론 사용 (반드시 붙이기)
+- `const`, `let` 명확히 구분 (`var` 사용 금지)
+- 함수는 arrow function 권장
+- ESLint + Prettier 설정 예정 (`.eslintrc.json`, `.prettierrc`)
 
-#Python
-- Black 또는 autopep8 사용 가능
-- 함수/클래스에 docstring 작성
+### Python
+- 함수/클래스에는 반드시 docstring 작성
+- `Black` 또는 `autopep8` 포맷터 중 하나 통일
+- 파일 인코딩은 `UTF-8` 유지
 
 ## 7. 문서 작성 규칙
 - Markdown .md 형식
@@ -94,7 +108,9 @@ def analyze_contract(text: str) -> dict:
 
 ## 8. Git 협업 규칙
 - 브랜치 명명: feature/기능, fix/버그, docs/문서 등
+```
 git checkout -b feature/ai-analysis
+```
 - 커밋 메시지 컨벤션:
 feat: 계약서 분석 로직 초안 추가
 fix: API 경로 에러 수정
@@ -133,4 +149,4 @@ docs: 회의록 추가
 ```
 
 **본 문서는 지속적으로 업데이트됩니다.
-팀원 누구든 개선 사항이 있으면 회의 후 반영 바랍니다.
+팀원 누구든 개선 사항이 있으면 회의 후 반영 바랍니다.**
