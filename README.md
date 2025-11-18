@@ -47,7 +47,7 @@ AI_LAWDOCTOR/ <br/>
 │<br/>
 └── README.md       # 현재 문서<br/>
 
-## 설치 및 실행 방법
+## 설치 및 실행 방법 (각 파트별로 코드 올리면 곧바로 실행 가능)
 ### 1. 프로젝트 클론
 ```
 git clone https://github.com/cloe-23/AI_LawDoctor.git
