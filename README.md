@@ -1,14 +1,22 @@
 # AI 법률 닥터_프로젝트 개요
 
-AI 기반으로 전월세 계약서의 위험 조항을 분석하고, <br/>
+AI 기반으로 부동 계약서의 위험 조항을 분석하고, <br/>
 법적 근거와 대응 가이드를 제공하는 웹 서비스입니다.<br/>
 
+## 주요 기능
+- **계약서 분석** (OCR + 위험조항 탐지 + 대응 가이드)
+- **법령 근거 자동 연결**
+- **법률 서식 추천 및 다운로드**
+- **기한 알림 캘린더 연동**
+- **Q&A 커뮤니티 (예정)**
+
 ## 기술 스택
-- AI/OCR: Python + Tesseract OCR + OpenAI API(RAG 구조 예정)<br/>
-- Frontend: React<br/>
-- Backend: Node.js + Express<br/>
-- DB: MongoDB 또는 Firebase<br/>
-- Infra: 로컬 기반 + 시연용 서버<br/>
+- **AI/OCR**: Python + Tesseract OCR + OpenAI API(RAG 기반 LangChain 구조 예정)<br/>
+- **Frontend**: React<br/>
+- **Backend**: Node.js + Express<br/>
+- **DB**: MongoDB 또는 Firebase / PostgreSQL<br/>
+- **Infra**: 로컬 기반 + 시연용 서버<br/>
+- **기타**: JWT 인증, Google Calendar API, 국가법령정보센터 연동 등
 
 
 ## 폴더 구조
@@ -38,6 +46,31 @@ AI_LAWDOCTOR/ <br/>
 │   └── README.txt     # 샘플 계약서/테스트 데이터 안내<br/>
 │<br/>
 └── README.md       # 현재 문서<br/>
+
+## 설치 및 실행 방법
+### 1. 프로젝트 클론
+```
+git clone https://github.com/cloe-23/AI_LawDoctor.git
+cd AI_LawDoctor
+```
+### 2. AI 파트 실행 (Python)
+```
+cd AI
+pip install -r requirements.txt
+python analysis/ai_example.py
+```
+### 3. 백엔드 실행 (Node.js)
+```
+cd backend
+npm install
+npm start
+```
+### 4. 프론트엔드 실행 (React + Vite)
+```
+cd frontend
+npm install
+npm run dev
+```
 
 ##  개발자 코드 작성 가이드
 
