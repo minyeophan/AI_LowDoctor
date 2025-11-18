@@ -1,0 +1,22 @@
+# Python
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.env
+
+# Node.js
+node_modules/
+dist/
+
+# VS Code
+.vscode/
+
+# Logs
+*.log
+
+# Mac/Linux 시스템 파일
+.DS_Store
+
+# 기타
+*.sqlite3
