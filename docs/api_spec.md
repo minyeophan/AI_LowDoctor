@@ -12,13 +12,14 @@
   "document_id": "uuid-1234",
   "status": "uploaded"
 }
-
+```
 
 - Response (실패):
+```json
 {
   "status": "error",
   "error_code": "UPLOAD_FAILED",
   "message": "파일 업로드 실패"
 }
-
+```
 
