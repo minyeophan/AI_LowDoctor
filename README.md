@@ -1,4 +1,4 @@
-# AI 법률 닥터 프로젝트 개요
+# AI 법률 닥터_프로젝트 개요
 
 AI 기반으로 전월세 계약서의 위험 조항을 분석하고, <br/>
 법적 근거와 대응 가이드를 제공하는 웹 서비스입니다.<br/>
@@ -16,29 +16,28 @@ AI 기반으로 전월세 계약서의 위험 조항을 분석하고, <br/>
 AI_LAWDOCTOR/ <br/>
 ├── AI/ <br/>
 │   ├── analysis/ <br/>
-│   │   └── ai_example.py        # 계약서 텍스트 ⇒ 위험 조항 분석 예시<br/>
+│   │   └── ai_example.py     # 계약서 텍스트 ⇒ 위험 조항 분석 예시<br/>
 │   ├── ocr/ <br/>
-│   │   └── ocr_example.py       # 이미지/PDF ⇒ 텍스트 추출 예시 <br/>
-│   └── requirements.txt         # AI/ OCR용 파이썬 패키지 <br/>
+│   │   └── ocr_example.py   # 이미지/PDF ⇒ 텍스트 추출 예시 <br/>
+│   └── requirements.txt     # AI/ OCR용 파이썬 패키지 <br/>
 │<br/>
 ├── backend/<br/>
 │   ├── src/<br/>
-│   │   ├── controllers/         # 요청 처리 로직 (추후 분리) <br/>
-│   │   ├── routes/              # 라우터 모음 (추후 분리) <br/>
-│   │   └── app.js               # Express 서버 진입점 (프로토타입용) <br/>
-│   └── package.json             # 백엔드 의존성 정보 <br/>
+│   │   ├── controllers/  # 요청 처리 로직 (추후 분리) <br/>
+│   │   ├── routes/      # 라우터 모음 (추후 분리) <br/>
+│   │   └── app.js     # Express 서버 진입점 (프로토타입용) <br/>
+│   └── package.json    # 백엔드 의존성 정보 <br/>
 │<br/>
-├── frontend/                    # 프론트엔드 (React 등, 추후 구현) <br/>
+├── frontend/    # 프론트엔드 (React 등, 추후 구현) <br/>
 │
 ├── docs/ <br/>
-│   ├── meeting_notes/           # 회의록 <br/>
-│   └── api_spec.md              # 공통 API / JSON 규격 정의 <br/>
+│   ├── meeting_notes/   # 회의록 <br/>
+│   └── api_spec.md      # 공통 API / JSON 규격 정의 <br/>
 │<br/>
 ├── samples/<br/>
-│   └── README.txt               # 샘플 계약서/테스트 데이터 안내<br/>
+│   └── README.txt     # 샘플 계약서/테스트 데이터 안내<br/>
 │<br/>
-└── README.md                    # 현재 문서<br/>
-
+└── README.md       # 현재 문서<br/>
 
 ##  개발자 코드 작성 가이드
 
