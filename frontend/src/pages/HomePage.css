@@ -1,0 +1,176 @@
+.home-page {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 0 20px 60px;
+}
+
+/* 업로드 섹션 */
+.upload-section {
+  margin: 0px;
+  padding-top: 100px;
+  background-color: #EEF5FB;
+  width: 100%;
+}
+
+.file-title {
+  font-size: 32px;
+  font-weight: 700;
+  text-align: left;
+  margin-bottom: 16px;
+  color: #3b82f6;
+  
+}
+
+.file-description {
+  font-size: 18px;
+  text-align: left;
+  color: #718096;
+  margin-bottom: 20px;
+}
+
+/* 공통 타이틀 */
+.section-title {
+  font-size: 30px;
+  font-weight: 700;
+  text-align: left;
+  margin-bottom: 16px;
+  color: #483030;
+}
+
+/* 나의 일정 관리 섹션 */
+.schedule-section {
+  margin-top: 150px;
+}
+
+.schedule-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+  gap: 30px;
+  height: 350px;
+}
+
+.schedule-card {
+  background-color: rgb(218, 236, 255);
+  padding: 40px 30px;
+  border-radius: 16px;
+  text-align: center;
+  transition: all 0.3s ease;
+  border: 2px solid transparent;
+}
+
+
+
+.feature-card h3 {
+  font-size: 20px;
+  font-weight: 600;
+  margin-bottom: 12px;
+  color: #2d3748;
+}
+
+.feature-card p {
+  font-size: 15px;
+  color: #718096;
+  line-height: 1.6;
+}
+
+/* 계약서 작성 섹션 */
+.contract-section {
+  margin-top: 150px;
+  border-radius: 0px;
+}
+
+.contract-box {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 24px;
+  margin-bottom: 20px;
+}
+
+.contract-write {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.contract-image-box {
+  background-color: #e5e7eb;
+  border-radius: 0px;
+  aspect-ratio: 16 / 5;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.contract-image-box span {
+  font-size: 16px;
+  color: #9ca3af;
+}
+
+.contract-button {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  padding: 25px;
+  background-color: white;
+  border: 1px solid #d1d5db;
+  border-radius: 12px;
+  text-decoration: none;
+  color: #374151;
+  font-size: 15px;
+  font-weight: 600;
+  transition: all 0.3s ease;
+}
+
+.contract-button .btn-icon{
+  margin: 0; display: flex;
+  align-items: center; 
+}
+
+/* 커뮤니티 */
+.commu-section {
+  margin-top: 150px;
+}
+
+.commu-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+  height: 350px;
+  background-color: #2d3748;
+}
+
+.schedule-card {
+  background-color: rgb(218, 236, 255);
+  padding: 40px 30px;
+  border-radius: 16px;
+  text-align: center;
+  transition: all 0.3s ease;
+  border: 2px solid transparent;
+}
+
+/* 반응형 디자인 */
+@media (max-width: 768px) {
+  .hero-title {
+    font-size: 32px;
+  }
+
+  .hero-description {
+    font-size: 16px;
+  }
+
+  .section-title {
+    font-size: 28px;
+  }
+
+  .features-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .step {
+    flex-direction: column;
+    text-align: center;
+  }
+
+  .step-content {
+    text-align: center;
+  }
+}
