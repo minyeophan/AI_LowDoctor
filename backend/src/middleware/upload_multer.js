@@ -23,11 +23,16 @@ const storage = multer.diskStorage({
     cb(null, uploadDir); // 업로드 폴더
   },
   filename: (req, file, cb) => {
-    // 파일명: 타임스탬프_원본파일명
-    const uniqueSuffix = Date.now() + "-" + Math.round(Math.random() * 1e9);
-    const ext = path.extname(file.originalname);
-    const basename = path.basename(file.originalname, ext);
-    cb(null, `${basename}-${uniqueSuffix}${ext}`);
+    // 한글 파일명 깨짐 방지: Buffer를 사용해 올바른 인코딩으로 변환
+    const originalname = Buffer.from(file.originalname, 'latin1').toString('utf8');
+    
+    // 중복 방지를 위한 타임스탬프 추가
+    const uniqueSuffix = Date.now();
+    const ext = path.extname(originalname);
+    const basename = path.basename(originalname, ext);
+    
+    // 파일명: 원본파일명_타임스탬프.확장자
+    cb(null, `${basename}_${uniqueSuffix}${ext}`);
   },
 });
 
