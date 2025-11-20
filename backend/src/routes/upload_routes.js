@@ -22,7 +22,7 @@ const router = express.Router();
  *               file:
  *                 type: string
  *                 format: binary
- *                 description: 계약서 파일 (PDF, JPG, PNG)
+ *                 description: 계약서 파일 (PDF, JPG, PNG, HWP, HWPX, DOC, DOCX)
  *     responses:
  *       200:
  *         description: 파일 업로드 성공
