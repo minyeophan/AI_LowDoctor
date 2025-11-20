@@ -1,21 +1,58 @@
 // backend/src/app.js
-
 import express from "express";
 import cors from "cors";
+import swaggerUi from "swagger-ui-express";
+import swaggerJsdoc from "swagger-jsdoc";
+import uploadRoutes from "./routes/upload_routes.js";
 
 const app = express();
+
+// 미들웨어 설정
 app.use(cors());
 app.use(express.json());
+app.use(express.urlencoded({ extended: true }));
+
+// Swagger 설정
+const swaggerOptions = {
+  definition: {
+    openapi: "3.0.0",
+    info: {
+      title: "AI Legal Doctor API",
+      version: "1.0.0",
+      description: "AI 기반 부동산 계약서 위험 분석 API",
+      contact: {
+        name: "AI Legal Doctor Team",
+      },
+    },
+    servers: [
+      {
+        url: "http://localhost:3001",
+        description: "개발 서버",
+      },
+    ],
+  },
+  apis: ["./src/routes/*.js"], // routes 파일에서 Swagger 주석 읽기
+};
+
+const swaggerSpec = swaggerJsdoc(swaggerOptions);
+
+// Swagger UI 라우트
+app.use("/api-docs", swaggerUi.serve, swaggerUi.setup(swaggerSpec));
 
 // 기본 루트 테스트용 GET
 app.get("/", (req, res) => {
-  res.json({ msg: "AI Legal Doctor Backend OK" });
+  res.json({ 
+    msg: "AI Legal Doctor Backend OK",
+    docs: "http://localhost:3001/api-docs"
+  });
 });
+
+// 업로드 라우트 연결
+app.use("/api", uploadRoutes);
 
 // AI 분석 요청용 POST 엔드포인트 (예시 구조)
 app.post("/api/analyze-text", (req, res) => {
   const { text } = req.body;
-
   if (!text) {
     return res.status(400).json({
       status: "error",
@@ -58,8 +95,17 @@ app.post("/api/analyze-text", (req, res) => {
   res.json(exampleResponse);
 });
 
+// 404 에러 핸들러
+app.use((req, res) => {
+  res.status(404).json({
+    status: "error",
+    message: "요청한 리소스를 찾을 수 없습니다.",
+  });
+});
+
 // 서버 실행
 const PORT = 3001;
 app.listen(PORT, () => {
   console.log(`✅ Backend server running on port ${PORT}`);
+  console.log(`📚 Swagger docs: http://localhost:${PORT}/api-docs`);
 });
