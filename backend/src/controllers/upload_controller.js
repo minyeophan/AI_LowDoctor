@@ -1,4 +1,4 @@
-// backend/src/controllers/uploadController.js
+// backend/src/controllers/upload_controller.js
 import { v4 as uuidv4 } from "uuid";
 
 /**
@@ -12,10 +12,11 @@ export const uploadFile = (req, res) => {
     // 고유 문서 ID 생성
     const documentId = uuidv4();
 
-    // 업로드 성공 로그
+    // 업로드 성공 로그 (한글 파일명도 정상 출력)
     console.log(`✅ File uploaded: ${file.originalname} (${file.size} bytes)`);
     console.log(`📄 Document ID: ${documentId}`);
-    console.log(`📁 Saved to: ${file.path}`);
+    console.log(`📁 Saved as: ${file.filename}`);
+    console.log(`📂 Path: ${file.path}`);
 
     // 성공 응답
     return res.status(200).json({
