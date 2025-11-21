@@ -1,0 +1,169 @@
+1단계: 준비하기 (프로그램 설치)
+🟢 1) MongoDB 설치하기 (PC에서 실행용)
+
+MongoDB를 다운로드하려면:
+
+인터넷 주소창에 입력:
+👉 https://www.mongodb.com/try/download/community
+
+Download 버튼 누르기
+
+설치 프로그램 실행하기
+
+계속 → 계속 → Install 누르면 끝!
+(중간에 뭐 나오면 그냥 기본값으로 OK 하면 됨)
+
+🎉 이렇게 하면 컴퓨터에 MongoDB 프로그램이 깔린 거야.
+
+❗ 주의:
+우리 프로젝트에서 MongoDB Atlas를 사용하기 때문에
+로컬 MongoDB는 안 써도 되지만,
+팀원이 MongoDB를 모르면 무조건 설치하는 게 안전함
+
+🟢 2) Node.js 설치하기 (프로젝트 실행용)
+
+Node.js는 우리의 서버를 돌아가게 만들어주는 프로그램이야.
+
+설치 방법:
+
+인터넷에서
+👉 https://nodejs.org/
+
+들어가기
+
+초록색 버튼(LTS) 클릭해서 다운로드
+
+파일 열기 → 계속 → 계속 → Install
+
+설치 완료!
+
+🎉 이것만 하면 Node.js 설치 끝!
+
+📁 2단계: 프로젝트 다운로드 받기
+
+크롬에서 깃허브 주소로 들어간다.
+예) https://github.com/너아이디/ai-law-db
+
+초록색 Code 버튼 클릭
+
+Download ZIP 누르기
+
+ZIP 파일이 다운로드 됨
+
+ZIP 파일을 더블클릭해서 압축 풀기
+
+그러면 이렇게 생긴 폴더가 나온다:
+
+ai-law-db/
+
+📦 3단계: 터미널(명령창) 열기
+
+ai-law-db 폴더를 연다
+
+빈 공간에서 Shift + 마우스 오른쪽 버튼
+
+“여기서 PowerShell 열기” 또는 “터미널 열기” 클릭
+
+화면에 이런 창이 나와야 한다:
+
+C:\Users\TEAM\Desktop\ai-law-db>
+
+🔧 4단계: 서버에 필요한 라이브러리 설치하기
+
+터미널에서 입력:
+
+npm install
+
+
+엔터!
+
+그러면 글자가 막 지나가는데,
+이건 자동으로 필요한 파일들을 설치하는 과정이야.
+
+끝나면:
+
+added 200 packages, and audited 200 packages...
+
+
+비슷한 글자가 나오면 성공!
+
+🔐 5단계: .env 파일 만들기 (가장 중요한 단계)
+
+프로젝트에는 .env.example 라는 파일이 있을 거야.
+
+1) 이 파일을 복사해서
+
+이름을 .env 로 바꾼다.
+
+2) .env 파일을 메모장으로 열고
+
+내용을 이렇게 채운다:
+
+MONGODB_URI=여러분의_몽고DB_주소
+JWT_SECRET=여러분이_원하는_비밀_문자
+
+❓ MongoDB 주소는 어디서 가져오나요?
+
+팀원이 MongoDB Atlas에 가입해야 한다.
+
+🌎 6단계: MongoDB Atlas 클러스터 만들기 (초보자 버전)
+1) 인터넷에서
+
+👉 https://www.mongodb.com/cloud/atlas
+
+들어가기
+
+2) “Try Free” 버튼 클릭
+
+→ 구글 계정으로 로그인해도 됨
+
+3) Cluster 만들기 누르기
+
+설정은 이렇게 하면 됨:
+
+무료 (Free) 선택
+
+지역: 서울 또는 가까운 지역
+
+이름: 아무거나 OK (Cluster0 그대로 둬도 됨)
+
+4) DB User 만들기
+
+Username: test
+Password: 1234 또는 원하는 비번
+
+5) 네트워크 허용
+
+“0.0.0.0/0” 입력 → 전 세계 모두 허용
+(초보자일 때는 이게 제일 편함)
+
+6) 연결(Connect) → “Node.js” 선택
+
+나오는 주소 예시:
+
+mongodb+srv://test:1234@cluster0.abcd123.mongodb.net/?retryWrites=true&w=majority
+
+
+이걸 그대로 .env의 MONGODB_URI에 넣으면 돼.
+
+예:
+
+MONGODB_URI=mongodb+srv://test:1234@cluster0.mongodb.net/?retryWrites=true&w=majority
+JWT_SECRET=anythingyouwant
+
+
+🎉 이제 MongoDB Atlas 연결 준비 끝!
+
+🚀 7단계: 서버 실행하기
+
+터미널에서:
+
+node app-jwt-upload.js
+
+
+엔터하면…
+
+🚀 통합 서버 실행 중: http://localhost:4000
+
+
+이런 글자가 나오면 성공!!
