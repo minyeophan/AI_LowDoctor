@@ -1,11 +1,97 @@
 // backend/src/app.js
 import express from "express";
 import cors from "cors";
+import dotenv from "dotenv";
+import mongoose from "mongoose";
 import swaggerUi from "swagger-ui-express";
 import swaggerJsdoc from "swagger-jsdoc";
 import uploadRoutes from "./routes/upload_routes.js";
+import resultRoutes from "./routes/result_routes.js";
+
+// 환경변수 로드
+dotenv.config();
 
 const app = express();
+
+// MongoDB 연결
+mongoose.connect(process.env.MONGODB_URI)
+  .then(() => {
+    console.log(`✅ MongoDB Connected`);
+    console.log(`📊 Database: ${mongoose.connection.name}`);
+  })
+  .catch((error) => {
+    console.error(`❌ MongoDB Connection Error: ${error.message}`);
+    process.exit(1);
+  });
+
+// ========== MongoDB 스키마 정의 ==========
+const lawRefSchema = new mongoose.Schema({
+  name: { type: String, required: true },
+  article: { type: String, required: true },
+  url: { type: String, required: true }
+}, { _id: false });
+
+const riskItemSchema = new mongoose.Schema({
+  id: { type: Number, required: true },
+  clauseText: { type: String, required: true },
+  riskLevel: { 
+    type: String, 
+    enum: ['high', 'medium', 'low'],
+    required: true 
+  },
+  reason: { type: String, required: true },
+  lawRefs: [lawRefSchema],
+  guide: { type: String, required: true }
+}, { _id: false });
+
+const formSchema = new mongoose.Schema({
+  type: { type: String, required: true },
+  description: { type: String, required: true },
+  downloadUrl: { type: String, required: true }
+}, { _id: false });
+
+const analysisSchema = new mongoose.Schema({
+  documentId: { 
+    type: String, 
+    required: true,
+    unique: true,
+    index: true 
+  },
+  filename: { type: String, required: true },
+  originalname: { type: String, required: true },
+  filePath: { type: String, required: true },
+  fileSize: { type: Number, required: true },
+  mimetype: { type: String, required: true },
+  
+  // OCR 결과
+  extractedText: { type: String },
+  
+  // AI 분석 결과
+  summary: { type: String },
+  riskItems: [riskItemSchema],
+  forms: [formSchema],
+  
+  // 처리 상태
+  status: { 
+    type: String, 
+    enum: ['uploaded', 'processing', 'completed', 'failed'],
+    default: 'uploaded'
+  },
+  errorMessage: { type: String },
+  
+  // 타임스탬프
+  createdAt: { type: Date, default: Date.now },
+  updatedAt: { type: Date, default: Date.now }
+});
+
+// 업데이트 시 updatedAt 자동 갱신
+analysisSchema.pre('save', function(next) {
+  this.updatedAt = Date.now();
+  next();
+});
+
+// 모델 생성 및 export (controllers에서 사용)
+export const Analysis = mongoose.model('Analysis', analysisSchema);
 
 // 미들웨어 설정
 app.use(cors());
@@ -49,6 +135,9 @@ app.get("/", (req, res) => {
 
 // 업로드 라우트 연결
 app.use("/api", uploadRoutes);
+
+// 결과 조회 라우트 연결
+app.use("/api", resultRoutes);
 
 // AI 분석 요청용 POST 엔드포인트 (예시 구조)
 app.post("/api/analyze-text", (req, res) => {
