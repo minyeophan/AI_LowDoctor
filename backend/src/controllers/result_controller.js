@@ -1,46 +1,66 @@
 // backend/src/controllers/result_controller.js
 import { Analysis } from "../app.js";
+import { analyzeDocument } from "../services/ai_service.js";
 
 /**
- * 분석 결과 조회
- * GET /api/result/:id
+ * 단일 문서 분석 조회 및 생성
+ * POST /api/result/:id
+ * 업로드된 문서를 AI 분석 후 DB 저장, 결과 반환
  */
-export const getResult = async (req, res) => {
+export const analyzeAndGetResult = async (req, res) => {
   try {
     const { id } = req.params;
 
-    console.log(`🔍 결과 조회 요청: ${id}`);
+    console.log(`📄 분석 요청: ${id}`);
 
-    // DB에서 문서 조회
-    const analysis = await Analysis.findOne({ documentId: id });
+    // 이미 DB에 존재하는 경우
+    let analysis = await Analysis.findOne({ documentId: id });
 
-    if (!analysis) {
-      return res.status(404).json({
-        status: "error",
-        error_code: "NOT_FOUND",
-        message: "해당 문서를 찾을 수 없습니다."
-      });
+    if (analysis) {
+      if (analysis.status === "completed") {
+        // 이미 분석 완료
+        return res.status(200).json({
+          status: "success",
+          message: "분석 완료",
+          data: {
+            documentId: analysis.documentId,
+            summary: analysis.summary,
+            riskItems: analysis.riskItems,
+            forms: analysis.forms,
+            createdAt: analysis.createdAt,
+            updatedAt: analysis.updatedAt,
+          },
+        });
+      } else if (analysis.status === "processing" || analysis.status === "uploaded") {
+        return res.status(202).json({
+          status: "processing",
+          message: "분석 진행 중",
+          document_id: analysis.documentId,
+          progress: analysis.status,
+        });
+      } else if (analysis.status === "failed") {
+        return res.status(400).json({
+          status: "error",
+          error_code: "ANALYSIS_FAILED",
+          message: analysis.errorMessage || "분석 실패",
+        });
+      }
     }
 
-    // 상태에 따른 응답 처리
-    if (analysis.status === "uploaded" || analysis.status === "processing") {
-      return res.status(202).json({
-        status: "processing",
-        message: "분석이 진행 중입니다.",
-        document_id: analysis.documentId,
-        progress: analysis.status
-      });
-    }
+    // DB에 없으면 새로운 분석 기록 생성
+    analysis = new Analysis({ documentId: id, status: "processing" });
+    await analysis.save();
 
-    if (analysis.status === "failed") {
-      return res.status(500).json({
-        status: "error",
-        error_code: "ANALYSIS_FAILED",
-        message: analysis.errorMessage || "분석 중 오류가 발생했습니다."
-      });
-    }
+    // AI 서버에 분석 요청
+    const aiResult = await analyzeDocument(analysis.filePath);
 
-    // 분석 완료 - 전체 결과 반환
+    // 분석 결과 DB 저장
+    analysis.summary = aiResult.summary;
+    analysis.riskItems = aiResult.riskItems;
+    analysis.forms = aiResult.forms;
+    analysis.status = "completed";
+    await analysis.save();
+
     return res.status(200).json({
       status: "success",
       message: "분석 완료",
@@ -50,16 +70,25 @@ export const getResult = async (req, res) => {
         riskItems: analysis.riskItems,
         forms: analysis.forms,
         createdAt: analysis.createdAt,
-        updatedAt: analysis.updatedAt
-      }
+        updatedAt: analysis.updatedAt,
+      },
     });
 
   } catch (error) {
-    console.error("❌ 결과 조회 에러:", error);
+    console.error("❌ 분석 에러:", error);
+
+    // DB 상태 업데이트
+    if (id) {
+      await Analysis.findOneAndUpdate(
+        { documentId: id },
+        { status: "failed", errorMessage: error.message }
+      );
+    }
+
     return res.status(500).json({
       status: "error",
       error_code: "SERVER_ERROR",
-      message: "서버 오류가 발생했습니다."
+      message: error.message || "서버 오류가 발생했습니다.",
     });
   }
 };
@@ -73,9 +102,7 @@ export const getAllResults = async (req, res) => {
     const { status, limit = 10, page = 1 } = req.query;
 
     const query = {};
-    if (status) {
-      query.status = status;
-    }
+    if (status) query.status = status;
 
     const skip = (page - 1) * limit;
 
@@ -83,7 +110,7 @@ export const getAllResults = async (req, res) => {
       .sort({ createdAt: -1 })
       .limit(parseInt(limit))
       .skip(skip)
-      .select('-extractedText'); // 텍스트는 용량이 크니 목록에서 제외
+      .select('-extractedText'); // 텍스트 제외
 
     const total = await Analysis.countDocuments(query);
 
@@ -95,9 +122,9 @@ export const getAllResults = async (req, res) => {
           total,
           page: parseInt(page),
           limit: parseInt(limit),
-          totalPages: Math.ceil(total / limit)
-        }
-      }
+          totalPages: Math.ceil(total / limit),
+        },
+      },
     });
 
   } catch (error) {
@@ -105,43 +132,7 @@ export const getAllResults = async (req, res) => {
     return res.status(500).json({
       status: "error",
       error_code: "SERVER_ERROR",
-      message: "서버 오류가 발생했습니다."
-    });
-  }
-};
-
-/**
- * 분석 결과 삭제
- * DELETE /api/result/:id
- */
-export const deleteResult = async (req, res) => {
-  try {
-    const { id } = req.params;
-
-    const analysis = await Analysis.findOneAndDelete({ documentId: id });
-
-    if (!analysis) {
-      return res.status(404).json({
-        status: "error",
-        error_code: "NOT_FOUND",
-        message: "해당 문서를 찾을 수 없습니다."
-      });
-    }
-
-    // 파일도 삭제 (선택사항)
-    // fs.unlinkSync(analysis.filePath);
-
-    return res.status(200).json({
-      status: "success",
-      message: "문서가 삭제되었습니다."
-    });
-
-  } catch (error) {
-    console.error("❌ 삭제 에러:", error);
-    return res.status(500).json({
-      status: "error",
-      error_code: "SERVER_ERROR",
-      message: "서버 오류가 발생했습니다."
+      message: "서버 오류가 발생했습니다.",
     });
   }
 };
