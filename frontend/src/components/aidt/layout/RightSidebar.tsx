@@ -1,5 +1,5 @@
-import Chatbot from './Chatbot';
-import Notification from './Notification';
+import Chatbot from '../shared/Chatbot';
+import Notification from '../shared/Notification';
 import './RightSidebar.css';
 
 type SidebarType = 'chatbot' | 'notification' | null;

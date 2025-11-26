@@ -1,4 +1,5 @@
 import { useState, ChangeEvent, DragEvent } from 'react';
+import { GoFileDirectoryFill } from "react-icons/go";
 import './FileUploader.css';
 
 interface FileUploaderProps {
@@ -97,7 +98,7 @@ function FileUploader({ onFileSelect, onUploadSuccess, onUploadError }: FileUplo
             style={{ display: 'none' }}
           />
           <div className="upload-icon-simple">
-            ⬆︎
+            <p>⬆︎</p>
           </div>
           <button 
             onClick={() => document.getElementById("file-input-simple")?.click()} 
@@ -107,14 +108,16 @@ function FileUploader({ onFileSelect, onUploadSuccess, onUploadError }: FileUplo
             파일 선택
           </button>  
           <p className="upload-description">
-            첨부할 계약서를 여기에 끌어다 놓거나 계약서 선택 버튼을 눌러 첨부해 주세요.
+            파일을 드래그하여 올리거나 파일 선택 버튼을 눌러 업로드하세요
           </p>
         </div>
       ) : (
         // 파일 선택 후 화면
         <div className="file-selected-area">
           <div className="file-info-simple">
-            <div className="file-icon-large">📁</div>
+            <div className="file-icon-large">
+              <GoFileDirectoryFill size={35} />
+            </div>
             <p className="file-name-simple">{selectedFile.name}</p>
             <p className="file-size-simple">
               {(selectedFile.size / 1024).toFixed(2)} KB

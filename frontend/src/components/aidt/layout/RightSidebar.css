@@ -1,7 +1,7 @@
 .right-sidebar {
   position: fixed;
   top: 70px;
-  right: 0;
+  right: 60px;
   width: 350px;
   height: calc(100vh - 70px);
   background-color: white;

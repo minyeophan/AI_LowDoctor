@@ -4,8 +4,10 @@ import { DocumentProvider } from './context/DocumentContext';
 import { useState } from 'react';
 import HomePage from './pages/HomePage';
 import AnalysisPage from './pages/AiPage';
-import { FaHouseChimneyCrack } from "react-icons/fa6";
+import { RiAccountBoxFill } from "react-icons/ri";
+import logoImage from '../src/assets/img/logo.svg';
 import './App.css'
+
 
 function Navbar() {
   const [menuOpen, setMenuOpen] = useState(false);
@@ -18,26 +20,14 @@ const isActive = (path: string) => {
   return (
     <nav className="navbar">
       <div className="nav-container">
-        {/* 왼쪽: 메뉴 버튼 */}
-        <button 
-          className="menu-button"
-          onClick={() => setMenuOpen(!menuOpen)}
-          aria-label="메뉴"
-        >
-          <span className="menu-icon">☰</span>
-        </button>
-
-        {/* 중앙: 로고  */}
-        <Link to="/" className="logo-section">
-          <div className='logo-box'>
-            <FaHouseChimneyCrack size={18} color='#3a8bdcff'/>
-            <p>법닥</p>
-          </div>
-         
-        </Link>
-
-        {/* 오른쪽: 메뉴 링크들 */}
+        {/* 왼쪽: 메뉴 링크들 */}
         <div className="nav-links">
+          <Link to="/" className="logo-section">
+            <div className='logo-box'>
+              <img src={logoImage} alt="로고" className="logo-svg" />
+              <p>법닥</p>
+            </div>
+          </Link>
           <Link 
             to="/analysis" 
             className={`nav-link ${isActive('/analysis') ? 'active' : ''}`}
@@ -57,34 +47,20 @@ const isActive = (path: string) => {
             커뮤니티
           </Link>
         </div>
-      </div>
 
-      {/* 모바일 메뉴 (햄버거 클릭 시)
-      {menuOpen && (
-        <div className="mobile-menu">
-          <Link 
-            to="/analysis" 
-            className={`mobile-link ${isActive('/analysis') ? 'active' : ''}`}
-            onClick={() => setMenuOpen(false)}
-          >
-            AIDT
+        {/* 오른쪽: 로그인/회원가입/마이페이지 */}
+        <div className="nav-auth">
+          <Link to="/login" className="auth-link">
+            로그인
           </Link>
-          <Link 
-            to="/community" 
-            className={`mobile-link ${isActive('/community') ? 'active' : ''}`}
-            onClick={() => setMenuOpen(false)}
-          >
-            커뮤니티
+          <Link to="/signup" className="auth-link signup-btn">
+            회원가입
           </Link>
-          <Link 
-            to="/mypage" 
-            className={`mobile-link ${isActive('/mypage') ? 'active' : ''}`}
-            onClick={() => setMenuOpen(false)}
-          >
-            마이페이지
+          <Link to="/mypage" className="mypage-icon" aria-label="마이페이지">
+            <RiAccountBoxFill className="user-icon" size={24}/>
           </Link>
         </div>
-      )} */}
+      </div>
     </nav>
   );
 }

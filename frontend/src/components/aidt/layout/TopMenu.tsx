@@ -23,7 +23,11 @@ function TopMenu({ selectedMenu, onMenuSelect, isSidebarOpen }: TopMenuProps) {
           onClick={() => onMenuSelect('document')}
         >
           <span className="menu-icon">
-            <FaFile size={20} color="#3b82f6"/>
+            {selectedMenu === 'document' ? (
+              <FaFile size={22} color="#4099FD"/>
+            ) : (
+              <FaFile size={22} color="#858D99"/>
+            )}
           </span>
           <span className="menu-label">본문</span>
         </button>
@@ -33,7 +37,11 @@ function TopMenu({ selectedMenu, onMenuSelect, isSidebarOpen }: TopMenuProps) {
           onClick={() => onMenuSelect('summary')}
         >
           <span className="menu-icon">
-            <MdFactCheck size={22} color="#14AD68"/>
+            {selectedMenu === 'summary' ? (
+              <MdFactCheck size={23} color="#4099FD"/>
+            ) : (
+              <MdFactCheck size={23} color="#858D99"/>
+            )}
           </span>
           <span className="menu-label">핵심 요약</span>
         </button>
@@ -43,7 +51,11 @@ function TopMenu({ selectedMenu, onMenuSelect, isSidebarOpen }: TopMenuProps) {
           onClick={() => onMenuSelect('danger')}
         >
           <span className="menu-icon">
-            <PiWarningOctagonFill size={22} color="#EF0E0E"/>
+            {selectedMenu === 'danger' ? (
+              <PiWarningOctagonFill size={22} color="#4099FD"/>
+            ) : (
+              <PiWarningOctagonFill size={22} color="#858D99"/>
+            )}
           </span>
           <span className="menu-label">위험 탐지</span>
         </button>
@@ -53,7 +65,11 @@ function TopMenu({ selectedMenu, onMenuSelect, isSidebarOpen }: TopMenuProps) {
           onClick={() => onMenuSelect('guide')}
         >
           <span className="menu-icon">
-            <RiGuideFill size={20} color="#ea8007ff"/>
+            {selectedMenu === 'guide' ? (
+              <RiGuideFill size={20} color="#4099FD"/>
+            ) : (
+              <RiGuideFill size={20} color="#858D99"/>
+            )}
           </span>
           <span className="menu-label">대응 가이드</span>
         </button>
@@ -63,7 +79,11 @@ function TopMenu({ selectedMenu, onMenuSelect, isSidebarOpen }: TopMenuProps) {
           onClick={() => onMenuSelect('search')}
         >
           <span className="menu-icon">
-            <RiUserCommunityFill size={22} color="#7624E9"/>
+            {selectedMenu === 'search' ? (
+              <RiUserCommunityFill size={22} color="#4099FD"/>
+            ) : (
+              <RiUserCommunityFill size={22} color="#858D99"/>
+            )}
           </span>
           <span className="menu-label">사례 검색</span>
         </button>

@@ -1,0 +1,138 @@
+/* 위험조항 */
+.dangerous-box {
+  width: 794px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  flex-wrap: wrap;
+  position: sticky;
+  top: 0px;
+  background-color: #ffff;
+  z-index: 10;
+  padding: 0px 0px 20px 0px;
+  flex-shrink: 0;
+  border-bottom: 0.8px solid rgb(234, 234, 234);
+  
+}
+.danger-box-text {width: 100%; display: flex; align-items: center; }
+.danger-box-text p {width: 100%; margin-bottom: 10px;
+  font-size: 17px; margin-left: 2px;}
+
+  .risk-position-bar {width: 100%; background-color: #ECF1F6;
+ border-radius: 10px; height: 20px;
+position: relative;}
+
+ .risk-dot {
+  position: absolute;
+  width: 15px;
+  height: 15px;
+  border-radius: 50%;
+  cursor: pointer;
+  margin-top: 2px;
+}
+
+/* 위험도별 색상 */
+.risk-dot.severity-high {
+  background-color: #fa1a1a;
+}
+
+.risk-dot.severity-medium {
+  background-color: #FF6C1D;
+}
+
+.risk-dot.severity-low {
+  background-color: #FFC72F;
+}
+
+/* 위험 탐지 내용 */
+.danger-section {
+  margin-bottom: 24px;
+}
+
+/* 본문 + 위험 표시 */
+.document-with-danger {
+  width: 100%;
+  padding: 0px 50px;
+}
+
+.danger-header {
+  margin-bottom: 32px;
+  padding-bottom: 15px;
+  border-bottom: 1px solid #e0e0e0;
+
+}
+
+.danger-header h2 {
+  font-size: 24px;
+  font-weight: 700;
+  color: #212121;
+  margin: 0 0 8px 0;
+}
+
+.danger-description {
+  font-size: 14px;
+  color: #757575;
+  margin: 0;
+  line-height: 22px;
+}
+
+.document-line {
+  margin: 0;
+  padding: 4px 8px;
+  line-height: 1.8;
+}
+
+/* 위험 조항 하이라이트 */
+.document-line.highlight-high {
+  background-color: #ea1c1c56;
+  padding-left: 12px;
+  margin: 5px 0;
+}
+
+.document-line.highlight-medium {
+  background-color: #ff6c1d68;
+  padding-left: 12px;
+  margin: 5px 0;
+}
+
+.document-line.highlight-low {
+  background-color: #ffc82f7f;
+  padding-left: 12px;
+  margin: 8px 0;
+}
+
+/* 이유 박스 */
+.reason-box {
+  margin: 8px 0 18px 20px;
+  padding: 12px 16px;
+  border-radius: 8px;
+  border: 1px solid;
+  line-height: 22px;
+}
+
+.reason-box.severity-high {
+  background: #fff5f5;
+  border-color: #EA1C1C;
+}
+
+.reason-box.severity-medium {
+  background: #fffbf0;
+  border-color: #FF6C1D;
+}
+
+.reason-box.severity-low {
+  background: #fcf5cf79;
+  border-color: #FFC72F;
+}
+
+.reason-box .reason {
+  margin: 0 0 8px 0;
+  font-size: 14px;
+  color: #c62828;
+}
+
+.reason-box .guide {
+  margin: 0;
+  font-size: 14px;
+  color: #1565c0;
+}

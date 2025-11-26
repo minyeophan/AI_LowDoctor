@@ -1,0 +1,33 @@
+/* 핵심요약 */
+.summary-body {width: 100%; height: auto; min-height: 1123px;  
+  font-size: 13px;
+  padding: 0px 50px; background-color: #fff;}
+
+/* 헤더 콘텐츠 */
+.summary-header-content {
+  margin-bottom: 32px;
+  padding-bottom: 15px;
+  border-bottom: 1px solid #e0e0e0;
+}
+
+.summary-header-content h2 {
+  color: #212121;
+  font-size: 24px;
+  font-weight: 700;
+  margin: 0 0 8px 0;
+  letter-spacing: -0.5px;
+}
+
+.summary-description {
+  font-size: 14px;
+  color: #757575;
+  margin-top: 12px;
+}
+
+
+.summary-item {
+  padding: 10px 0px;
+}
+.summary-highlight {padding: 7px 0px;} 
+.summary-content-text {padding: 10px 0px; line-height: 22px;}
+.summary-divider {margin-top: 10px; border: 0.8px solid rgb(222, 222, 222);}

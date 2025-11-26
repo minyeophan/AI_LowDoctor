@@ -1,17 +1,17 @@
 .file-uploader-simple {
   width: 100%;
-  max-width: 100%;
+  max-width: 600px;
   margin: 20px auto;
 }
 
 /* 파일 선택 전 영역 */
 .upload-area {
-  background-color: #f8f9fa;
+  background-color: #fbfcff;
   border-radius: 16px;
-  padding: 60px 40px;
+  padding: 40px 45px;
   text-align: center;
   transition: all 0.3s ease;
-  border: 1px solid rgb(222, 222, 222);
+  border: 1px solid rgb(188, 188, 188);
 }
 
 .upload-area.dragging {
@@ -21,14 +21,14 @@
 }
 
 .upload-icon-simple {
-  font-size: 30px;
-  color: #3b82f6;
+  font-size: 40px;
+  color: #4099FD;
   }
 
 /* 파일 선택 버튼 */
 .select-button {
-  padding: 13px 60px;
-  background-color: #3b82f6;
+  padding: 15px 60px;
+  background-color: #4099FD;
   color: white;
   border: none;
   border-radius: 8px;
@@ -53,13 +53,14 @@
   color: #6b7280;
   margin: 0;
   line-height: 1.5;
-  margin-top: 15px;
+  margin-top: 30px;
+  
 }
 
 /* 파일 선택 후 영역 */
 .file-selected-area {
-  background-color: white;
-  border: 1px solid #676e7d;
+  background-color: #fbfcff;
+  border: 1px solid rgb(188, 188, 188);
   border-radius: 16px;
   padding: 40px;
   text-align: center;
@@ -74,17 +75,19 @@
 }
 
 .file-icon-large {
-  font-size: 40px;
+  color: #868C98;
 }
 
 .file-name-simple {
   font-size: 14px;
   font-weight: 600;
-  color: #545d6a;
+  color: #4b5563;
   word-break: break-all;
   max-width: 100%;
   margin-top: 3px;
 }
+
+.file-size-simple {color: #868C98; font-size: 12px;}
 
 /* 액션 버튼들 */
 .action-buttons {
@@ -105,7 +108,7 @@
 }
 
 .reselect-button {
-  background-color: #f3f4f6;
+  background-color: #f9f9f9;
   color: #4b5563;
   border: 1px solid #d1d5db;
   width: 120px;
@@ -117,7 +120,7 @@
 }
 
 .upload-button-simple {
-  background-color: #3b82f6;
+  background-color: #4099FD;
   color: white;
   width: 120px;
 }

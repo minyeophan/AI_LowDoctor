@@ -1,31 +1,46 @@
 import { useState } from 'react';
-import TopMenu from '../components/aidt/TopMenu';
-import RightSidebar from '../components/aidt/RightSidebar';
-import FloatingButtons from '../components/aidt/FloatingButtons';
+import TopMenu from '../components/aidt/layout/TopMenu';
+import RightSidebar from '../components/aidt/layout/RightSidebar';
+import FloatingButtons from '../components/aidt/layout/FloatingButtons';
 import FileUploader from '../components/FileUploader';
+import DocumentMeta from '../components/aidt/shared/DocumentMeta';
 import { useDocument } from '../context/DocumentContext';
-import { api, ApiError, AnalysisResponse } from '../services/api';
+import { mockSummaryData, mockRiskItems, mockRecommendations, mockForms, mockContractTip, mockImprovementGuides   } from '../services/mockData';
+import { SummaryItem, RiskItem } from '../services/api';
+import { api, ApiError, AnalysisResponse, ContractTip } from '../services/api';
 import { UploadResult } from '../types';
-import { RiZoomOutFill } from "react-icons/ri";
-import { RiZoomInFill } from "react-icons/ri";
+import { IoIosInformationCircle } from "react-icons/io";
+import { BsFillInfoSquareFill } from "react-icons/bs";
+import DocumentView from '../components/aidt/views/DocumentView';
+import SummaryView from '../components/aidt/views/SummaryView';
+import LoadingOverlay from '../components/aidt/shared/LoadingOverlay';
+import DangerView from '../components/aidt/views/DangerView';
+import GuideView from '../components/aidt/views/GuideView';
+import AnalysisConfirmModal from '../components/aidt/shared/AnalysisConfirmModal';
+import AnalysisLoadingOverlay from '../components/aidt/shared/AnalysisLoadingOverlay';
 import './AiPage.css';
 
 type MenuItem = 'document' | 'summary' | 'danger' | 'guide' | 'search';
+type AnalysisType = 'summary' | 'danger' | 'guide' | null;
 type SidebarType = 'chatbot' | 'notification' | null;
 
 function AnalysisPage() {
-  const { currentDocument, setCurrentDocument } = useDocument();
-  
+  const {currentDocument, setCurrentDocument } = useDocument();
   const [selectedMenu, setSelectedMenu] = useState<MenuItem>('document');
   const [activeSidebar, setActiveSidebar] = useState<SidebarType>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [analysisData, setAnalysisData] = useState<AnalysisResponse | null>(null);
   const [isAnalyzing, setIsAnalyzing] = useState(false);
+  const [zoomLevel, setZoomLevel] = useState(100);
+  const [pendingAnalysis, setPendingAnalysis] = useState<AnalysisType>(null);
+  const [analyzingType, setAnalyzingType] = useState<AnalysisType>(null);
+  const [analyzedMenus, setAnalyzedMenus] = useState<Set<string>>(new Set());
 
-  // 백엔드 API 사용 여부 확인
-  const API_ENABLED = import.meta.env.VITE_API_BASE_URL !== undefined && 
-                      import.meta.env.VITE_API_BASE_URL !== '';
+  
+ // 백엔드 API 사용 여부 확인
+const API_ENABLED = import.meta.env.VITE_API_BASE_URL !== undefined && 
+                    import.meta.env.VITE_API_BASE_URL !== '';
 
   // AI 분석 요청 (백엔드 연결 시에만 작동)
   const requestAnalysis = async () => {
@@ -38,7 +53,7 @@ function AnalysisPage() {
 
     setIsAnalyzing(true);
     try {
-      const result = await api.analyzeDocument(currentDocument.documentId);
+      const result = await api.analyzeText(currentDocument.content || '');
       setAnalysisData(result);
       console.log('✅ AI 분석 완료:', result);
     } catch (error) {
@@ -52,131 +67,149 @@ function AnalysisPage() {
   };
 
   // 파일 업로드 핸들러
-  const handleFileUploadSuccess = async (uploadResult: UploadResult) => {
-    setIsLoading(true);
-    setError(null);
+const handleFileUploadSuccess = async (uploadResult: UploadResult) => {
+  setIsLoading(true);
+  setError(null);
 
-    // 백엔드 API가 활성화된 경우
-    if (API_ENABLED) {
-      try {
-        const response = await api.uploadDocument(uploadResult.file);
-        
-        console.log('✅ 백엔드 응답:', response);
+  try {
+    // 항상 api.uploadDocument 사용 (Mock 또는 실제 API)
+    const response = await api.uploadDocument(uploadResult.file);
+    
+    console.log('✅ 업로드 응답:', response);
+    console.log('📝 content:', response.content);
 
-        const newDoc = {
-          documentId: response.documentId,
-          filename: response.filename,
-          size: response.size,
-          uploadDate: response.uploadDate,
-          content: response.extractedText,
-          file: uploadResult.file,
-        };
+    const newDoc = {
+      documentId: response.document_id,
+      status: response.status,
+      filename: uploadResult.file.name,
+      size: uploadResult.file.size,
+      uploadDate: new Date().toISOString(),
+      content: response.content || '',
+      file: uploadResult.file,
+    };
 
-        setCurrentDocument(newDoc);
-        
-      } catch (error) {
-        console.error('❌ 업로드 실패:', error);
-        
-        if (error instanceof ApiError) {
-          setError(`업로드 실패: ${error.message}`);
-        } else {
-          setError('파일 업로드 중 오류가 발생했습니다.');
-        }
-      } finally {
-        setIsLoading(false);
-      }
-      return;
+    setCurrentDocument(newDoc);
+    
+  } catch (error) {
+    console.error('❌ 업로드 실패:', error);
+    if (error instanceof ApiError) {
+      setError(`업로드 실패: ${error.message}`);
+    } else {
+      setError('파일 업로드 중 오류가 발생했습니다.');
     }
+  } finally {
+    setIsLoading(false);
+  }
+};
 
-    // 로컬 처리 (기존 방식)
-    try {
-      const file = uploadResult.file;
-      
-      if (file.type === 'application/pdf') {
-        const content = `📄 PDF 파일: ${file.name}\n\n` +
-                        `파일 크기: ${(file.size / 1024).toFixed(2)} KB\n` +
-                        `업로드 시간: ${new Date().toLocaleString('ko-KR')}\n\n` +
-                        `⚠️ PDF 내용을 보려면 백엔드 연결이 필요합니다.`;
-        
-        const newDoc = {
-          documentId: `doc_${Date.now()}`,
-          filename: file.name,
-          size: file.size,
-          uploadDate: new Date().toISOString(),
-          content: content,
-          file: file,
-        };
-
-        setCurrentDocument(newDoc);
-        setIsLoading(false);
-        
-      } else if (file.type.startsWith('text/') || file.name.endsWith('.txt')) {
-        const reader = new FileReader();
-        
-        reader.onload = (e) => {
-          const content = e.target?.result as string;
-          
-          const newDoc = {
-            documentId: `doc_${Date.now()}`,
-            filename: file.name,
-            size: file.size,
-            uploadDate: new Date().toISOString(),
-            content: content || '(파일 내용이 비어있습니다)',
-            file: file,
-          };
-
-          setCurrentDocument(newDoc);
-          setIsLoading(false);
-        };
-
-        reader.onerror = () => {
-          setError('파일을 읽는 중 오류가 발생했습니다.');
-          setIsLoading(false);
-        };
-
-        reader.readAsText(file, 'UTF-8');
-        
-      } else {
-        const content = `📎 파일: ${file.name}\n\n` +
-                        `파일 타입: ${file.type}\n` +
-                        `파일 크기: ${(file.size / 1024).toFixed(2)} KB\n` +
-                        `업로드 시간: ${new Date().toLocaleString('ko-KR')}\n\n` +
-                        `이 파일 타입은 미리보기가 지원되지 않습니다.`;
-        
-        const newDoc = {
-          documentId: `doc_${Date.now()}`,
-          filename: file.name,
-          size: file.size,
-          uploadDate: new Date().toISOString(),
-          content: content,
-          file: file,
-        };
-
-        setCurrentDocument(newDoc);
-        setIsLoading(false);
-      }
-      
-    } catch (err) {
-      console.error('업로드 에러:', err);
-      setError('문서 처리 중 오류가 발생했습니다.');
-      setIsLoading(false);
-    }
-  };
-
-  // 메뉴 선택
+//메뉴 선택
   const handleMenuSelect = (menu: MenuItem) => {
-    if (!currentDocument) {
-      alert('⚠️ 먼저 문서를 업로드해주세요!');
+  if (!currentDocument) {
+    alert('⚠️ 먼저 문서를 업로드해주세요!');
+    return;
+  }
+
+  // 분석이 필요한 메뉴
+  if (menu === 'summary' || menu === 'danger' || menu === 'guide') {
+    // 이미 분석된 메뉴인지 확인
+    if (analyzedMenus.has(menu)) {
+      setSelectedMenu(menu);
       return;
     }
+    
+    // 분석 확인 팝업 표시
+    setPendingAnalysis(menu);
+  } else {
     setSelectedMenu(menu);
-  };
+  }
+};
+
+// 분석 확인
+// 분석 확인
+const handleAnalysisConfirm = async () => {
+  if (!pendingAnalysis) return;
+
+  const currentAnalysis = pendingAnalysis;
+  setAnalyzingType(currentAnalysis);
+  setSelectedMenu(currentAnalysis);
+  setPendingAnalysis(null);
+
+  try {
+    // 2초 로딩 시뮬레이션
+    await new Promise(resolve => setTimeout(resolve, 2000));
+    
+    // 분석 데이터 초기화 (첫 분석인 경우)
+    if (!analysisData) {
+      setAnalysisData({
+        summary: [],
+        riskItems: [],
+        recommendations: [],
+        forms: [],
+        analyzedAt: new Date().toISOString(),
+        contractTip: undefined,
+      });
+    }
+
+    // 선택한 메뉴 데이터만 설정
+    setAnalysisData(prev => {
+      const newData = prev || {
+        summary: [],
+        riskItems: [],
+        recommendations: [],
+        forms: [],
+        analyzedAt: new Date().toISOString(),
+            contractTip: {            
+            docType: '',
+            title: '',
+            items: []
+        },
+      };
+
+      switch (currentAnalysis) {
+        case 'summary':
+          return { ...newData, summary: mockSummaryData };
+        case 'danger':
+          return { ...newData, riskItems: mockRiskItems };
+        case 'guide':
+          return { ...newData, contractTip: mockContractTip };
+        default:
+          return newData;
+      }
+    });
+    
+    // 분석 완료 메뉴 추가
+    setAnalyzedMenus(prev => new Set(prev).add(currentAnalysis));
+    
+    // 백엔드 연결시 실제 API 호출
+    if (API_ENABLED) {
+      await requestAnalysis();
+    }
+  } catch (error) {
+    console.error('분석 실패:', error);
+  } finally {
+    setAnalyzingType(null);
+  }
+};
+
+
+// 분석 취소
+const handleAnalysisCancel = () => {
+  setPendingAnalysis(null);
+};
 
   // 사이드바 토글
   const toggleSidebar = (type: 'chatbot' | 'notification') => {
     setActiveSidebar(activeSidebar === type ? null : type);
   };
 
+  // 줌 인/아웃 함수
+const handleZoomIn = () => {
+  setZoomLevel(prev => Math.min(prev + 10, 150)); // 최대 150%
+};
+
+const handleZoomOut = () => {
+  setZoomLevel(prev => Math.max(prev - 10, 70)); // 최소 70%
+};
   // 새 문서 업로드
   const handleNewDocument = () => {
     setCurrentDocument(null);
@@ -184,6 +217,16 @@ function AnalysisPage() {
     setError(null);
     setAnalysisData(null);
   };
+
+  // 분석 데이터 키 가져오기
+const getAnalysisKey = (type: AnalysisType) => {
+  switch (type) {
+    case 'summary': return 'summary';
+    case 'danger': return 'riskItems';
+    case 'guide': return 'contractTip';
+    default: return null;
+  }
+};
 
   // 콘텐츠 렌더링
   const renderContent = () => {
@@ -198,18 +241,6 @@ function AnalysisPage() {
         </div>
       );
     }
-
-    if (isLoading) {
-      return (
-        <div className="content-section">
-          <div className="loading-state">
-            <div className="spinner"></div>
-            <p>문서를 처리하는 중입니다...</p>
-          </div>
-        </div>
-      );
-    }
-
     if (error) {
       return (
         <div className="content-section">
@@ -224,144 +255,75 @@ function AnalysisPage() {
         </div>
       );
     }
+    // 분석 확인 팝업
+  if (pendingAnalysis) {
+    return (
+      <div className="content-section" style={{ position: 'relative', minHeight: '400px' }}>
+        <AnalysisConfirmModal
+          type={pendingAnalysis}
+          onConfirm={handleAnalysisConfirm}
+          onCancel={handleAnalysisCancel}
+        />
+      </div>
+    );
+  }
 
+  // 분석 로딩
+  if (analyzingType) {
+    return (
+      <div className="content-section" style={{ position: 'relative', minHeight: '400px' }}>
+        <AnalysisLoadingOverlay type={analyzingType} />
+      </div>
+    );
+  }
     switch (selectedMenu) {
-      case 'document':
+      case 'document': // 본문
         return (
-          <div className="content-section">
-            <div className="document-header">
-              <h2>📄 {currentDocument.filename}</h2>
-              <div className="document-meta">
-                <div className='meta-box' >
-                  {/* <span>크기: {(currentDocument.size / 1024).toFixed(2)} KB</span> */}
-                  <span>업로드: {new Date(currentDocument.uploadDate).toLocaleString('ko-KR')}</span>
-                  <div className='zoom-box'>
-                    <button>
-                      <RiZoomOutFill />
-                    </button>
-                    <button>
-                      <RiZoomInFill />
-                    </button>
-                  </div>
-                </div>
-              </div>
-            </div>
-            <div className="document-content">
-              <pre>{currentDocument.content}</pre>
-            </div>
-          </div>
+          <DocumentView
+          currentDocument={currentDocument}
+          zoomLevel={zoomLevel}
+          onZoomIn={handleZoomIn}
+          onZoomOut={handleZoomOut}
+        />
         );
 
       case 'summary':
-        if (isAnalyzing) {
-          return (
-            <div className="content-section">
-              <div className="loading-state">
-                <div className="spinner"></div>
-                <p>AI가 문서를 분석하는 중입니다...</p>
-              </div>
-            </div>
-          );
-        }
-        
-        return (
-          <div className="content-section">
-              <h2>📝 요약</h2>
-            
-            {analysisData ? (
-              <div className="summary-content">
-                <p>{analysisData.summary}</p>
-                <p className="analyzed-time">
-                  분석 시간: {new Date(analysisData.analyzedAt).toLocaleString('ko-KR')}
-                </p>
-              </div>
-            ) : (
-              <div>
-                <p>
-                  {API_ENABLED 
-                    ? '문서 요약이 아직 생성되지 않았습니다.' 
-                    : '⚠️ AI 요약 기능은 백엔드 연결이 필요합니다.'}
-                </p>
-                {API_ENABLED && (
-                  <button onClick={requestAnalysis} className="analyze-btn">
-                    AI 분석 시작
-                  </button>
-                )}
-              </div>
-            )}
-          </div>
-        );
+       const summaryData = analysisData?.summary || mockSummaryData;
+      return (
+        <SummaryView
+          currentDocument={currentDocument}
+          summaryData={summaryData}
+          zoomLevel={zoomLevel}
+          onZoomIn={handleZoomIn}
+          onZoomOut={handleZoomOut}
+        />
+      );
 
       case 'danger':
-        if (isAnalyzing) {
-          return (
-            <div className="content-section">
-              <div className="loading-state">
-                <div className="spinner"></div>
-                <p>위험 요소를 분석하는 중입니다...</p>
-              </div>
-            </div>
-          );
-        }
-        
-        return (
-          <div className="content-section">
-            <div className='dangerous-box'> 
-              {/* 총 위험요소 갯수 */}
-              <p>n개의 위험 포인트를 찾았어요</p> 
-              <div className='danger-bar'></div>
-            </div>
-
-            {analysisData?.dangerPoints && analysisData.dangerPoints.length > 0 ? (
-              <div className="danger-points">
-                {analysisData.dangerPoints.map((point, index) => (
-                  <div 
-                    key={index} 
-                    className={`danger-item severity-${point.severity}`}
-                  >
-                    <p>{point.description}</p>
-                    <span className="location">위치: {point.location}</span>
-                  </div>
-                ))}
-              </div>
-            ) : (
-              <div>
-                <p>
-                  {API_ENABLED 
-                    ? '위험 요소 분석 결과가 없습니다.' 
-                    : '⚠️ 위험 요소 분석은 백엔드 연결이 필요합니다.'}
-                </p>
-                {API_ENABLED && (
-                  <button onClick={requestAnalysis} className="analyze-btn">
-                    AI 분석 시작
-                  </button>
-                )}
-              </div>
-            )}
-          </div>
-        );
+        const riskData = analysisData?.riskItems || mockRiskItems;
+      return (
+        <DangerView
+          currentDocument={currentDocument}
+          riskData={riskData}
+          zoomLevel={zoomLevel}
+          onZoomIn={handleZoomIn}
+          onZoomOut={handleZoomOut}
+        />
+      );
 
       case 'guide':
-        return (
-          <div className="content-section">
-            <h2>📖 가이드</h2>
-            {analysisData?.recommendations && analysisData.recommendations.length > 0 ? (
-              <div className="recommendations">
-                <ul>
-                  {analysisData.recommendations.map((rec, index) => (
-                    <li key={index}>{rec}</li>
-                  ))}
-                </ul>
-              </div>
-            ) : (
-              <p>
-                {API_ENABLED 
-                  ? '가이드 정보가 아직 생성되지 않았습니다.' 
-                  : '⚠️ 가이드 기능은 백엔드 연결이 필요합니다.'}
-              </p>
-            )}
-          </div>
-        );
+  const contractTip = analysisData?.contractTip || mockContractTip;
+   const improvementGuides = analysisData?.improvementGuides || mockImprovementGuides; 
+      return (
+        <GuideView
+          currentDocument={currentDocument}
+          contractTip={contractTip}
+          improvementGuides={improvementGuides}
+          zoomLevel={zoomLevel}
+          onZoomIn={handleZoomIn}
+          onZoomOut={handleZoomOut}
+        />
+      );
 
       case 'search':
         return (
@@ -377,26 +339,36 @@ function AnalysisPage() {
   };
   return (
     <div className="analysis-page-layout">
-      <TopMenu 
-        selectedMenu={selectedMenu}
-        onMenuSelect={handleMenuSelect}
-        isSidebarOpen={activeSidebar !== null}
-        isDisabled={!currentDocument}
-      />
+      <div className='ai-page-wrapper'>
+        {/* 왼쪽 영역 (TopMenu + Main Content) */}
+        <div className="left-area">
+          <TopMenu 
+            selectedMenu={selectedMenu}
+            onMenuSelect={handleMenuSelect}
+            isSidebarOpen={activeSidebar !== null}
+            isDisabled={!currentDocument}
+          />
 
-      <main className={`main-content ${activeSidebar ? 'sidebar-open' : 'sidebar-closed'}`}>
-        {renderContent()}
-      </main>
+          <main className={`main-content ${activeSidebar ? 'sidebar-open' : 'sidebar-closed'}`}>
+            {renderContent()}
+          </main>
+        </div>
 
-      <RightSidebar 
-        activeSidebar={activeSidebar}
-        onClose={() => setActiveSidebar(null)}
-      />
+     {/* 로딩 오버레이 */}
+      {isLoading && <LoadingOverlay message="문서를 처리하는 중입니다..." />}
 
-      <FloatingButtons 
-        activeSidebar={activeSidebar}
-        onToggle={toggleSidebar}
-      />
+        {/* 오른쪽 플로팅 버튼 */}
+        <RightSidebar 
+          activeSidebar={activeSidebar}
+          onClose={() => setActiveSidebar(null)}
+        />
+
+        <FloatingButtons 
+          activeSidebar={activeSidebar}
+          onToggle={toggleSidebar}
+        />
+      </div>
+     
     </div>
   );
 }

@@ -9,7 +9,6 @@
   padding: 0;
   box-sizing: border-box;}
 
-
 body {
     font-family: 'KoPub', sans-serif;
     -webkit-font-smoothing: antialiased;
@@ -25,7 +24,7 @@ body {
 
 /* 네비게이션 바 */
 .navbar {
-    background-color: #f7fafc; 
+    background-color: #fff; 
     position: sticky;
     top: 0;
     z-index: 1000;}
@@ -33,54 +32,42 @@ body {
 .nav-container {
     max-width: 1400px;
     margin: 0 auto;
-    padding: 0 30px;
+    padding: 0px;
     display: flex;
-    justify-content:flex-start;
+    justify-content:space-between;
     align-items:center;
     height: 70px;
-}
-
-.menu-button {
-  background: none;
-  border: none;
-  cursor: pointer;
-  padding: 0px 4px;
-  border-radius: 3px;
-
-}
-
-.menu-icon {
-  font-size: 23px;
-  color: #333;
-  display: block;
 }
 
 .logo-section {
   display: flex;
   align-items: center;
   justify-content: center;
-  margin-left: 30px;
+  margin-left: 0px;
   cursor: pointer;
-  padding: 5px 5px;
+  padding: 5px 0px;
   border-radius: 5px;
   color: #434242;
   text-decoration: none;
 }
+
 .logo-box {
   display: flex;
   font-size: 16px;
-  font-weight: 900;
+  font-weight: 700;
 }
+
+.logo-svg {width: 16px;}
 
 .logo-box p {
-  margin-left: 3px;
+  margin-left: 5px;
+  margin-top: 2px;
 }
 
-/* 오른쪽 메뉴 링크 */
 .nav-links {
     margin-left: 30px;
     display: flex;
-    gap: 30px;
+    gap: 35px;
     align-items: center;
 }
 
@@ -99,7 +86,23 @@ body {
   color: #3b82f6;
 }
 
+.nav-auth {
+  display: flex;
+  align-items: center;
+  gap: 35px;
+  margin-right: 20px;
+  height: 100%;
+}
 
+.auth-link {
+  text-decoration: none;
+  color: #5d5d5d;
+  font-size: 14px;
+  transition: color 0.3s;
+  font-weight: 700;
+}
+
+.user-icon {color: #C9C9C9; margin-top: 3px;}
 
 /* 메인 콘텐츠 */
 .main-content {
