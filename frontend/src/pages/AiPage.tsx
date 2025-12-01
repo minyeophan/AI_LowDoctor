@@ -1,23 +1,19 @@
 import { useState } from 'react';
-import TopMenu from '../components/aidt/layout/TopMenu';
-import RightSidebar from '../components/aidt/layout/RightSidebar';
 import FloatingButtons from '../components/aidt/layout/FloatingButtons';
-import FileUploader from '../components/FileUploader';
-import DocumentMeta from '../components/aidt/shared/DocumentMeta';
-import { useDocument } from '../context/DocumentContext';
-import { mockSummaryData, mockRiskItems, mockRecommendations, mockForms, mockContractTip, mockImprovementGuides   } from '../services/mockData';
-import { SummaryItem, RiskItem } from '../services/api';
-import { api, ApiError, AnalysisResponse, ContractTip } from '../services/api';
-import { UploadResult } from '../types';
-import { IoIosInformationCircle } from "react-icons/io";
-import { BsFillInfoSquareFill } from "react-icons/bs";
-import DocumentView from '../components/aidt/views/DocumentView';
-import SummaryView from '../components/aidt/views/SummaryView';
-import LoadingOverlay from '../components/aidt/shared/LoadingOverlay';
-import DangerView from '../components/aidt/views/DangerView';
-import GuideView from '../components/aidt/views/GuideView';
+import RightSidebar from '../components/aidt/layout/RightSidebar';
+import TopMenu from '../components/aidt/layout/TopMenu';
 import AnalysisConfirmModal from '../components/aidt/shared/AnalysisConfirmModal';
 import AnalysisLoadingOverlay from '../components/aidt/shared/AnalysisLoadingOverlay';
+import LoadingOverlay from '../components/aidt/shared/LoadingOverlay';
+import DangerView from '../components/aidt/views/DangerView';
+import DocumentView from '../components/aidt/views/DocumentView';
+import GuideView from '../components/aidt/views/GuideView';
+import SummaryView from '../components/aidt/views/SummaryView';
+import FileUploader from '../components/FileUploader';
+import { useDocument } from '../context/DocumentContext';
+import { AnalysisResponse, api, ApiError } from '../services/api';
+import { mockContractTip, mockImprovementGuides, mockRiskItems, mockSummaryData } from '../services/mockData';
+import { UploadResult } from '../types';
 import './AiPage.css';
 
 type MenuItem = 'document' | 'summary' | 'danger' | 'guide' | 'search';
@@ -43,28 +39,31 @@ const API_ENABLED = import.meta.env.VITE_API_BASE_URL !== undefined &&
                     import.meta.env.VITE_API_BASE_URL !== '';
 
   // AI 분석 요청 (백엔드 연결 시에만 작동)
-  const requestAnalysis = async () => {
-    if (!currentDocument) return;
-
-    if (!API_ENABLED) {
-      alert('⚠️ AI 분석은 백엔드 연결이 필요합니다.\n.env 파일에서 VITE_API_BASE_URL을 설정해주세요.');
-      return;
+ const requestAnalysis = async () => {
+  if (!currentDocument) return;
+  if (!API_ENABLED) {
+    alert('⚠️ AI 분석은 백엔드 연결이 필요합니다.\n.env 파일에서 VITE_API_BASE_URL을 설정해주세요.');
+    return;
+  }
+  
+  setIsAnalyzing(true);
+  
+  try {
+    // ✅ documentId로 분석 결과 조회 (polling 방식)
+    console.log('🔍 분석 결과 조회:', currentDocument.documentId);
+    const result = await api.getAnalysisResult(currentDocument.documentId);
+    
+    setAnalysisData(result);
+    console.log('✅ AI 분석 완료:', result);
+  } catch (error) {
+    console.error('❌ AI 분석 실패:', error);
+    if (error instanceof ApiError) {
+      alert(`분석 실패: ${error.message}`);
     }
-
-    setIsAnalyzing(true);
-    try {
-      const result = await api.analyzeText(currentDocument.content || '');
-      setAnalysisData(result);
-      console.log('✅ AI 분석 완료:', result);
-    } catch (error) {
-      console.error('❌ AI 분석 실패:', error);
-      if (error instanceof ApiError) {
-        alert(`분석 실패: ${error.message}`);
-      }
-    } finally {
-      setIsAnalyzing(false);
-    }
-  };
+  } finally {
+    setIsAnalyzing(false);
+  }
+};
 
   // 파일 업로드 핸들러
 const handleFileUploadSuccess = async (uploadResult: UploadResult) => {

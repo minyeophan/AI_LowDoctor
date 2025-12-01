@@ -42,13 +42,14 @@
   color: #858D99;
   white-space: nowrap;
   flex-shrink: 0;
-  width: 10%;
+  width: 6%;
   position: relative;
   gap: 0px;
-  background-color: #ffff;
+  background-color: #ffffff;
   justify-content: center;
   align-items: center;
 }
+
 /* 활성화 상태 */
 .menu-item.active .menu-label {
   color: #1976d2;
@@ -56,14 +57,13 @@
 }
 
 .menu-item.active {
-  background-color: #F5F6FA;
-  border-bottom: 1px solid rgb(198, 198, 198);
-  border-radius: 10px;
+  background-color: #f5f6fb;
+  border-radius: 5px;
 }
 
 .menu-icon {
   font-size: 10px;
-  width: 100px;
+  width: 50px;
 }
 
 .menu-label {
@@ -72,15 +72,20 @@
   height: 10px;
   margin-top: -1px;
   text-align: center;
-  width: 100px;
+  width: 50px;
 }
 
 
-
-/* ========== 반응형 ========== */
-
-/* 태블릿 (1024px 이하) */
+/* 태블릿 (768px ~ 1024px) */
 @media (max-width: 1024px) {
+  .top-menu {
+    width: 100%;
+  }
+
+  .top-menu.sidebar-open {
+    width: calc(100% - 300px);
+  }
+
   .menu-nav {
     width: 100%;
     padding: 8px 5px;
@@ -88,7 +93,8 @@
 
   .menu-item {
     padding: 3px 30px;
-    width: 20%;
+    width: auto;
+    min-width: 80px;
   }
 
   .menu-label {
@@ -96,86 +102,107 @@
   }
 }
 
-/* 작은 태블릿 (768px 이하) */
+/* 모바일 (768px 이하) */
 @media (max-width: 768px) {
-  .top-menu.sidebar-open {
-    width: calc(100% - 280px);
-  }
-
-  .menu-nav {
-    overflow-x: auto;
-    scrollbar-width: thin;
-    scrollbar-color: #d9d9d9 transparent;
-  }
-
-  .menu-nav::-webkit-scrollbar {
-    height: 4px;
-  }
-
-  .menu-nav::-webkit-scrollbar-thumb {
-    background: #d9d9d9;
-    border-radius: 2px;
-  }
-
-  .menu-item {
-    padding: 3px 20px;
-    min-width: 80px;
-    width: auto;
-    flex: 1;
-  }
-
-  .menu-icon {
-    font-size: 18px;
-  }
-
-  .menu-label {
-    font-size: 10px;
-  }
-}
-
-/* 모바일 (480px 이하) */
-@media (max-width: 480px) {
   .top-menu {
-    border-radius: 0;
+    width: 100%;
+    border-radius: 8px 8px 0 0;
   }
 
+  /* 사이드바 열렸을 때 전체 너비 유지 */
   .top-menu.sidebar-open {
     width: 100%;
   }
 
   .menu-nav {
-    padding: 4px 0;
-    gap: 0;
+    width: 100%;
+    padding: 8px 5px;
+    gap: 5px;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: thin;
+  }
+
+  /* 스크롤바 스타일 */
+  .menu-nav::-webkit-scrollbar {
+    height: 4px;
+  }
+
+  .menu-nav::-webkit-scrollbar-track {
+    background: #f1f1f1;
+  }
+
+  .menu-nav::-webkit-scrollbar-thumb {
+    background: #c1c1c1;
+    border-radius: 2px;
   }
 
   .menu-item {
-    padding: 8px 12px;
-    min-width: 60px;
-    gap: 2px;
+    padding: 8px 15px;
+    width: auto;
+    min-width: 70px;
+    flex-shrink: 0;
+    gap: 4px;
   }
 
   .menu-icon {
-    font-size: 16px;
+    width: auto;
   }
 
   .menu-label {
-    font-size: 9px;
-    font-weight: 600;
+    font-size: 11px;
+    width: auto;
+    height: auto;
+    white-space: nowrap;
   }
 }
 
-/* 아주 작은 화면 (360px 이하) */
-@media (max-width: 360px) {
-  .menu-item {
-    padding: 6px 8px;
-    min-width: 50px;
+/* 작은 모바일 (480px 이하) */
+@media (max-width: 480px) {
+  .top-menu {
+    border-radius: 6px 6px 0 0;
   }
 
-  .menu-icon {
-    font-size: 14px;
+  .menu-nav {
+    padding: 6px 3px;
+    gap: 3px;
+  }
+
+  .menu-item {
+    padding: 6px 12px;
+    min-width: 65px;
+    gap: 3px;
+  }
+
+  .menu-icon svg {
+    width: 18px;
+    height: 18px;
   }
 
   .menu-label {
-    font-size: 8px;
+    font-size: 10px;
+  }
+
+  .menu-item.active {
+    border-radius: 4px;
+  }
+}
+
+/* 가로 스크롤 힌트 (모바일) */
+@media (max-width: 768px) {
+  .menu-nav::after {
+    content: '';
+    position: absolute;
+    right: 0;
+    top: 0;
+    bottom: 0;
+    width: 30px;
+    background: linear-gradient(to right, transparent, rgba(255, 255, 255, 0.9));
+    pointer-events: none;
+  }
+
+  /* 스크롤 끝에 도달하면 그라데이션 숨김 */
+  .menu-nav::-webkit-scrollbar-thumb:horizontal:active::after {
+    display: none;
   }
 }

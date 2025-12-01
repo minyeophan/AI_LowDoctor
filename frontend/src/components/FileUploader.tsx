@@ -1,5 +1,6 @@
 import { useState, ChangeEvent, DragEvent } from 'react';
 import { GoFileDirectoryFill } from "react-icons/go";
+import { RiFolderUploadFill } from "react-icons/ri";
 import './FileUploader.css';
 
 interface FileUploaderProps {
@@ -96,17 +97,15 @@ function FileUploader({ onFileSelect, onUploadSuccess, onUploadError }: FileUplo
             onChange={handleFileSelect}
             accept=".pdf,.doc,.docx,.txt,.hwp"
             style={{ display: 'none' }}
-          />
-          <div className="upload-icon-simple">
-            <p>⬆︎</p>
-          </div>
+          /> 
+          <RiFolderUploadFill  className="upload-icon-simple"/>
           <button 
             onClick={() => document.getElementById("file-input-simple")?.click()} 
             type="button" 
             className="select-button"
           >
-            파일 선택
-          </button>  
+           파일 선택
+          </button> 
           <p className="upload-description">
             파일을 드래그하여 올리거나 파일 선택 버튼을 눌러 업로드하세요
           </p>

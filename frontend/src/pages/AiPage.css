@@ -59,6 +59,9 @@
   flex-wrap: wrap;
   background-color: #fff;
   padding: 50px 0px;  
+  
+  
+  
 }
 
 .content-analysis-box{ width: 794px; min-height: 1123px; height: auto;
@@ -68,35 +71,3 @@
   border-radius: 2px; }
 
 
-
-
-/* 반응형 */
-@media (max-width: 768px) {
-  .guide-body {
-    padding: 16px;
-  }
-
-  .improvement-item {
-    padding: 16px;
-  }
-
-  .guide-header h2 {
-    font-size: 20px;
-  }
-}
-
-@media (max-width: 1024px) {
-  .main-content.sidebar-open {
-    margin-right: 300px;
-  }
-}
-
-@media (max-width: 768px) {
-  .main-content {
-    padding: 20px;
-  }
-
-  .main-content.sidebar-open {
-    margin-right: 0;
-  }
-}

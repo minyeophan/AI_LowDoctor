@@ -5,7 +5,7 @@ import {
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || '';
 const USE_MOCK = !API_BASE_URL;
-const USE_MOCK_AI = true; //ai 연결시 true -> false로 변경해야함
+const USE_MOCK_AI = false; //ai 연결시 true -> false로 변경해야함
 
 // 에러 클래스
 export class ApiError extends Error {
@@ -19,7 +19,6 @@ export class ApiError extends Error {
 }
 
 // 타입 정의
-
 // 파일 업로드
 export interface UploadResponse {
   document_id: string;
@@ -37,6 +36,7 @@ export interface SummaryItem {
 export interface RiskItem {
   id: number;
   clauseText: string;
+  searchKeyword?: string;
   riskLevel: 'high' | 'medium' | 'low';
   reason: string;
   guide: string;
@@ -99,7 +99,7 @@ const readFileAsText = (file: File): Promise<string> => {
       // mock 데이터 바로 표시
       resolve(mockDocumentContent);
     } else if (fileName.endsWith('.hwp') || fileName.endsWith('.hwpx')) {
-      resolve(`[HWP 파일]\n\n📄 파일명: ${file.name}\n📦 크기: ${(file.size / 1024).toFixed(2)} KB\n\n⚠️ HWP 내용 표시는 백엔드 연결이 필요합니다.\n\n--- Mock 데이터 ---\n\n${mockDocumentContent}`);
+      resolve(`${mockDocumentContent}`);
     } else {
       resolve(`[${file.type || '알 수 없는'} 파일]\n\n📄 파일명: ${file.name}\n📦 크기: ${(file.size / 1024).toFixed(2)} KB\n\n--- Mock 데이터 ---\n\n${mockDocumentContent}`);
     }
@@ -139,6 +139,7 @@ export const api = {
       }
       const result = await response.json();
       console.log('✅ 백엔드 응답:', result);
+      console.log('🔥 result.data:', result.data);
 
       // 클라이언트에서 파일 내용 읽기
       const content = await readFileAsText(file);
@@ -158,45 +159,70 @@ export const api = {
     }
   },
 
-
-  // AI 분석 요청
-  analyzeText: async (text: string): Promise<AnalysisResponse> => {
-    console.log('AI 분석: Mock 데이터 사용 (AI 파트 미연결)');
-
-     // Mock 모드
+// AI 분석 결과 조회 (document_id로 polling)
+getAnalysisResult: async (documentId: string): Promise<AnalysisResponse> => {
+  // Mock 모드
   if (USE_MOCK_AI) {
-    console.log('Mock 모드: AI 분석 (AI 파트 미연결)');
-    console.log('나중에 USE_MOCK_AI = false로 변경하면 실제 AI 사용');
-    
+    console.log('🎭 Mock 모드: AI 분석');
     await new Promise(r => setTimeout(r, 2000));
     return {
       ...mockAnalysisResult,
       analyzedAt: new Date().toISOString(),
     };
   }
-    // 실제 API 호출
-     console.log('🚀 실제 AI API 호출');
-    
-    try {
-      const response = await fetch(`${API_BASE_URL}/analyze-text`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ text }),
-      });
 
+  // 실제 API 호출 - Polling 방식
+  console.log('🔍 분석 결과 조회 시작:', documentId);
+  
+  const checkResult = async (): Promise<AnalysisResponse> => {
+    try {
+      const response = await fetch(`${API_BASE_URL}/result/${documentId}`);
+      
       if (!response.ok) {
-        throw new Error('분석 요청에 실패했습니다.');
+        throw new Error(`HTTP ${response.status}`);
       }
+      
       const result = await response.json();
-      return result.data;
+      console.log('📊 백엔드 응답:', result);
+      
+      // 분석 진행 중 - 3초 후 재시도
+      if (result.status === 'processing') {
+        console.log('⏳ 분석 진행 중... 3초 후 재시도');
+        await new Promise(r => setTimeout(r, 3000));
+        return checkResult();
+      }
+      
+      // 분석 실패
+      if (result.status === 'error') {
+        throw new ApiError(result.message || '분석 실패', 500);
+      }
+      
+      // 분석 완료
+      if (result.status === 'success' && result.data) {
+        console.log('✅ 분석 완료');
+        return {
+          summary: result.data.summary || [],
+          riskItems: result.data.riskItems || [],
+          recommendations: [],
+          forms: result.data.forms || [],
+          analyzedAt: result.data.updatedAt || new Date().toISOString(),
+        };
+      }
+      
+      throw new ApiError('알 수 없는 응답 형식', 500);
       
     } catch (error) {
-      console.error('분석 에러:', error);
-      throw new ApiError('AI 분석에 실패했습니다.', 500);
+      console.error('❌ 결과 조회 에러:', error);
+      if (error instanceof ApiError) {
+        throw error;
+      }
+      throw new ApiError('분석 결과 조회에 실패했습니다.', 500);
     }
-  },
+  };
+  
+  return checkResult();
+},
+ 
 };
 
 export default api;

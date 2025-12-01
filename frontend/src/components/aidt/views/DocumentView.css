@@ -151,8 +151,13 @@ font-size: 13px;}
 .page-navigation { width: 100%;
 display: flex; justify-content: center; padding: 3px; margin:20px 0px;}
 
-.page-btn {border-radius: 5px; border: 1px solid rgb(190, 190, 190);
-background-color: #fff; padding: 2px; margin: 0px 20px; cursor: pointer;}
+.page-btn {border-radius: 2px; border: 1px solid rgb(190, 190, 190);
+background-color: #fff; padding: 5px 10px; margin: 0px 20px; cursor: pointer;}
+
+.page-info { width: 100px; display: flex; justify-content: center; 
+gap: 5px;}
+.page-input {display: flex; }
+.page-total {display: flex; align-items: center;} 
 
 /* 반응형 */
 @media (max-width: 768px) {

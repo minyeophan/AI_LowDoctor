@@ -6,6 +6,8 @@ import { MdWarning, MdCheckCircle, MdClose } from "react-icons/md";
 import { FaHandPointRight } from "react-icons/fa";
 import { MdDocumentScanner } from "react-icons/md";
 import { IoMdDownload } from "react-icons/io";
+import { Document, Packer, Paragraph, TextRun, AlignmentType, HeadingLevel } from 'docx';
+import { saveAs } from 'file-saver';
 
 import '../views/GuideView.css';
 
@@ -65,20 +67,70 @@ function GuideView({
   };
 
   // 저장하기
-  const handleSave = () => {
-    const blob = new Blob([improvedDocument], { type: 'text/plain;charset=utf-8' });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    const originalName = currentDocument.filename.replace(/\.[^/.]+$/, '');
-    a.download = `${originalName}_개선본.txt`;
-    a.click();
-    URL.revokeObjectURL(url);
+const handleSave = async () => {
+  try {
+    // 문서 내용을 줄 단위로 분리
+    const lines = improvedDocument.split('\n');
     
-    // 성공 메시지 표시 (선택사항)
-    alert('개선된 문서가 저장되었습니다!');
+    // docx 문서 생성
+    const doc = new Document({
+      sections: [{
+        properties: {},
+        children: lines.map((line, index) => {
+          // 첫 줄은 제목으로
+          if (index === 0 && line.trim()) {
+            return new Paragraph({
+              text: line,
+              heading: HeadingLevel.HEADING_1,
+              alignment: AlignmentType.CENTER,
+              spacing: {
+                after: 400,
+              },
+            });
+          }
+          
+          // 빈 줄 처리
+          if (!line.trim()) {
+            return new Paragraph({
+              text: '',
+              spacing: {
+                after: 200,
+              },
+            });
+          }
+          
+          // 일반 문단
+          return new Paragraph({
+            children: [
+              new TextRun({
+                text: line,
+                font: '맑은 고딕',
+                size: 22, // 11pt (half-points)
+              }),
+            ],
+            alignment: AlignmentType.JUSTIFIED,
+            spacing: {
+              line: 360,
+              after: 120,
+            },
+          });
+        }),
+      }],
+    });
+
+    // Blob 생성 및 다운로드
+    const blob = await Packer.toBlob(doc);
+    const filename = `개선된_계약서_${new Date().toISOString().slice(0, 10)}.docx`;
+    saveAs(blob, filename);
+    
     setShowPreviewModal(false);
-  };
+    alert('문서가 저장되었습니다!');
+    
+  } catch (error) {
+    console.error('저장 실패:', error);
+    alert('저장에 실패했습니다.');
+  }
+};
 
   return (
     <div className="content-section">
