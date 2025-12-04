@@ -1,3 +1,5 @@
+#ai_example.py
+'''
 import os
 from openai import OpenAI
 from dotenv import load_dotenv
@@ -39,3 +41,4 @@ if __name__ == "__main__":
     result = analyze_contract(sample_text)
     print("=== AI 분석 결과 ===")
     print(result)
+'''

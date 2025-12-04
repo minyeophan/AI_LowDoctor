@@ -1,3 +1,5 @@
+#ocr_example.py
+'''
 import pytesseract
 from PIL import Image
 
@@ -15,3 +17,4 @@ if __name__ == "__main__":
         print(result_text)
     except FileNotFoundError:
         print("⚠️ 샘플 이미지 파일을 찾을 수 없습니다.")
+'''
