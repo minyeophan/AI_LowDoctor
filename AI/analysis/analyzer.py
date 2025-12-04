@@ -26,6 +26,7 @@ def extract_text_from_pdf(pdf_path: str) -> str:
                 text += page_text + "\n"
     return text
 
+<<<<<<< HEAD
 # 분석 함수 (JSON 형식 강제)a
 def analyze_contract(text: str) -> dict:
     """GPT API를 호출하여 계약서 내용을 분석하고 JSON을 반환합니다."""
@@ -47,10 +48,19 @@ def analyze_contract(text: str) -> dict:
             // 위험 조항이 없으면 빈 배열 []
         ]
     }}
+=======
+# 분석 함수 (JSON 형식 강제)
+def analyze_contract(text: str) -> str:
+    prompt = f"""
+    다음 계약서 내용에서 임차인에게 불리하거나 위험한 조항이 있다면 지적하고,
+    초보자도 이해할 수 있도록 쉽게 설명해줘.
+    그리고 어떻게 대응하거나 수정하면 좋은지도 함께 알려줘.
+>>>>>>> b320d1edaa304676a474c80363657c8e1e925b95
 
     계약서 내용:
     {text}
     """
+<<<<<<< HEAD
 
     try:
         res = client.chat.completions.create(
@@ -60,6 +70,19 @@ def analyze_contract(text: str) -> dict:
                 {"role": "user", "content": prompt}
             ]
         )
+=======
+    res = client.chat.completions.create(
+        model="gpt-4o-mini",
+        messages=[{"role": "user", "content": prompt}]
+    )
+
+    if res.choices and res.choices[0].message:
+        gpt_reply = res.choices[0].message.content
+        print("🧠 GPT 응답:\n", gpt_reply)  # 이 줄 추가해서 확인
+        return gpt_reply
+    return "⚠️ 분석 실패"
+
+>>>>>>> b320d1edaa304676a474c80363657c8e1e925b95
 
         content = res.choices[0].message.content.strip()
 
