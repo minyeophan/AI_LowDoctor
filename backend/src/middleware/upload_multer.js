@@ -36,7 +36,7 @@ const storage = multer.diskStorage({
   },
 });
 
-// 파일 필터 (PDF, 이미지, 한글, 워드 허용)
+// 파일 필터 (PDF, 이미지, 한글, 워드, 텍스트 허용)
 const fileFilter = (req, file, cb) => {
   const allowedMimes = [
     "application/pdf",                                                      // PDF
@@ -48,7 +48,8 @@ const fileFilter = (req, file, cb) => {
     "application/vnd.hancom.hwp",                                           // HWP (한글)
     "application/vnd.hancom.hwpx",                                          // HWPX (한글 2014+)
     "application/msword",                                                   // DOC (워드)
-    "application/vnd.openxmlformats-officedocument.wordprocessingml.document" // DOCX (워드)
+    "application/vnd.openxmlformats-officedocument.wordprocessingml.document", // DOCX (워드)
+    "text/plain"                                                            // TXT (텍스트)
   ];
 
   if (allowedMimes.includes(file.mimetype)) {
@@ -56,13 +57,13 @@ const fileFilter = (req, file, cb) => {
   } else {
     // 확장자로도 체크 (일부 브라우저에서 MIME 타입이 정확하지 않을 수 있음)
     const ext = path.extname(file.originalname).toLowerCase();
-    const allowedExts = ['.pdf', '.jpg', '.jpeg', '.png', '.hwp', '.hwpx', '.doc', '.docx'];
+    const allowedExts = ['.pdf', '.jpg', '.jpeg', '.png', '.hwp', '.hwpx', '.doc', '.docx', '.txt'];
     
     if (allowedExts.includes(ext)) {
       cb(null, true); // 확장자로 허용
     } else {
       cb(
-        new Error("지원하지 않는 파일 형식입니다. PDF, JPG, PNG, HWP, HWPX, DOC, DOCX만 가능합니다."),
+        new Error("지원하지 않는 파일 형식입니다. PDF, JPG, PNG, HWP, HWPX, DOC, DOCX, TXT만 가능합니다."),
         false
       );
     }
