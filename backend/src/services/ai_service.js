@@ -6,7 +6,7 @@ import path from "path";
  */
 export const analyzeWithPython = (filePath, mimetype) => {
   return new Promise((resolve, reject) => {
-    const scriptPath = path.join("AI", "analyzer.py");
+    const scriptPath = path.join("..","AI","analysis", "analyzer.py");
 
     console.log(`Python analyzer 실행: ${scriptPath}`);
 
