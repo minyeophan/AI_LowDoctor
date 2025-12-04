@@ -8,7 +8,7 @@ export const analyzeWithPython = (filePath, mimetype) => {
   return new Promise((resolve, reject) => {
     const scriptPath = path.join("AI", "analyzer.py");
 
-    console.log(`🐍 Python analyzer 실행: ${scriptPath}`);
+    console.log(`Python analyzer 실행: ${scriptPath}`);
 
     execFile(
       "python",
@@ -16,15 +16,15 @@ export const analyzeWithPython = (filePath, mimetype) => {
       { maxBuffer: 10 * 1024 * 1024 },
       (error, stdout, stderr) => {
         if (error) {
-          console.error("❌ Python 오류:", stderr);
+          console.error("Python 오류:", stderr);
           return reject(error);
         }
 
-        console.log("📤 Python 출력:", stdout);
+        console.log("Python 출력:", stdout);
         console.log("Python stdout raw:", stdout);
 
         try {
-          const parsed = JSON.parse(stdout); // 🔥 JSON 파싱
+          const parsed = JSON.parse(stdout); // JSON 파싱
           resolve(parsed);
         } catch (err) {
           reject(new Error("Python 출력 JSON 파싱 실패"));

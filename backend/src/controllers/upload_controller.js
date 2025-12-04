@@ -12,7 +12,7 @@ export const uploadFile = async (req, res) => {
 
     const documentId = uuidv4();
 
-    console.log(`📁 업로드 파일: ${file.originalname}`);
+    console.log(`업로드 파일: ${file.originalname}`);
 
     await new Analysis({
       documentId,
@@ -34,11 +34,11 @@ export const uploadFile = async (req, res) => {
 
 async function processAnalysis(documentId, filePath, mimetype) {
   try {
-    console.log(`🔄 분석 시작: ${documentId}`);
+    console.log(`분석 시작: ${documentId}`);
 
     await Analysis.updateOne({ documentId }, { status: "processing" });
 
-    // 🔥 Python analyzer.py 실행
+    // Python analyzer.py 실행
     const result = await analyzeWithPython(filePath, mimetype);
 
     await Analysis.updateOne(
@@ -50,15 +50,15 @@ async function processAnalysis(documentId, filePath, mimetype) {
       }
     );
 
-    console.log(`✅ 분석 완료: ${documentId}`);
-    console.log("💾 저장된 분석 결과:", {
+    console.log(`분석 완료: ${documentId}`);
+    console.log("저장된 분석 결과:", {
       documentId,
       summary: result.summary,
       riskItems: result.riskItems
     });
 
   } catch (err) {
-    console.error("❌ 분석 실패:", err);
+    console.error("분석 실패:", err);
     await Analysis.updateOne(
       { documentId },
       { status: "failed", errorMessage: err.message }
