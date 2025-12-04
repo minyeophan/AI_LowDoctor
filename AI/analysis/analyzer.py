@@ -25,38 +25,26 @@ def extract_text_from_pdf(pdf_path: str) -> str:
     return text
 
 # 분석 함수 (JSON 형식 강제)
-def analyze_contract(text: str) -> dict:
+def analyze_contract(text: str) -> str:
     prompt = f"""
-    다음 계약서 내용을 분석해서 아래 JSON 형식으로 ONLY JSON만 출력해줘.
-
-    형식:
-    {{
-        "summary": "핵심 요약",
-        "riskItems": [
-            {{
-                "clauseText": "문제 조항 원문",
-                "riskLevel": "high|medium|low",
-                "reason": "이 조항이 왜 위험한지",
-                "guide": "임차인 관점의 대응 가이드"
-            }}
-        ]
-    }}
+    다음 계약서 내용에서 임차인에게 불리하거나 위험한 조항이 있다면 지적하고,
+    초보자도 이해할 수 있도록 쉽게 설명해줘.
+    그리고 어떻게 대응하거나 수정하면 좋은지도 함께 알려줘.
 
     계약서 내용:
     {text}
     """
-
     res = client.chat.completions.create(
         model="gpt-4o-mini",
         messages=[{"role": "user", "content": prompt}]
     )
 
-    content = res.choices[0].message.content
+    if res.choices and res.choices[0].message:
+        gpt_reply = res.choices[0].message.content
+        print("🧠 GPT 응답:\n", gpt_reply)  # 이 줄 추가해서 확인
+        return gpt_reply
+    return "⚠️ 분석 실패"
 
-    try:
-        return json.loads(content)  # GPT가 준 JSON을 파싱
-    except:
-        return {"summary": "GPT 응답 파싱 실패", "riskItems": []}
 
 # 파일 분석
 def analyze_uploaded_file(file_path: str, mimetype: str) -> dict:
@@ -64,6 +52,9 @@ def analyze_uploaded_file(file_path: str, mimetype: str) -> dict:
         extracted_text = extract_text_from_image(file_path)
     elif mimetype == "application/pdf":
         extracted_text = extract_text_from_pdf(file_path)
+    elif mimetype == "text/plain":
+        with open(file_path, 'r', encoding='utf-8') as f:
+            extracted_text = f.read()
     else:
         return {"error": "지원하지 않는 파일 형식"}
 
@@ -77,12 +68,3 @@ if __name__ == "__main__":
 
     result = analyze_uploaded_file(file_path, mimetype)
     print(json.dumps(result, ensure_ascii=False))
-'''
-print("===== DEBUG START =====")
-print(f"file_path: {file_path}, mimetype: {mimetype}")  # 받은 인자
-print("----- extracted text preview -----")
-print(extracted_text[:500])  # 앞 500자만
-print("----- GPT raw response -----")
-print(content)
-print("===== DEBUG END =====")
-'''
