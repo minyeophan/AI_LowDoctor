@@ -22,7 +22,6 @@ export const saveAnalysisResult = async (fileName, text, analysis) => {
     extractedText: text,
     summary: analysis.summary,
     riskItems: analysis.riskItems,
-    forms: analysis.forms,
     status: "completed"
   });
 
