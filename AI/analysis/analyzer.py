@@ -51,7 +51,6 @@ def analyze_contract(text: str) -> dict:
     계약서 내용:
     {text}
     """
-<<<<<<< HEAD
 
     try:
         res = client.chat.completions.create(
