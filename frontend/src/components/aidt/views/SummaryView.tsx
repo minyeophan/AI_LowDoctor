@@ -45,7 +45,7 @@ function SummaryView({
               </p>
             </div>
           </div>
-          {summaryData.map((item, index) => (
+          {(Array.isArray(summaryData) ? summaryData : []).map((item, index) => (
             <div key={index} className="summary-item" style={{ fontSize: `${zoomLevel}%` }}>
               <h2 className="summary-highlight">{index + 1}. {item.title}</h2>
               <p className="summary-content-text">•{item.content}</p>

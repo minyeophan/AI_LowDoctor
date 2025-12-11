@@ -19,16 +19,47 @@ dotenv.config();
 
 const app = express();
 
+export const memoryStore = new Map();
+
+// Analysis 클래스 (MongoDB 대신)
+export class Analysis {
+  constructor(data) {
+    Object.assign(this, data);
+    this.createdAt = new Date();
+    this.updatedAt = new Date();
+  }
+  
+  async save() {
+    memoryStore.set(this.documentId, this);
+    console.log("💾 메모리 저장 완료");
+    return this;
+  }
+  
+  static async findOneAndUpdate(query, update) {
+    const doc = memoryStore.get(query.documentId);
+    if (doc) {
+      Object.assign(doc, update);
+      doc.updatedAt = new Date();
+      console.log("💾 메모리 업데이트 완료");
+    }
+    return doc;
+  }
+  
+  static async findOne(query) {
+    return memoryStore.get(query.documentId) || null;
+  }
+}
+
 // =================== MongoDB 연결 ===================
-mongoose.connect(process.env.MONGODB_URI)
-  .then(() => {
-    console.log("✅ MongoDB Connected");
-    console.log(`📊 Database: ${mongoose.connection.name}`);
-  })
-  .catch((error) => {
-    console.error(`❌ MongoDB Connection Error: ${error.message}`);
-    process.exit(1);
-  });
+// mongoose.connect(process.env.MONGODB_URI)
+//   .then(() => {
+//     console.log("✅ MongoDB Connected");
+//     console.log(`📊 Database: ${mongoose.connection.name}`);
+//   })
+//   .catch((error) => {
+//     console.error(`❌ MongoDB Connection Error: ${error.message}`);
+//     process.exit(1);
+//   });
 
 // =================== MongoDB 스키마 정의 ===================
 const lawRefSchema = new mongoose.Schema({
@@ -84,10 +115,13 @@ analysisSchema.pre("save", function(next){
 });
 
 // 모델
-export const Analysis = mongoose.model("Analysis", analysisSchema);
+// export const Analysis = mongoose.model("Analysis", analysisSchema);
 
 // =================== 미들웨어 ===================
-app.use(cors());
+app.use(cors({
+  origin: ['http://localhost:5173', 'http://localhost:5174', 'http://localhost:3000'],
+  credentials: true
+}));
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 

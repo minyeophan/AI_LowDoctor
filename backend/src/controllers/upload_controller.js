@@ -74,10 +74,24 @@ async function processAnalysis(documentId, filePath) {
       { status: "processing" }
     );
 
-    // 2-1. OCR로 텍스트 추출 (필수!)
-    console.log(`📄 1단계: OCR 텍스트 추출 중...`);
-    const extractedText = await extractText(filePath);
-    console.log(`✅ OCR 완료 (${extractedText.length}자 추출)`);
+    let extractedText = "";
+
+    // ✅ TXT 파일 체크
+    const isTextFile = filePath.toLowerCase().endsWith('.txt');
+
+    // ✅ TXT 파일은 직접 읽기
+    if (isTextFile) {
+      // TXT 파일은 직접 읽기
+      console.log('📄 TXT 파일: 직접 읽기');
+      const fs = await import('fs');
+      extractedText = fs.readFileSync(filePath, 'utf-8');
+      console.log(`✅ 텍스트 읽기 완료 (${extractedText.length}자)`);
+    } else {
+      // 2-1. OCR로 텍스트 추출 (필수!)
+      console.log(`📄 1단계: OCR 텍스트 추출 중...`);
+      extractedText = await extractText(filePath);
+      console.log(`✅ OCR 완료 (${extractedText.length}자 추출)`);
+    }
 
     // 2-2. AI 분석 (OCR 결과를 기반으로)
     console.log(`🤖 2단계: AI 분석 중...`);

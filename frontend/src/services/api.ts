@@ -51,11 +51,11 @@ export interface FormItem {
 
 // 대응가이드 
 export interface ImprovementGuide {
-  id: number;
-  page?: number;
-  originalClause: string;
-  checkPoints: string[];
-  improvedClause: string;
+  id: number; // 페이지 순서대로 개선 필요한 조항 번호
+  page?: number;  // 개선 필요한 조항의 해당 페이지
+  originalClause: string; // 원문 조항
+  checkPoints: string[];   // 체크 포인트(알아둬야하는 내용)
+  improvedClause: string;  // 개선된 조항
 }
 
 export interface AnalysisResponse {

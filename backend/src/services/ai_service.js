@@ -58,9 +58,9 @@ export const analyzeWithExtractedText = async (extractedText) => {
 
     // AI 서버로 텍스트 전송
     const response = await axios.post(
-      `${AI_SERVER_URL}/api/analyze`,
+      `${AI_SERVER_URL}/api/ai-analyze`,
       {
-        text: extractedText  // OCR 결과를 JSON으로 전송
+        extracted_text: extractedText  // OCR 결과를 JSON으로 전송
       },
       {
         headers: {
@@ -71,14 +71,24 @@ export const analyzeWithExtractedText = async (extractedText) => {
     );
 
     console.log("✅ AI 분석 완료");
+    console.log("🔍 AI 응답:", JSON.stringify(response.data, null, 2));
     
-    // AI 서버 응답 형식:
-    // {
-    //   summary: "요약...",
-    //   riskItems: [...],
-    //   forms: [...]
-    // }
-    return response.data;
+    // 이 부분 수정함
+  const aiData = response.data;
+
+    return {
+      summary: aiData.summary ? [{ title: "핵심 요약", content: aiData.summary }] : [],
+      riskItems: (aiData.riskItems || []).map((item, index) => ({
+        id: item.id || index + 1,
+        clauseText: item.excerpt || "",
+        searchKeyword: item.searchKeyword,
+        riskLevel: (item.risk_level || "low").toLowerCase(),
+        reason: item.reason || "",
+        guide: item.suggested_fix || "",
+      })),
+      forms: aiData.forms || [],
+
+    };
 
   } catch (error) {
     console.error("❌ AI 분석 에러:", error.message);
