@@ -1,13 +1,9 @@
-# AI 분석
 openai>=1.0.0
 python-dotenv==1.0.0
-
-# OCR
 pytesseract==0.3.10
 pillow==10.1.0
-
-# 문서 처리 (PDF 등)
 pdfplumber
-
-# 웹 서버 연동 (옵션)
-flask
+fastapi
+uvicorn
+python-multipart
+httpx
