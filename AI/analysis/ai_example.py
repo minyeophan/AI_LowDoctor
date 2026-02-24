@@ -79,11 +79,11 @@ def analyze_contract(text: str) -> dict:
         return json.loads(result_str)
 
     # JSON 파싱 실패 시 예외 처리
-    except json.JSONDecodeError:
-        print("GPT 응답이 올바른 JSON 형식이 아닙니다.")
-        return {}
+    except json.JSONDecodeError as e:
+        print(f"❌ GPT 응답이 올바른 JSON 형식이 아닙니다: {e}")
+        raise
 
-    # 기타 예외 처리
+    # 기타 예외 처리 (API 키 오류, 네트워크 등)
     except Exception as e:
-        print("오류 발생:", str(e))
-        return {}
+        print(f"❌ 오류 발생: {type(e).__name__}: {str(e)}")
+        raise
