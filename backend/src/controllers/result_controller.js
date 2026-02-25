@@ -20,6 +20,7 @@ export const getAnalysisResult = async (req, res, next) => {
       documentId,
       status: analysis.status,
       extractedText: analysis.extractedText || "",
+      content: analysis.extractedText || "",
       summary: result?.summary || [],
       riskItems: result?.riskItems || [],
       forms: result?.forms || [],
