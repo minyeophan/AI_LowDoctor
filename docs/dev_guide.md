@@ -107,15 +107,48 @@ OPENAI_API_KEY=sk-...
 - 예: api_spec.md, meeting_2025_11_19.md
 
 ## 8. Git 협업 규칙
-- 브랜치 명명: feature/기능, fix/버그, docs/문서 등
+
+### 브랜치 구조
+
 ```
-git checkout -b feature/ai-analysis
+main                  ← 배포 전용, 건드리지 말 것
+  └─ develop          ← 통합 브랜치
+       ├─ feature/frontend
+       ├─ feature/backend
+       └─ feature/ai
 ```
-- 커밋 메시지 컨벤션:
-feat: 계약서 분석 로직 초안 추가
-fix: API 경로 에러 수정
-docs: 회의록 추가
--PR 전에 작업 설명을 README.txt 또는 PR 템플릿에 요약
+
+### 작업 순서
+
+**① 작업 시작 전 항상 develop 최신화**
+```bash
+git checkout feature/본인브랜치
+git pull origin develop
+```
+
+**② 작업 후 커밋 & 푸시**
+```bash
+git add .
+git commit -m "feat: 작업 내용 요약"
+git push origin feature/본인브랜치
+```
+
+**③ GitHub에서 PR 생성**
+- `feature/본인브랜치` → `develop` 로 PR 오픈
+- 팀장 승인 후 merge
+
+### 규칙
+
+- `main`, `develop` 직접 push **절대 금지**
+- PR 없이 develop merge **금지**
+- 커밋 메시지 태그
+
+| 태그 | 용도 |
+|------|------|
+| `feat:` | 새 기능 |
+| `fix:` | 버그 수정 |
+| `refactor:` | 코드 정리 |
+| `docs:` | 문서 수정 |
 
 ## 분석 결과 JSON 예시 (프론트 ↔ 백엔드)
 ```json

@@ -287,7 +287,7 @@ const getAnalysisKey = (type: AnalysisType) => {
         );
 
       case 'summary':
-       const summaryData = analysisData?.summary || mockSummaryData;
+       const summaryData = analysisData?.summary?.length ? analysisData.summary : mockSummaryData;
       return (
         <SummaryView
           currentDocument={currentDocument}
@@ -299,7 +299,7 @@ const getAnalysisKey = (type: AnalysisType) => {
       );
 
       case 'danger':
-        const riskData = analysisData?.riskItems || mockRiskItems;
+        const riskData = analysisData?.riskItems?.length ? analysisData.riskItems : mockRiskItems;
       return (
         <DangerView
           currentDocument={currentDocument}
