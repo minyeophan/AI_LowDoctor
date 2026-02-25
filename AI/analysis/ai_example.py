@@ -1,18 +1,19 @@
 # ai_example.py
-from openai import OpenAI  # OpenAI API 사용
-from dotenv import load_dotenv  # .env 파일에서 환경 변수 불러오기
+from google import genai
+from google.genai import types
+from dotenv import load_dotenv
 import os
 import json
-import re  # 정규식 사용
+import re
 
 # ----------------------------------------
 # 환경 변수 로드
 # ----------------------------------------
-load_dotenv()  # .env 파일 로드
-OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")  # OPENAI_API_KEY 가져오기
+load_dotenv()
+GEMINI_API_KEY = os.getenv("VITE_GEMINI_API_KEY")
 
-# OpenAI 클라이언트 생성
-client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
+# Gemini 클라이언트 설정
+client = genai.Client(api_key=GEMINI_API_KEY)
 
 # ----------------------------------------
 # 계약서 분석 함수 정의
@@ -25,8 +26,9 @@ def analyze_contract(text: str) -> dict:
     결과를 JSON 형태로 반환하는 함수
     """
 
-    # GPT에게 전달할 프롬프트 작성
     prompt = f"""
+    [역할] 너는 한국 계약서 분석 전문가야. 반드시 JSON 형식만 출력하고, 최상위 키 (summary, riskItems, forms)를 포함해야 한다.
+
     아래 계약서 내용을 읽고 조항별로 매우 세세하게 위험을 분석해줘.
 
     - 핵심 내용은 summary 필드에 매우 상세하고 구조적으로 요약하며, 최소 500자 이상으로 작성할 것. 모든 조항의 중요 포인트를 깊이 있게 다룰 것.
@@ -44,46 +46,44 @@ def analyze_contract(text: str) -> dict:
 
     JSON 필드:
     - summary: 계약서 전체 요약
-    - riskItems: [ {{ type: "조항 종류", risk_level: "LOW | MEDIUM | HIGH", excerpt: "원문 일부", reason: "위험한 이유", suggested_fix: "수정 제안" }} ] # <--- 중괄호 이스케이프 수정
-    - forms: [ {{ type: "서식 종류", description: "서식 설명", downloadUrl: "다운로드 링크" }} ] # <--- 중괄호 이스케이프 수정
+    - riskItems: [ {{ "type": "조항 종류", "risk_level": "LOW | MEDIUM | HIGH", "excerpt": "원문 일부", "reason": "위험한 이유", "suggested_fix": "수정 제안" }} ]
+    - forms: [ {{ "type": "서식 종류", "description": "서식 설명", "downloadUrl": "다운로드 링크" }} ]
 
     계약서 내용:
     {text}
-
     """
+
     try:
         # ----------------------------------------
-        # GPT API 호출
+        # Gemini API 호출 (google-genai SDK)
         # ----------------------------------------
-        response = client.chat.completions.create(
-            model="gpt-4o-mini",  # 사용할 GPT 모델
-            messages=[
-                {"role": "system", "content": "너는 한국 계약서 분석 전문가야. 반드시 JSON 형식만 출력하고, 최상위 키 (summary, riskItems, forms)를 포함해야 한다."},
-                {"role": "user", "content": prompt}
-            ],
-            response_format={"type": "json_object"},  # JSON 객체 형식 지정
-            temperature=0.0  # 결과 일관성을 위해 0 설정
+        response = client.models.generate_content(
+            model="gemini-2.0-flash-lite",
+            contents=prompt,
+            config=types.GenerateContentConfig(
+                system_instruction="너는 한국 계약서 분석 전문가야. 반드시 JSON 형식만 출력하고, 최상위 키 (summary, riskItems, forms)를 포함해야 한다.",
+                response_mime_type="application/json",
+                temperature=0.0
+            )
         )
 
-        # GPT 응답 텍스트 추출 및 앞뒤 공백 제거
-        result_str = response.choices[0].message.content.strip()
+        result_str = response.text.strip()
 
         # ----------------------------------------
-        # GPT가 ```json ... ``` 형식으로 출력했을 경우 JSON만 추출
+        # ```json ... ``` 형식으로 출력했을 경우 JSON만 추출
         # ----------------------------------------
         match = re.search(r"```json\s*(.*?)```", result_str, re.DOTALL)
         if match:
-            result_str = match.group(1)  # JSON 부분만 남김
+            result_str = match.group(1)
 
-        # JSON 문자열을 파이썬 dict로 변환 후 반환
         return json.loads(result_str)
 
     # JSON 파싱 실패 시 예외 처리
-    except json.JSONDecodeError:
-        print("GPT 응답이 올바른 JSON 형식이 아닙니다.")
-        return {}
+    except json.JSONDecodeError as e:
+        print(f"❌ Gemini 응답이 올바른 JSON 형식이 아닙니다: {e}")
+        raise
 
     # 기타 예외 처리
     except Exception as e:
-        print("오류 발생:", str(e))
-        return {}
+        print(f"❌ 오류 발생: {type(e).__name__}: {str(e)}")
+        raise
