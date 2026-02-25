@@ -1,34 +1,31 @@
 {
   "name": "ai-legaldoctor-backend",
-  "version": "1.0.0",
+  "version": "0.0.1",
   "description": "AI 기반 부동산 계약서 위험 분석 백엔드 서버",
+  "license": "MIT",
+  "author": "poema",
   "type": "module",
   "main": "src/app.js",
   "scripts": {
-    "start": "node src/app.js",
-    "dev": "nodemon src/app.js"
+    "start": "nodemon app",
+    "test": "echo \"Error: no test specified\" && exit 1"
   },
-  "keywords": [
-    "legal",
-    "ai",
-    "contract",
-    "analysis"
-  ],
-  "author": "AI Legal Doctor Team",
-  "license": "ISC",
   "dependencies": {
-    "axios": "^1.6.2",
-    "cors": "^2.8.5",
-    "dotenv": "^16.3.1",
-    "express": "^4.21.2",
-    "form-data": "^4.0.0",
-    "mongoose": "^8.0.3",
-    "multer": "^1.4.5-lts.1",
-    "uuid": "^9.0.1",
+    "axios": "^1.13.5",
+    "cookie-parser": "^1.4.7",
+    "cors": "^2.8.6",
+    "dotenv": "^17.3.1",
+    "express": "^5.2.1",
+    "express-session": "^1.19.0",
+    "form-data": "^4.0.5",
+    "mongoose": "^9.2.1",
+    "morgan": "^1.10.1",
+    "multer": "^2.0.2",
     "swagger-jsdoc": "^6.2.8",
-    "swagger-ui-express": "^5.0.0"
+    "swagger-ui-express": "^5.0.1",
+    "uuid": "^13.0.0"
   },
   "devDependencies": {
-    "nodemon": "^3.0.2"
+    "nodemon": "^3.1.11"
   }
 }
