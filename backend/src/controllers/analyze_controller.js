@@ -12,10 +12,17 @@ export const requestAnalysis = async (req, res, next) => {
       return res.status(404).json({ message: "업로드된 문서를 찾을 수 없습니다." });
     }
 
-    const newAnalysis = await Analysis.create({
-      documentId: documentId,
-      status: "processing",
-    });
+    const existing = await Analysis.findOne({ documentId });
+
+    if (existing && existing.status === "processing") {
+      return res.status(400).json({ message: "이미 분석 진행 중입니다. "});
+    }
+
+    const newAnalysis = await Analysis.findOneAndUpdate(
+      { documentId},
+      { status: "processing", errorMessage: null },
+      { upsert: true, new: true }
+    );
 
     res.status(200).json({
       message: "분석 요청 성공. 분석 진행 중...",
@@ -42,11 +49,8 @@ export const requestAnalysis = async (req, res, next) => {
         {
           status: "completed",
           extractedText: resultData.extractedText || "",
-          summary: safeSummary,
-          riskItems: safeRiskItems,
-          forms: safeForms,
+          result: resultData,
         },
-        { returnDocument: "after" }
       );
 
       await Result.findOneAndUpdate(
