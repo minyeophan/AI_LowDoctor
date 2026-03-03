@@ -34,7 +34,9 @@ export const analyzeDocument = async (filePath) => {
 
     return {
       extractedText,
-      summary: aiData.summary || [],
+      summary: typeof aiData.summary === "string"
+      ? [{ title: "핵심 요약", content: aiData.summary }]
+      : aiData.summary || [],
       riskItems: aiData.riskItems || [],
       forms: aiData.forms || [],
     };
