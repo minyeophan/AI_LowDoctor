@@ -11,7 +11,10 @@ export const connect = async () => {
             mongoose.set('debug', true);
         }
         
-        await mongoose.connect(MONGO_URL);
+        await mongoose.connect(MONGO_URL, {
+            serverSelectionTimeoutMS: 5000,
+            socketTimeoutMS: 45000,
+        });
         console.log("몽고디비 연결 성공");
     } catch (error) {
         console.error("몽고디비 연결 에러", error);

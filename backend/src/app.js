@@ -22,6 +22,13 @@ connect();
 
 app.use(morgan('dev'));
 
+app.use((req, res, next) => {
+    res.setTimeout(120000, () => {
+        res.status(408).json({ message: "요청 시간이 초과되었습니다." });
+    });
+    next();
+});
+
 app.use(cors({
     origin: "http://localhost:5173",
     credentials: true
