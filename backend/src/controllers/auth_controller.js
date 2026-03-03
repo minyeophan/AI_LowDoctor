@@ -1,6 +1,6 @@
 import jwt from "jsonwebtoken";
 import bcrypt from "bcrypt";
-import { User } from "../schemas";
+import { User } from "../schemas/user_db";
 
 export const createToken = async (req, res) => {
     const { email, password } = req.body;
