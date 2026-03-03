@@ -64,6 +64,7 @@ router.post('/upload', (req, res, next) => {
     req.setTimeout(30000, () => {
         res.status(408).json({ message: "파일 업로드 시간 초과" });
     });
+    next();
 }, upload.single('file'), afterUpload);
 
 export default router;
