@@ -1,8 +1,9 @@
 import jwt from "jsonwebtoken";
 
-exports.verifyToken = (req, res, next) => {
+export const verifyToken = (req, res, next) => {
     try {
-        res.locals.decoded = jwt.verify(req.headers.authorization, process.env.JWT_SECRET);
+        const token = req.headers.authorization?.split(" ")[1];
+        res.locals.decoded = jwt.verify(token, process.env.JWT_SECRET);
         return next();
     } catch (error) {
         if (error.name === 'TokenExpiredError') {
