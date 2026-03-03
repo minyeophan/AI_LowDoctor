@@ -1,12 +1,10 @@
 import express from "express";
 
-import { verifyToken } from "../middleware";
-import { createToken, tokenTest } from "../controllers/auth_controller";
+import { verifyToken } from "../middleware/auth_middle.js";
+import { createToken } from "../controllers/auth_controller.js";
 
 const router = express.Router();
 
 router.post('/token', createToken);
-
-router.get('/test', verifyToken, tokenTest);
 
 export default router;
