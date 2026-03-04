@@ -20,3 +20,10 @@ dist/
 
 # 기타
 *.sqlite3
+.claude/
+**/.env
+**/.env.local
+
+# 업로드 파일
+backend/uploads/*
+!backend/uploads/.gitkeep
