@@ -7,6 +7,8 @@ export interface DocumentData {
   uploadDate: string;
   content: string;
   file: File;
+  fileUrl?: string; 
+  status?: string;
 }
 
 interface DocumentContextType {
@@ -21,7 +23,7 @@ interface DocumentContextType {
 const DocumentContext = createContext<DocumentContextType | undefined>(undefined);
 
 // 백엔드 API URL
-const API_BASE_URL = 'http://localhost:3001/api'; // 백엔드 포트에 맞게 수정
+const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:3001';
 
 interface DocumentProviderProps {
   children: ReactNode;

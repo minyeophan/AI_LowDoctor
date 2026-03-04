@@ -13,20 +13,22 @@
 
 /* 사이드바 열렸을 때 */
 .top-menu.sidebar-open {
-  width: calc(100% - 350px);
+  width: calc(100% - 360px);
   margin-right: 0;
+  border-radius: 10px 10px 0px 0px;
+  overflow: hidden;
 }
 
 .menu-nav {
   display: flex;
   flex-direction: row;
-  gap: 0;
+  gap: 80px;
   overflow-x: auto;
   width: 1200px;
   max-width: 100%;
   background-color: #ffff;
-  padding: 8px 10px;
-  justify-content: space-around;
+  padding: 8px;
+  justify-content: center;
 }
 
 .menu-item {
@@ -52,14 +54,10 @@
 
 /* 활성화 상태 */
 .menu-item.active .menu-label {
-  color: #1976d2;
+  color: #4A9EFF;
   font-weight: 600;
 }
 
-.menu-item.active {
-  background-color: #f5f6fb;
-  border-radius: 5px;
-}
 
 .menu-icon {
   font-size: 10px;
