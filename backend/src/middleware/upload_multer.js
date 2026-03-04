@@ -36,6 +36,7 @@ const storage = multer.diskStorage({
   },
 });
 
+<<<<<<< HEAD
 // 파일 필터 (PDF, 이미지, 한글, 워드 허용)
 const fileFilter = (req, file, cb) => {
   const allowedMimes = [
@@ -51,10 +52,38 @@ const fileFilter = (req, file, cb) => {
     "application/vnd.openxmlformats-officedocument.wordprocessingml.document", // DOCX (워드)
     'text/plain',  // TXT 텍스트
   ];
+=======
+// 허용된 MIME 타입 및 확장자 목록 정의 (TXT 파일 추가됨)
+const ALLOWED_MIMES = [
+  "application/pdf",// PDF
+  "application/x-pdf",                                                   // PDF (비표준)
+  "image/jpeg",// JPG
+  "image/jpg", // JPG
+  "image/png", // PNG
+  "application/x-hwp", // HWP (한글)
+  "application/haansofthwp", // HWP (한글)
+  "application/vnd.hancom.hwp",// HWP (한글)
+  "application/vnd.hancom.hwpx", // HWPX (한글 2014+)
+  "application/msword", // DOC (워드)
+  "application/vnd.openxmlformats-officedocument.wordprocesSsingml.document",// DOCX (워드)
+  "text/plain" // 텍스트 파일 (.txt) 
+];
+>>>>>>> origin/develop
 
-  if (allowedMimes.includes(file.mimetype)) {
-    cb(null, true); // 허용
+const ALLOWED_EXTS = ['.pdf', '.jpg', '.jpeg', '.png', '.hwp', '.hwpx', '.doc', '.docx', '.txt']; // ❗ .txt 추가
+
+
+// 파일 필터 (PDF, 이미지, 한글, 워드, 텍스트 허용)
+const fileFilter = (req, file, cb) => {
+  const mimeCheck = ALLOWED_MIMES.includes(file.mimetype);
+  const ext = path.extname(file.originalname).toLowerCase();
+  const extCheck = ALLOWED_EXTS.includes(ext);
+  
+  // MIME 타입이 허용되거나 (OR) 확장자가 허용될 경우 통과
+  if (mimeCheck || extCheck) {
+    cb(null, true); 
   } else {
+<<<<<<< HEAD
     // 확장자로도 체크 (일부 브라우저에서 MIME 타입이 정확하지 않을 수 있음)
     const ext = path.extname(file.originalname).toLowerCase();
     const allowedExts = ['.pdf', '.jpg', '.jpeg', '.png', '.hwp', '.hwpx', '.doc', '.docx','txt'];
@@ -67,6 +96,11 @@ const fileFilter = (req, file, cb) => {
         false
       );
     }
+=======
+    // MIME 타입도 확장자도 일치하지 않는 경우 거부
+    const errorMessage = `지원하지 않는 파일 형식입니다. ${ALLOWED_EXTS.join(', ').toUpperCase()} 파일만 가능합니다. (MIME: ${file.mimetype})`;
+    cb(new Error(errorMessage), false);
+>>>>>>> origin/develop
   }
 };
 

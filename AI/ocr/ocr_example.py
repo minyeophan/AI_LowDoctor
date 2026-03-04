@@ -1,5 +1,11 @@
+<<<<<<< HEAD
 import pdfplumber  # 텍스트 기반 PDF 처리
 import pytesseract  # 이미지 OCR 처리
+=======
+#ocr_example.py
+'''
+import pytesseract
+>>>>>>> origin/develop
 from PIL import Image
 import os
 
@@ -34,3 +40,16 @@ def extract_text_from_pdf(pdf_path: str) -> str:
     return text
 
 
+<<<<<<< HEAD
+=======
+# 테스트용 실행
+if __name__ == "__main__":
+    sample_path = "../../samples/contract_sample.png"
+    try:
+        print("=== OCR 결과 ===")
+        result_text = extract_text_from_image(sample_path)
+        print(result_text)
+    except FileNotFoundError:
+        print("⚠️ 샘플 이미지 파일을 찾을 수 없습니다.")
+'''
+>>>>>>> origin/develop

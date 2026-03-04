@@ -97,7 +97,6 @@ const analysisSchema = new mongoose.Schema({
   // AI 분석 결과
   summary: { type: String },
   riskItems: [riskItemSchema],
-  forms: [formSchema],
 
   // 상태 관리
   status: { type: String, enum: ["uploaded","processing","completed","failed"], default: "uploaded" },

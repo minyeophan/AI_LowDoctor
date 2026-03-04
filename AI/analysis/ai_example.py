@@ -1,6 +1,13 @@
+<<<<<<< HEAD
 # ai_example.py
 from google import genai
 from google.genai import types
+=======
+#ai_example.py
+'''
+import os
+from openai import OpenAI
+>>>>>>> origin/develop
 from dotenv import load_dotenv
 import os
 import json
@@ -67,6 +74,7 @@ def analyze_contract(text: str) -> dict:
             )
         )
 
+<<<<<<< HEAD
         result_str = response.text.strip()
 
         # ----------------------------------------
@@ -87,3 +95,11 @@ def analyze_contract(text: str) -> dict:
     except Exception as e:
         print(f"❌ 오류 발생: {type(e).__name__}: {str(e)}")
         raise
+=======
+# 테스트용 실행
+if __name__ == "__main__":
+    result = analyze_contract(sample_text)
+    print("=== AI 분석 결과 ===")
+    print(result)
+'''
+>>>>>>> origin/develop
