@@ -1,3 +1,5 @@
+from dotenv import load_dotenv
+load_dotenv()
 #run.py
 import os
 import json

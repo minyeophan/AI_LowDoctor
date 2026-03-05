@@ -21,9 +21,9 @@ const riskItemSchema = new Schema({
     type: Number,
     required: true
   },
-  clauseText: { 
+  clauseText: {
     type: String,
-    required: true 
+    required: true
   },
   riskLevel: {
     type: String,

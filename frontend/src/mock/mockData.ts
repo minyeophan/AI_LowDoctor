@@ -1,4 +1,4 @@
-import { ContractTip } from './api';
+import { ContractTip } from '../api';
 
 // Mock 데이터 - AI 연결 전 시각화 테스트용
 

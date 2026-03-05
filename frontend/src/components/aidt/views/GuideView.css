@@ -1,22 +1,32 @@
-/* 대응 가이드 */
-/* 팁 박스 */
+/* ── 대응 가이드 ── */
+
+/* 팁 박스 래퍼 - absolute로 겹치게 */
+.guide-tip-box-wrapper {
+  position: relative;
+  width: 794px;
+  height: 67.8px;
+}
+
 .guide-tip-box {
+  position: absolute;
+  top: 0;
+  left: 0;
+  z-index: 50;
+  width: 794px;
   background: #e3f2fd;
   border: 1px solid #90caf9;
   border-radius: 12px;
-  margin-bottom: 20px;
   overflow: hidden;
   transition: all 0.3s ease;
-  width: 794px;
 }
 
-/* 팁 헤더 (버튼) */
+/* 팁 헤더 */
 .tip-header {
   width: 100%;
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 13px 20px;
+  padding: 12px 16px;
   background: transparent;
   border: none;
   cursor: pointer;
@@ -36,14 +46,14 @@
   display: flex;
   align-items: center;
   gap: 8px;
-  font-size: 18px;
+  font-size: 16px;
   font-weight: 700;
   color: #1976d2;
   margin: 0;
 }
 
 .tip-badge {
-  padding: 4px 12px;
+  padding: 3px 10px;
   background: #1976d2;
   color: white;
   border-radius: 12px;
@@ -62,7 +72,7 @@
   transform: rotate(180deg);
 }
 
-/* 팁 콘텐츠 (접이식) */
+/* 팁 콘텐츠 */
 .tip-content {
   max-height: 0;
   opacity: 0;
@@ -73,66 +83,37 @@
 .guide-tip-box.open .tip-content {
   max-height: 500px;
   opacity: 1;
-  padding: 10px 20px 20px 20px;
+  padding: 8px 20px 20px;
 }
 
 .tip-main-title {
-  font-size: 16px;
+  font-size: 14px;
   font-weight: 600;
   color: #1565c0;
-  margin: 0 0 12px 0;
+  margin: 0 0 10px 0;
 }
 
 .tip-content ul {
   margin: 0;
-  padding-left: 24px;
+  padding-left: 14px;
   list-style: none;
 }
 
 .tip-content ul li {
   position: relative;
   padding-left: 16px;
-  font-size: 14px;
+  font-size: 13px;
   color: #424242;
-  margin-bottom: 8px;
-  line-height: 1.6;
+  margin-bottom: 7px;
+  line-height: 1.7;
   animation: fadeInUp 0.3s ease forwards;
   opacity: 0;
 }
 
-.guide-tip-box.open .tip-content ul li {
-  animation: fadeInUp 0.4s ease forwards;
-}
-
-.guide-tip-box.open .tip-content ul li:nth-child(1) {
-  animation-delay: 0.1s;
-}
-
-.guide-tip-box.open .tip-content ul li:nth-child(2) {
-  animation-delay: 0.2s;
-}
-
-.guide-tip-box.open .tip-content ul li:nth-child(3) {
-  animation-delay: 0.3s;
-}
-
-.guide-tip-box.open .tip-content ul li:nth-child(4) {
-  animation-delay: 0.4s;
-}
-
-.guide-tip-box.open .tip-content ul li:nth-child(5) {
-  animation-delay: 0.5s;
-}
 
 @keyframes fadeInUp {
-  from {
-    opacity: 0;
-    transform: translateY(10px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
+  from { opacity: 0; transform: translateY(4px); }
+  to   { opacity: 1; transform: translateY(0); }
 }
 
 .tip-content ul li::before {
@@ -143,18 +124,17 @@
   font-weight: bold;
 }
 
-
 /* 사용 팁 */
 .guide-tips {
-  padding-top: 16px;
+  padding-top: 14px;
   border-top: 1px solid #e0e0e0;
 }
 
 .guide-tips h4 {
-  font-size: 14px;
+  font-size: 13px;
   font-weight: 600;
   color: #1976d2;
-  margin: 0 0 12px 0;
+  margin: 0 0 10px 0;
 }
 
 .guide-tips ul {
@@ -165,10 +145,10 @@
 
 .guide-tips ul li {
   position: relative;
-  padding-left: 16px;
+  padding-left: 14px;
   font-size: 13px;
   color: #616161;
-  margin-bottom: 8px;
+  margin-bottom: 6px;
   line-height: 1.6;
 }
 
@@ -180,44 +160,48 @@
   font-weight: bold;
 }
 
+/* ── 가이드 본문 ── */
 .guide-body {
-  padding: 0px 40px;
+  padding: 0 40px 40px;
+  min-height: 0;
+  overflow-y: auto;
 }
 
 .guide-header {
-  margin-bottom: 32px;
-  padding-bottom: 15px;
+  margin-bottom: 28px;
+  padding-bottom: 16px;
   border-bottom: 1px solid #e0e0e0;
-
 }
 
 .guide-header h2 {
-  font-size: 24px;
+  font-size: 22px;
   font-weight: 700;
-  color: #212121;
-  margin: 0 0 8px 0;
+  color: #111111;
+  margin: 0 0 6px 0;
+  letter-spacing: -0.3px;
 }
 
 .guide-description {
-  font-size: 14px;
-  color: #757575;
+  font-size: 13px;
+  color: #9e9e9e;
   margin: 0;
+  line-height: 1.6;
 }
 
-/* 페이지 정보 */
+/* 페이지 배지 */
 .clause-page {
-  margin-bottom: 12px;
+  margin-bottom: 10px;
 }
 
 .page-badge {
   display: inline-flex;
   align-items: center;
   gap: 6px;
-  padding: 6px 14px;
+  padding: 5px 12px;
   background: #e3f2fd;
   color: #1976d2;
   border-radius: 16px;
-  font-size: 13px;
+  font-size: 12px;
   font-weight: 600;
 }
 
@@ -225,15 +209,15 @@
 .improvement-list {
   display: flex;
   flex-direction: column;
-  gap: 32px;
+  gap: 24px;
 }
 
 .improvement-item {
   background: #ffffff;
-  border: 1px solid #e0e0e0;
+  border: 1px solid #eeeeee;
   border-radius: 12px;
-  padding: 24px;
-  box-shadow: 0 2px 1px rgba(0, 0, 0, 0.05);
+  padding: 22px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
 }
 
 /* 섹션 헤더 */
@@ -245,27 +229,20 @@
 }
 
 .section-header h3 {
-  font-size: 16px;
+  font-size: 15px;
   font-weight: 600;
-  color: #212121;
+  color: #111111;
   margin: 0;
 }
 
-.warning-icon {
-  font-size: 20px;
-  color: #EA1C1C;
-}
-
-.retouch-icon {
-  font-size: 20px;
-  color: #4caf50;
-}
+.warning-icon { font-size: 18px; color: #EA1C1C; }
+.retouch-icon { font-size: 18px; color: #4caf50; }
 
 /* 조항 박스 */
 .clause-box {
-  padding: 10px 20px;
+  padding: 10px 18px;
   border-radius: 8px;
-  margin-bottom: 16px;
+  margin-bottom: 14px;
 }
 
 .clause-box.original {
@@ -280,22 +257,22 @@
 
 .clause-box p {
   margin: 0;
-  font-size: 14px;
+  font-size: 13px;
   line-height: 1.8;
-  color: #212121;
+  color: #333333;
 }
 
 /* 체크 포인트 */
 .check-points {
-  padding: 10px 16px;
-  margin-bottom: 16px;
+  padding: 8px 14px;
+  margin-bottom: 14px;
 }
 
 .check-title {
-  font-size: 15px;
+  font-size: 14px;
   font-weight: 600;
   color: #ff9800;
-  margin: 0 0 8px 0;
+  margin: 0 0 6px 0;
   display: flex;
   align-items: center;
   gap: 4px;
@@ -303,17 +280,16 @@
 
 .check-point-item {
   font-size: 12px;
-  color: #616161;
+  color: #666666;
   margin: 4px 0;
   line-height: 1.6;
 }
 
-/* 개선된 조항 섹션 */
 .improved-clause-section {
-  margin-top: 20px;
+  margin-top: 18px;
 }
 
-/* 대응 가이드 적용하기 버튼 */
+/* ── 대응 가이드 적용 버튼 ── */
 .apply-guide-btn {
   position: absolute;
   bottom: 40px;
@@ -321,12 +297,12 @@
   display: flex;
   align-items: center;
   gap: 10px;
-  padding: 15px 20px;
+  padding: 12px 14px;
   background-color: #4099FD;
   color: white;
   border: none;
-  border-radius: 10px;
-  font-size: 15px;
+  border-radius: 20px;
+  font-size: 14px;
   font-weight: 600;
   cursor: pointer;
   transition: all 0.3s ease;
@@ -335,20 +311,16 @@
 
 .apply-guide-btn:hover {
   transform: translateY(-3px);
-
 }
 
 .apply-guide-btn .btn-icon {
   font-size: 18px;
 }
 
-/* 미리보기 모달 오버레이 */
+/* ── 미리보기 모달 ── */
 .preview-modal-overlay {
   position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
+  top: 0; left: 0; right: 0; bottom: 0;
   background-color: rgba(0, 0, 0, 0.6);
   display: flex;
   align-items: center;
@@ -358,7 +330,6 @@
   backdrop-filter: blur(4px);
 }
 
-/* 미리보기 모달 */
 .preview-modal {
   background: white;
   border-radius: 12px;
@@ -372,17 +343,10 @@
 }
 
 @keyframes modalSlideUp {
-  from {
-    opacity: 0;
-    transform: translateY(30px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
+  from { opacity: 0; transform: translateY(30px); }
+  to   { opacity: 1; transform: translateY(0); }
 }
 
-/* 모달 헤더 */
 .preview-modal-header {
   display: flex;
   justify-content: space-between;
@@ -392,16 +356,15 @@
 }
 
 .modal-title-group h2 {
-  margin: 0 0 6px 0;
-  font-size: 22px;
+  margin: 0 0 4px 0;
+  font-size: 20px;
   font-weight: 700;
-  color: #1a1a1a;
+  color: #111111;
 }
 
 .modal-subtitle {
-  font-size: 14px;
-  color: #666;
-  font-weight: 400;
+  font-size: 13px;
+  color: #888888;
 }
 
 .modal-close-btn {
@@ -412,7 +375,6 @@
   padding: 4px;
   display: flex;
   align-items: center;
-  justify-content: center;
   border-radius: 50%;
   transition: all 0.2s;
 }
@@ -422,19 +384,19 @@
   color: #333;
 }
 
-/* 모달 바디 */
 .preview-modal-body {
   flex: 1;
+  background: #f5f5f5;
+  padding: 40px 20px;
   overflow-y: auto;
-  padding: 24px 28px;
-  background-color: #F4F6FA;
+  max-height: calc(100vh - 200px);
 }
 
 .preview-content {
   background: white;
   padding: 60px 80px;
   min-height: 600px;
-  box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
   border: 1px solid #e0e0e0;
   margin: 20px auto;
   max-width: 800px;
@@ -444,15 +406,13 @@
   font-family: 'Malgun Gothic', '맑은 고딕', 'Noto Sans KR', sans-serif;
   font-size: 11pt;
   line-height: 1.8;
-  color: #000;
+  color: #111111;
   white-space: pre-wrap;
   word-wrap: break-word;
   margin: 0;
   padding: 0;
 }
 
-
-/* 모달 푸터 */
 .preview-modal-footer {
   display: flex;
   justify-content: flex-end;
@@ -460,30 +420,14 @@
   padding: 15px 28px;
   border-top: 2px solid #f0f0f0;
   background-color: #fafafa;
-  border-radius: 0 0 16px 16px;
+  border-radius: 0 0 12px 12px;
 }
-
-/* A4 용지 느낌 */
-.preview-modal-body {
-  background: #f5f5f5;
-  padding: 40px 20px;
-  overflow-y: auto;
-  max-height: calc(100vh - 200px);
-}
-
-/* 한글 문서 타이틀 스타일 */
-.preview-content pre::first-line {
-  font-size: 16pt;
-  font-weight: bold;
-  text-align: center;
-}
-
 
 .modal-cancel-btn,
 .modal-save-btn {
-  padding: 12px 24px;
+  padding: 10px 22px;
   border-radius: 8px;
-  font-size: 15px;
+  font-size: 14px;
   font-weight: 600;
   cursor: pointer;
   transition: all 0.2s;
@@ -504,53 +448,44 @@
 }
 
 .modal-save-btn {
-background-color: #1976d2;;
+  background-color: #1976d2;
   border: none;
   color: white;
 }
 
 .modal-save-btn:hover {
   transform: translateY(-2px);
-  box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
+  box-shadow: 0 4px 12px rgba(25, 118, 210, 0.3);
 }
 
-/* 반응형 */
+/* ── 반응형 ── */
 @media (max-width: 768px) {
   .apply-guide-btn {
     bottom: 20px;
     right: 20px;
-    padding: 14px 20px;
-    font-size: 14px;
+    padding: 12px 18px;
+    font-size: 13px;
   }
 
   .preview-modal {
     max-width: 95%;
-    max-height: 90vh;
   }
 
   .preview-modal-header {
-    padding: 20px;
+    padding: 16px;
   }
 
   .modal-title-group h2 {
-    font-size: 18px;
+    font-size: 17px;
   }
 
-  .modal-subtitle {
-    font-size: 13px;
-  }
-
-  .preview-modal-body {
-    padding: 20px;
-  }
-
-  .preview-content pre {
-    font-size: 13px;
+  .preview-content {
+    padding: 30px 24px;
   }
 
   .preview-modal-footer {
-    padding: 16px 20px;
     flex-direction: column;
+    padding: 14px 16px;
   }
 
   .modal-cancel-btn,

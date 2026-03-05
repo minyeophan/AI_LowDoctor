@@ -59,6 +59,8 @@ export const requestAnalysis = async (req, res, next) => {
           summary: safeSummary,
           riskItems: safeRiskItems,
           forms: safeForms,
+          improvementGuides: resultData.improvementGuides || [],
+          contractTip: resultData.contractTip || null,
         },
         { upsert: true, returnDocument: "after" }
       );

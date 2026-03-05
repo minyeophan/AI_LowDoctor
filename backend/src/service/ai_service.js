@@ -39,6 +39,8 @@ export const analyzeDocument = async (filePath) => {
       : aiData.summary || [],
       riskItems: aiData.riskItems || [],
       forms: aiData.forms || [],
+      contractTip: aiData.contractTip || null,
+      improvementGuides: aiData.improvementGuides || [],
     };
 
   } catch (error) {

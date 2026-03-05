@@ -78,9 +78,9 @@ def analyze_contract(text: str) -> dict:
         return json.loads(result_str)
 
     except json.JSONDecodeError as e:
-        print(f"❌ Gemini 응답이 올바른 JSON 형식이 아닙니다: {e}")
+        print(f"Gemini 응답이 올바른 JSON 형식이 아닙니다: {e}")
         raise
 
     except Exception as e:
-        print(f"❌ 오류 발생: {type(e).__name__}: {str(e)}")
+        print(f"오류 발생: {type(e).__name__}: {str(e)}")
         raise

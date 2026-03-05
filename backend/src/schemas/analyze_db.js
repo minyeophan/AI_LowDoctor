@@ -23,6 +23,9 @@ const analysisSchema = new Schema(
     },
     errorMessage: {
       type: String
+    },
+    summary: {
+      type: Schema.Types.Mixed
     }
   },
   {

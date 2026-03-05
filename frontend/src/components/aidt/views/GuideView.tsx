@@ -1,7 +1,7 @@
 import DocumentMeta from '../shared/DocumentMeta';
 import { useState } from 'react';
-import { ContractTip, ImprovementGuide as APIImprovementGuide } from '../../../services/api';
-import { mockImprovementGuides } from '../../../services/mockData';
+import { ContractTip, ImprovementGuide as APIImprovementGuide } from '../../../api/analyze';
+import { mockImprovementGuides } from '../../../mock/mockData';
 import { MdWarning, MdCheckCircle, MdClose } from "react-icons/md";
 import { FaHandPointRight } from "react-icons/fa";
 import { MdDocumentScanner } from "react-icons/md";
@@ -41,7 +41,7 @@ function GuideView({
   onZoomOut 
 }: GuideViewProps) {
   
-  const [isTipOpen, setIsTipOpen] = useState(true);
+  const [isTipOpen, setIsTipOpen] = useState(false);
   const [showPreviewModal, setShowPreviewModal] = useState(false);
   const [improvedDocument, setImprovedDocument] = useState('');
 
@@ -135,6 +135,7 @@ const handleSave = async () => {
   return (
     <div className="content-section">
       {/* 팁 박스 */}
+      <div className="guide-tip-box-wrapper">
       <div className={`guide-tip-box ${isTipOpen ? 'open' : ''}`}>
         <button 
           className="tip-header"
@@ -152,15 +153,15 @@ const handleSave = async () => {
         <div className="tip-content">
           <p className="tip-main-title">[{contractTip.docType}] 작성 시 알아두세요</p>
           <ul>
-            {contractTip.items.map((item, index) => (
-              <li key={index}>{item}</li>
+            {contractTip.items.slice(0, 4).map((item, index) => (
+            <li key={index}>{item}</li>
             ))}
           </ul>
         </div>
       </div>
-
+</div>
       {/* 스크롤 영역 */}
-      <div className="content-analysis-box"
+      <div className="content-analysis-box has-header"
         style={{
           fontSize: `${zoomLevel}%`,
           transformOrigin: 'top',

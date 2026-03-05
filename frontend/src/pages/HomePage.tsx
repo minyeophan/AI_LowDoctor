@@ -3,7 +3,8 @@ import { Link, useNavigate } from 'react-router-dom';
 import FileUploader from '../components/FileUploader';
 import { useDocument } from '../context/DocumentContext';
 import { UploadResult } from '../types';
-import { api, ApiError } from '../services/api';
+import {documentsAPI} from '../api/documents'
+import { analyzeAPI } from '../api/analyze'
 import { CiSquarePlus } from "react-icons/ci";
 import { CiSaveDown2 } from "react-icons/ci";
 
@@ -19,37 +20,45 @@ function HomePage() {
                       import.meta.env.VITE_API_BASE_URL !== '';
 
    const handleFileUpload = async (uploadResult: UploadResult) => {
-    console.log('📤 파일 업로드 시작:', uploadResult.file.name);
+    console.log('📤 파일 업로드 시작:', uploadResult.file?.name);
 
     const file = uploadResult.file;
+
+     if (!file) {
+    console.error('파일이 없습니다');
+    return;
+  }
     setIsUploading(true);
+
 
     try {
       console.log('🌐 api.uploadDocument 호출 중...');
       
       // api.ts의 uploadDocument 사용
-      const response = await api.uploadDocument(file);
-      
+      const response = await documentsAPI.uploadDocument(file);
+      const fileUrl = URL.createObjectURL(file);
       console.log('✅ 업로드 완료:', response);
 
+      const content = await file.text(); 
       // Context에 문서 저장
       const newDoc = {
-        documentId: response.document_id,
+        documentId: response.documentId || response.document_id || '',
         filename: file.name,
         size: file.size,
         uploadDate: new Date().toISOString(),
         content: response.content || '',
+          fileUrl,
         file: file,
       };
 
       setCurrentDocument(newDoc);
-      navigate('/analysis');
+      navigate('/analysis', { state: { autoAnalyze: true } });
 
     } catch (error) {
       console.error('❌ 업로드 실패:', error);
       
-      if (error instanceof ApiError) {
-        alert(`업로드 실패: ${error.message} (코드: ${error.code})`);
+      if (error instanceof Error) {
+        alert(`업로드 실패: ${error.message}`);
       } else {
         alert('파일 업로드 중 오류가 발생했습니다.');
       }
@@ -65,8 +74,8 @@ function HomePage() {
           <div className='upload-section-box'>
             <h2 className="file-title">AIDT</h2>
             <p className="file-description">
-              계약서를 업로드하세요 AI가 핵심 조항과 위험 요소를 즉시 분석합니다 <br />
-              지금 바로 스마트 계약서 분석 기능을 이용해 보세요
+              계약서를 업로드하세요 <br />
+              AI가 핵심 조항과 위험 요소를 분석해드립니다
             </p>
             <FileUploader onUploadSuccess={handleFileUpload} />
           </div>
