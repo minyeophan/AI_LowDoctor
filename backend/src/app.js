@@ -30,7 +30,10 @@ app.use((req, res, next) => {
 });
 
 app.use(cors({
-    origin: "http://localhost:5173",
+    origin: [
+        "http://localhost:5173",  // 로컬 개발
+        "http://localhost",       // Docker 프로덕션
+    ],
     credentials: true
 }));
 app.use(express.json());
