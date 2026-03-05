@@ -39,7 +39,8 @@ export interface RiskItem {
   searchKeyword?: string;
   riskLevel: 'high' | 'medium' | 'low';
   reason: string;
-  guide: string;
+  checkPoints: string[];
+  improvedClause: string;
 }
 
 // 문서 정보

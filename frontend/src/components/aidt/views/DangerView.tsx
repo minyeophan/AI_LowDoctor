@@ -298,7 +298,7 @@ function DangerView({
                   </p>
                   <div className={`reason-box severity-${matchedRisk.riskLevel}`}>
                     <p className="reason">⚠️ {matchedRisk.reason}</p>
-                    <p className="guide">[참고] {matchedRisk.guide}</p>
+                    <p className="guide">[참고] {matchedRisk.improvedClause}</p>
                   </div>
                 </div>
               );
