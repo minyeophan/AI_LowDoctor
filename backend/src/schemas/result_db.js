@@ -35,7 +35,8 @@ const riskItemSchema = new Schema({
     required: true
   },
   lawRefs: [lawRefSchema],
-  guide: {
+  checkPoints: [{ type: String }],
+  improvedClause: {
     type: String
   }
 }, { _id: false });
