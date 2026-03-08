@@ -31,7 +31,7 @@ class AnalyzeRequest(BaseModel):
 @app.post("/api/ocr") # <--- Node.js가 파일 보내는 경로
 async def ocr_pdf_file(file: UploadFile = File(...)):
     # 1. 파일 형식 유효성 검사 (보안 및 로직 안정성 확보)
-    if not file.filename.lower().endswith(('.pdf', '.jpg', '.jpeg', '.png')):
+    if not file.filename.lower().endswith(('.pdf', '.jpg', '.jpeg', '.png', 'txt')):
         raise HTTPException(status_code=400, detail="지원하지 않는 파일 형식입니다.")
 
     # 2. 임시 파일로 저장 경로 설정
