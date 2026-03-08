@@ -1,4 +1,5 @@
-import { FaMinus, FaPlus  } from "react-icons/fa";
+import { GoPlus } from "react-icons/go";
+import { AiOutlineMinus } from "react-icons/ai";
 import './DocumentMeta.css';
 
 interface DocumentMetaProps {
@@ -31,11 +32,11 @@ function DocumentMeta({
       <div className="meta-box">
         <div className="zoom-box">
           <button onClick={onZoomOut} title="축소">
-            <FaMinus color="#bdc2c7ff"/>
+            <AiOutlineMinus color="#666"/>
           </button>
           <span className="zoom-level">{zoomLevel}%</span>
           <button onClick={onZoomIn} title="확대">
-            <FaPlus color="#bdc2c7ff"/>
+            <GoPlus color="#666"/>
           </button>
         </div>
       </div>

@@ -1,4 +1,8 @@
 import './AnalysisConfirmModal.css';
+import { MdFactCheck } from "react-icons/md";
+import { PiWarningOctagonFill } from "react-icons/pi";
+import { RiGuideFill } from "react-icons/ri";
+
 
 interface AnalysisConfirmModalProps {
   type: 'summary' | 'danger' | 'guide';
@@ -11,17 +15,17 @@ function AnalysisConfirmModal({ type, onConfirm, onCancel }: AnalysisConfirmModa
     summary: {
       title: '핵심 요약',
       message: '문서의 내용을 핵심 요약 하시겠습니까?',
-      icon: '📃'
+      icon: <MdFactCheck />
     },
     danger: {
       title: '위험 탐지',
       message: '문서의 위험 요소를 분석하시겠습니까?',
-      icon: '⚠️'
+      icon: <PiWarningOctagonFill/>
     },
     guide: {
       title: '대응 가이드',
       message: '대응 가이드를 생성하시겠습니까?',
-      icon: '📋'
+      icon: <RiGuideFill/>
     }
   };
 

@@ -1,8 +1,7 @@
 import './FloatingButtons.css';
-import { RiChatAiFill } from "react-icons/ri";
 import { GoBellFill } from "react-icons/go";
 import { FaSave } from "react-icons/fa";
-
+import { RiChatAiFill } from 'react-icons/ri';
 type SidebarType = 'chatbot' | 'notification' | null;
 
 interface FloatingButtonsProps {

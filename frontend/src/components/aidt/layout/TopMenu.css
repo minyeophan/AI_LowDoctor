@@ -1,13 +1,13 @@
 .top-menu {
   width: 100%;
   background-color: white;
-  border: 1px solid #D9D9D9;
+  border: 1px solid #e5e7eb;;
   border-bottom: none;
   position: relative;
   transition: all 0.3s ease;
   display: flex;
   justify-content: center;
-  border-radius: 10px 10px 0px 0px;
+  border-radius: 8px 8px 0px 0px;
   flex-shrink: 0;;
 }
 

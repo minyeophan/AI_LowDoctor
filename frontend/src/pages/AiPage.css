@@ -32,8 +32,8 @@
   padding: 20px;
   transition: margin-right 0.3s ease;
   background-color: #fff;
-  border: 1px solid #D9D9D9;
-  border-radius: 0px 0px 10px 10px;
+  border: 1px solid #e5e7eb;
+  border-radius: 0px 0px 8px 8px;
   overflow-y: auto;
   overflow-x: hidden;
   height: 100%;
@@ -64,10 +64,18 @@
   
 }
 
+<<<<<<< Updated upstream
 .content-analysis-box{ width: 794px; min-height: 1123px; height: auto;
   display: flex; justify-content: center; align-items: flex-start; flex-wrap: wrap;
   border: 1px solid #D9D9D9;
   padding: 0px 5px; background-color: #ffff;
   border-radius: 2px; }
+=======
+.content-analysis-box { width: 794px; height: calc(100vh - 130px); 
+  display: flex;  flex-direction: column;
+  border: 1px solid #e5e7eb;
+  padding: 0px; overflow: hidden; 
+  border-radius: 4px; }
+>>>>>>> Stashed changes
 
 

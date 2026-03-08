@@ -55,6 +55,7 @@ def analyze_contract(text: str) -> dict:
         # ----------------------------------------
         # GPT API 호출
         # ----------------------------------------
+<<<<<<< Updated upstream
         response = client.chat.completions.create(
             model="gpt-4o-mini",  # 사용할 GPT 모델
             messages=[
@@ -67,6 +68,26 @@ def analyze_contract(text: str) -> dict:
 
         # GPT 응답 텍스트 추출 및 앞뒤 공백 제거
         result_str = response.choices[0].message.content.strip()
+=======
+        response = client.models.generate_content(
+            model="gemini-2.5-flash",
+            contents=prompt,
+            config=types.GenerateContentConfig(
+                system_instruction="너는 한국 계약서 분석 전문가야. 반드시 JSON 형식만 출력하고, 최상위 키 (summary, riskItems, forms)를 포함해야 한다. riskItems 각 항목에는 clauseText, riskLevel, reason, checkPoints(배열), improvedClause 필드가 있어야 한다.",
+                response_mime_type="application/json",
+                temperature=0.0,
+                max_output_tokens=65536,
+                thinking_config=types.ThinkingConfig(thinking_budget=0)
+            )
+        )
+
+        result_str = response.text.strip()
+        print("=== GEMINI RAW RESPONSE ===")
+        print(f"LENGTH: {len(result_str)}")
+        print(result_str[:200])
+        print(f"FINISH REASON: {response.candidates[0].finish_reason if response.candidates else None}")
+        print("=========================")
+>>>>>>> Stashed changes
 
         # ----------------------------------------
         # GPT가 ```json ... ``` 형식으로 출력했을 경우 JSON만 추출

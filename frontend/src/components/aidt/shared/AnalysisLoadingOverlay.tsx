@@ -1,4 +1,5 @@
 import './AnalysisLoadingOverlay.css';
+import LoadingCharacter from '../shared/Loadingcharacter';
 
 interface AnalysisLoadingOverlayProps {
   type: 'summary' | 'danger' | 'guide';

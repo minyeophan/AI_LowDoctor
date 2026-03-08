@@ -26,13 +26,30 @@ function AnalysisPage() {
   const [activeSidebar, setActiveSidebar] = useState<SidebarType>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+<<<<<<< Updated upstream
   const [analysisData, setAnalysisData] = useState<AnalysisResponse | null>(null);
+=======
+  const [analysisData, setAnalysisData] = useState<AnalysisResult | null>(null);
+>>>>>>> Stashed changes
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [zoomLevel, setZoomLevel] = useState(100);
   const [pendingAnalysis, setPendingAnalysis] = useState<AnalysisType>(null);
   const [analyzingType, setAnalyzingType] = useState<AnalysisType>(null);
   const [analyzedMenus, setAnalyzedMenus] = useState<Set<string>>(new Set());
+<<<<<<< Updated upstream
 
+=======
+  const location = useLocation();
+
+useEffect(() => {
+  if (location.state?.autoAnalyze && currentDocument?.documentId) {
+    setAnalyzingType('summary');
+    setTimeout(() => {
+      handleFileUploadSuccess({ file: currentDocument.file } as any);
+    }, 0);
+  }
+}, []);
+>>>>>>> Stashed changes
   
  // 백엔드 API 사용 여부 확인
 const API_ENABLED = import.meta.env.VITE_API_BASE_URL !== undefined && 
@@ -75,7 +92,12 @@ const handleFileUploadSuccess = async (uploadResult: UploadResult) => {
     const response = await api.uploadDocument(uploadResult.file);
     
     console.log('✅ 업로드 응답:', response);
+<<<<<<< Updated upstream
     console.log('📝 content:', response.content);
+=======
+    
+    const documentId = response.document_id!; // ! 로 undefined 제거
+>>>>>>> Stashed changes
 
     const newDoc = {
       documentId: response.document_id,
@@ -134,6 +156,7 @@ const handleAnalysisConfirm = async () => {
   setPendingAnalysis(null);
 
   try {
+<<<<<<< Updated upstream
     // 2초 로딩 시뮬레이션
     await new Promise(resolve => setTimeout(resolve, 2000));
     
@@ -179,10 +202,14 @@ const handleAnalysisConfirm = async () => {
     // 분석 완료 메뉴 추가
     setAnalyzedMenus(prev => new Set(prev).add(currentAnalysis));
     
+=======
+   
+>>>>>>> Stashed changes
     // 백엔드 연결시 실제 API 호출
     if (API_ENABLED) {
       await requestAnalysis();
     }
+     setAnalyzedMenus(prev => new Set(prev).add(currentAnalysis));
   } catch (error) {
     console.error('분석 실패:', error);
   } finally {
@@ -312,7 +339,9 @@ const getAnalysisKey = (type: AnalysisType) => {
 
       case 'guide':
   const contractTip = analysisData?.contractTip || mockContractTip;
-   const improvementGuides = analysisData?.improvementGuides || mockImprovementGuides; 
+   const improvementGuides = (analysisData?.improvementGuides || mockImprovementGuides)
+    .slice()
+    .sort((a, b) => (a.page ?? 0) - (b.page ?? 0)); 
       return (
         <GuideView
           currentDocument={currentDocument}

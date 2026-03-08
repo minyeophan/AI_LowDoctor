@@ -211,7 +211,7 @@ function DangerView({
 
       <div className="content-analysis-box"
         style={{
-          fontSize: `${zoomLevel}%`,
+          fontSize: `${zoomLevel / 100}em`,
           transformOrigin: 'top',
         }}>
 
