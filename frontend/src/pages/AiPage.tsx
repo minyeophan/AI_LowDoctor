@@ -1,4 +1,5 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+import { useLocation } from 'react-router-dom';
 import FloatingButtons from '../components/aidt/layout/FloatingButtons';
 import RightSidebar from '../components/aidt/layout/RightSidebar';
 import TopMenu from '../components/aidt/layout/TopMenu';
@@ -10,9 +11,10 @@ import DocumentView from '../components/aidt/views/DocumentView';
 import GuideView from '../components/aidt/views/GuideView';
 import SummaryView from '../components/aidt/views/SummaryView';
 import FileUploader from '../components/FileUploader';
-import { useDocument } from '../context/DocumentContext';
-import { AnalysisResponse, api, ApiError } from '../services/api';
-import { mockContractTip, mockImprovementGuides, mockRiskItems, mockSummaryData } from '../services/mockData';
+import { useDocument , DocumentData } from '../context/DocumentContext';
+import { documentsAPI, UploadResponse } from '../api/documents';
+import { analyzeAPI, AnalyzeResponse, AnalysisResult } from '../api/analyze';
+import { mockContractTip, mockImprovementGuides, mockRiskItems, mockSummaryData } from '../mock/mockData';
 import { UploadResult } from '../types';
 import './AiPage.css';
 
@@ -20,25 +22,19 @@ type MenuItem = 'document' | 'summary' | 'danger' | 'guide' | 'search';
 type AnalysisType = 'summary' | 'danger' | 'guide' | null;
 type SidebarType = 'chatbot' | 'notification' | null;
 
+
 function AnalysisPage() {
   const {currentDocument, setCurrentDocument } = useDocument();
-  const [selectedMenu, setSelectedMenu] = useState<MenuItem>('document');
+  const [selectedMenu, setSelectedMenu] = useState<MenuItem | null>(null);
   const [activeSidebar, setActiveSidebar] = useState<SidebarType>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-<<<<<<< Updated upstream
-  const [analysisData, setAnalysisData] = useState<AnalysisResponse | null>(null);
-=======
   const [analysisData, setAnalysisData] = useState<AnalysisResult | null>(null);
->>>>>>> Stashed changes
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [zoomLevel, setZoomLevel] = useState(100);
   const [pendingAnalysis, setPendingAnalysis] = useState<AnalysisType>(null);
   const [analyzingType, setAnalyzingType] = useState<AnalysisType>(null);
   const [analyzedMenus, setAnalyzedMenus] = useState<Set<string>>(new Set());
-<<<<<<< Updated upstream
-
-=======
   const location = useLocation();
 
 useEffect(() => {
@@ -49,7 +45,6 @@ useEffect(() => {
     }, 0);
   }
 }, []);
->>>>>>> Stashed changes
   
  // 백엔드 API 사용 여부 확인
 const API_ENABLED = import.meta.env.VITE_API_BASE_URL !== undefined && 
@@ -59,65 +54,125 @@ const API_ENABLED = import.meta.env.VITE_API_BASE_URL !== undefined &&
  const requestAnalysis = async () => {
   if (!currentDocument) return;
   if (!API_ENABLED) {
-    alert('⚠️ AI 분석은 백엔드 연결이 필요합니다.\n.env 파일에서 VITE_API_BASE_URL을 설정해주세요.');
+    alert('⚠️ AI 분석은 백엔드 연결이 필요합니다.');
     return;
   }
-  
+
   setIsAnalyzing(true);
-  
+
   try {
-    // ✅ documentId로 분석 결과 조회 (polling 방식)
-    console.log('🔍 분석 결과 조회:', currentDocument.documentId);
-    const result = await api.getAnalysisResult(currentDocument.documentId);
-    
-    setAnalysisData(result);
-    console.log('✅ AI 분석 완료:', result);
+    console.log('🔍 분석 요청:', currentDocument.documentId);
+    await analyzeAPI.requestAnalysis(currentDocument.documentId);
+
+    // polling을 Promise로 감싸서 완료될 때까지 기다림
+    await new Promise<void>((resolve, reject) => {
+      const pollResult = async () => {
+        try {
+          const result = await analyzeAPI.getAnalysisResult(currentDocument.documentId);
+
+          if (result.status === 'completed') {
+            const parsedResult = {
+              ...result,
+              summary: typeof result.summary === 'string'
+                ? JSON.parse(result.summary)
+                : result.summary || []
+            };
+            setAnalysisData(parsedResult);
+            if (result.content) {
+              setCurrentDocument({
+                ...currentDocument,
+                content: result.content,
+              } as DocumentData);
+            }
+            console.log('✅ AI 분석 완료:', result);
+            resolve(); // ← 완료 시 Promise 해결
+          } else if (result.status === 'failed') {
+            reject(new Error(result.errorMessage || '분석 실패'));
+          } else {
+            console.log('⏳ 분석 진행 중...');
+            setTimeout(pollResult, 3000);
+          }
+        } catch (error) {
+          reject(error);
+        }
+      };
+      pollResult();
+    });
+
   } catch (error) {
-    console.error('❌ AI 분석 실패:', error);
-    if (error instanceof ApiError) {
+    console.error('❌ 분석 요청 실패:', error);
+    if (error instanceof Error) {
       alert(`분석 실패: ${error.message}`);
     }
   } finally {
-    setIsAnalyzing(false);
+    setIsAnalyzing(false); // ← polling 완료 후 실행됨
   }
 };
 
-  // 파일 업로드 핸들러
-const handleFileUploadSuccess = async (uploadResult: UploadResult) => {
+  const handleFileUploadSuccess = async (uploadResult: UploadResult) => {
   setIsLoading(true);
   setError(null);
-
   try {
-    // 항상 api.uploadDocument 사용 (Mock 또는 실제 API)
-    const response = await api.uploadDocument(uploadResult.file);
-    
+    if (!uploadResult.file) {
+      console.error('파일이 없습니다');
+      return;
+    }
+
+    // 1. 업로드
+    const response = await documentsAPI.uploadDocument(uploadResult.file);
+    const fileUrl = URL.createObjectURL(uploadResult.file);
     console.log('✅ 업로드 응답:', response);
-<<<<<<< Updated upstream
-    console.log('📝 content:', response.content);
-=======
     
     const documentId = response.document_id!; // ! 로 undefined 제거
->>>>>>> Stashed changes
 
+    // 2. 로딩 화면 표시
+    setAnalyzingType('summary');
+
+    // 3. OCR 요청해서 텍스트 추출
+    let extractedText = '';
+    try {
+      
+      const analyzeResponse = await analyzeAPI.requestAnalysis(documentId);
+      // polling으로 extractedText 가져오기
+      await new Promise<void>((resolve) => {
+        const poll = async () => {
+          const result = await analyzeAPI.getAnalysisResult(documentId);
+          if (result.extractedText) {
+            extractedText = result.extractedText;
+            resolve();
+          } else {
+            setTimeout(poll, 2000);
+          }
+        };
+        poll();
+      });
+    } catch (e) {
+      console.error('OCR 실패:', e);
+    }
+
+    // 4. 텍스트 화면 표시
     const newDoc = {
       documentId: response.document_id,
       status: response.status,
       filename: uploadResult.file.name,
       size: uploadResult.file.size,
       uploadDate: new Date().toISOString(),
-      content: response.content || '',
+      content: extractedText,
+      fileUrl,
       file: uploadResult.file,
     };
+    setCurrentDocument(newDoc as any);
+    setAnalyzingType(null);  // 로딩 끝
+    setSelectedMenu('document');
 
-    setCurrentDocument(newDoc);
-    
   } catch (error) {
     console.error('❌ 업로드 실패:', error);
-    if (error instanceof ApiError) {
+    if (error instanceof Error) {
       setError(`업로드 실패: ${error.message}`);
     } else {
       setError('파일 업로드 중 오류가 발생했습니다.');
     }
+    setAnalyzingType(null);
   } finally {
     setIsLoading(false);
   }
@@ -145,7 +200,7 @@ const handleFileUploadSuccess = async (uploadResult: UploadResult) => {
   }
 };
 
-// 분석 확인
+// 분석 확인\
 // 분석 확인
 const handleAnalysisConfirm = async () => {
   if (!pendingAnalysis) return;
@@ -156,55 +211,7 @@ const handleAnalysisConfirm = async () => {
   setPendingAnalysis(null);
 
   try {
-<<<<<<< Updated upstream
-    // 2초 로딩 시뮬레이션
-    await new Promise(resolve => setTimeout(resolve, 2000));
-    
-    // 분석 데이터 초기화 (첫 분석인 경우)
-    if (!analysisData) {
-      setAnalysisData({
-        summary: [],
-        riskItems: [],
-        recommendations: [],
-        forms: [],
-        analyzedAt: new Date().toISOString(),
-        contractTip: undefined,
-      });
-    }
-
-    // 선택한 메뉴 데이터만 설정
-    setAnalysisData(prev => {
-      const newData = prev || {
-        summary: [],
-        riskItems: [],
-        recommendations: [],
-        forms: [],
-        analyzedAt: new Date().toISOString(),
-            contractTip: {            
-            docType: '',
-            title: '',
-            items: []
-        },
-      };
-
-      switch (currentAnalysis) {
-        case 'summary':
-          return { ...newData, summary: mockSummaryData };
-        case 'danger':
-          return { ...newData, riskItems: mockRiskItems };
-        case 'guide':
-          return { ...newData, contractTip: mockContractTip };
-        default:
-          return newData;
-      }
-    });
-    
-    // 분석 완료 메뉴 추가
-    setAnalyzedMenus(prev => new Set(prev).add(currentAnalysis));
-    
-=======
    
->>>>>>> Stashed changes
     // 백엔드 연결시 실제 API 호출
     if (API_ENABLED) {
       await requestAnalysis();
@@ -314,7 +321,12 @@ const getAnalysisKey = (type: AnalysisType) => {
         );
 
       case 'summary':
-       const summaryData = analysisData?.summary?.length ? analysisData.summary : mockSummaryData;
+       const rawSummary = analysisData?.summary;
+        const summaryData = typeof rawSummary === 'string'
+          ? JSON.parse(rawSummary)
+          : Array.isArray(rawSummary) && rawSummary.length > 0
+            ? rawSummary
+            : mockSummaryData;
       return (
         <SummaryView
           currentDocument={currentDocument}
@@ -326,11 +338,11 @@ const getAnalysisKey = (type: AnalysisType) => {
       );
 
       case 'danger':
-        const riskData = analysisData?.riskItems?.length ? analysisData.riskItems : mockRiskItems;
+        const riskData = analysisData?.riskItems || mockRiskItems;
       return (
         <DangerView
           currentDocument={currentDocument}
-          riskData={riskData}
+          riskData={riskData as any}
           zoomLevel={zoomLevel}
           onZoomIn={handleZoomIn}
           onZoomOut={handleZoomOut}
@@ -338,6 +350,7 @@ const getAnalysisKey = (type: AnalysisType) => {
       );
 
       case 'guide':
+        console.log('analysisData:', analysisData); 
   const contractTip = analysisData?.contractTip || mockContractTip;
    const improvementGuides = (analysisData?.improvementGuides || mockImprovementGuides)
     .slice()
@@ -346,7 +359,7 @@ const getAnalysisKey = (type: AnalysisType) => {
         <GuideView
           currentDocument={currentDocument}
           contractTip={contractTip}
-          improvementGuides={improvementGuides}
+          improvementGuides={improvementGuides as any}
           zoomLevel={zoomLevel}
           onZoomIn={handleZoomIn}
           onZoomOut={handleZoomOut}
