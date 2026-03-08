@@ -1,9 +1,4 @@
 /* 핵심요약 */
-<<<<<<< Updated upstream
-.summary-body {width: 100%; height: auto; min-height: 1123px;  
-  font-size: 13px;
-  padding: 0px 50px; background-color: #fff;}
-=======
 .summary-body {
   width: 100%;
   height: auto;
@@ -13,34 +8,23 @@
   padding: 0 50px 40px;
   background-color: #fff;
 }
->>>>>>> Stashed changes
 
 /* 헤더 콘텐츠 */
 .summary-header-content {
-  margin-bottom: 32px;
-  padding-bottom: 15px;
+  margin-bottom: 28px;
+  padding-bottom: 16px;
   border-bottom: 1px solid #e0e0e0;
 }
 
 .summary-header-content h2 {
-<<<<<<< Updated upstream
-  color: #212121;
-  font-size: 24px;
-=======
   color: #111111;
   font-size: 1.375em;
->>>>>>> Stashed changes
   font-weight: 700;
-  margin: 0 0 8px 0;
+  margin: 0 0 6px 0;
   letter-spacing: -0.5px;
 }
 
 .summary-description {
-<<<<<<< Updated upstream
-  font-size: 14px;
-  color: #757575;
-  margin-top: 12px;
-=======
   font-size: 0.8125em;
   color: #9e9e9e;
   margin-top: 8px;
@@ -65,13 +49,10 @@
   line-height: 1.8;
   font-size: 0.875em;
   color: #444444;
->>>>>>> Stashed changes
 }
 
-
-.summary-item {
-  padding: 10px 0px;
+.summary-divider {
+  margin-top: 4px;
+  border: none;
+  border-top: 0.8px solid #eeeeee;
 }
-.summary-highlight {padding: 7px 0px;} 
-.summary-content-text {padding: 10px 0px; line-height: 22px;}
-.summary-divider {margin-top: 10px; border: 0.8px solid rgb(222, 222, 222);}
