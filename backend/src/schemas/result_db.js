@@ -54,6 +54,19 @@ const formSchema = new Schema({
   }
 }, { _id: false });
 
+const improvementGuideSchema = new Schema({
+  id: { type: Number },
+  originalClause: { type: String },
+  checkPoints: [{ type: String }],
+  improvedClause: { type: String }
+}, { _id: false });
+
+const contractTipSchema = new Schema({
+  docType: { type: String },
+  title: { type: String },
+  items: [{ type: String }]
+}, { _id: false });
+
 const resultSchema = new Schema(
   {
     documentId: {
@@ -67,7 +80,9 @@ const resultSchema = new Schema(
       required: true
     },
     riskItems: [riskItemSchema],
-    forms: [formSchema]
+    forms: [formSchema],
+    improvementGuides: [improvementGuideSchema],
+    contractTip: contractTipSchema
   },
   {
     timestamps: true
