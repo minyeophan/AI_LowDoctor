@@ -33,7 +33,7 @@ export const requestAnalysis = async (req, res, next) => {
       const resultData = await analyzeDocument(currentDocument.filePath);
 
       const safeSummary = Array.isArray(resultData.summary)
-        ? resultData.summary.join("\n")
+        ? JSON.stringify(resultData.summary)
         : resultData.summary || "";
 
       const safeRiskItems = Array.isArray(resultData.riskItems)
@@ -42,6 +42,15 @@ export const requestAnalysis = async (req, res, next) => {
 
       const safeForms = Array.isArray(resultData.forms)
         ? resultData.forms
+        : [];
+
+      const safeImprovementGuides = Array.isArray(resultData.riskItems)
+        ? resultData.riskItems.map((item, index) => ({
+            id: index + 1,
+            originalClause: item.clauseText || '',
+            checkPoints: Array.isArray(item.checkPoints) ? item.checkPoints : [],
+            improvedClause: item.improvedClause || '',
+          }))
         : [];
 
       await Analysis.findOneAndUpdate(
@@ -59,7 +68,7 @@ export const requestAnalysis = async (req, res, next) => {
           summary: safeSummary,
           riskItems: safeRiskItems,
           forms: safeForms,
-          improvementGuides: resultData.improvementGuides || [],
+          improvementGuides: safeImprovementGuides,
           contractTip: resultData.contractTip || null,
         },
         { upsert: true, returnDocument: "after" }
