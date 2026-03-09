@@ -29,13 +29,12 @@ function AnalysisPage() {
   const [activeSidebar, setActiveSidebar] = useState<SidebarType>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-const [analysisData, setAnalysisData] = useState<AnalysisResult | null>(null);
+  const [analysisData, setAnalysisData] = useState<AnalysisResult | null>(null);
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [zoomLevel, setZoomLevel] = useState(100);
   const [pendingAnalysis, setPendingAnalysis] = useState<AnalysisType>(null);
   const [analyzingType, setAnalyzingType] = useState<AnalysisType>(null);
   const [analyzedMenus, setAnalyzedMenus] = useState<Set<string>>(new Set());
-
   const location = useLocation();
 
 useEffect(() => {
@@ -123,6 +122,7 @@ const API_ENABLED = import.meta.env.VITE_API_BASE_URL !== undefined &&
     const response = await documentsAPI.uploadDocument(uploadResult.file);
     const fileUrl = URL.createObjectURL(uploadResult.file);
     console.log('✅ 업로드 응답:', response);
+    
     const documentId = response.document_id!; // ! 로 undefined 제거
 
     // 2. 로딩 화면 표시
@@ -211,57 +211,12 @@ const handleAnalysisConfirm = async () => {
   setPendingAnalysis(null);
 
   try {
-    // 2초 로딩 시뮬레이션
-    await new Promise(resolve => setTimeout(resolve, 2000));
-    
-    // 분석 데이터 초기화 (첫 분석인 경우)
-    if (!analysisData) {
-      setAnalysisData({
-        analysisId: '',
-        documentId: '', 
-        summary: [],
-        riskItems: [],
-        recommendations: [],
-        forms: [],
-        analyzedAt: new Date().toISOString(),
-        contractTip: undefined,
-      } as AnalysisResult);
-    }
-
-    // 선택한 메뉴 데이터만 설정
-    setAnalysisData(prev => {
-      const newData = prev || {
-        summary: [],
-        riskItems: [],
-        recommendations: [],
-        forms: [],
-        analyzedAt: new Date().toISOString(),
-            contractTip: {            
-            docType: '',
-            title: '',
-            items: []
-        },
-      };
-
-      switch (currentAnalysis) {
-        case 'summary':
-          return { ...newData, summary: mockSummaryData };
-        case 'danger':
-          return { ...newData, riskItems: mockRiskItems };
-        case 'guide':
-          return { ...newData, contractTip: mockContractTip };
-        default:
-          return newData;
-      }
-    });
-    
-    // 분석 완료 메뉴 추가
-    setAnalyzedMenus(prev => new Set(prev).add(currentAnalysis));
-    
+   
     // 백엔드 연결시 실제 API 호출
     if (API_ENABLED) {
       await requestAnalysis();
     }
+     setAnalyzedMenus(prev => new Set(prev).add(currentAnalysis));
   } catch (error) {
     console.error('분석 실패:', error);
   } finally {
@@ -397,7 +352,9 @@ const getAnalysisKey = (type: AnalysisType) => {
       case 'guide':
         console.log('analysisData:', analysisData); 
   const contractTip = analysisData?.contractTip || mockContractTip;
-   const improvementGuides = analysisData?.improvementGuides || mockImprovementGuides; 
+   const improvementGuides = (analysisData?.improvementGuides || mockImprovementGuides)
+    .slice()
+    .sort((a, b) => (a.page ?? 0) - (b.page ?? 0)); 
       return (
         <GuideView
           currentDocument={currentDocument}

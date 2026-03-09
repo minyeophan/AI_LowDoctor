@@ -154,7 +154,7 @@ const handleSave = async () => {
           <p className="tip-main-title">[{contractTip.docType}] 작성 시 알아두세요</p>
           <ul>
             {contractTip.items.slice(0, 4).map((item, index) => (
-            <li key={index}>{item}</li>
+            <li key={index} >{item}</li>
             ))}
           </ul>
         </div>
@@ -163,7 +163,7 @@ const handleSave = async () => {
       {/* 스크롤 영역 */}
       <div className="content-analysis-box has-header"
         style={{
-          fontSize: `${zoomLevel}%`,
+          fontSize: `${zoomLevel / 100}em`,
           transformOrigin: 'top',
         }}>
         <DocumentMeta 

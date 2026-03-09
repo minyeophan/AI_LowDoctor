@@ -34,7 +34,7 @@ export interface AnalysisResult {
   recommendations?: string[];
   
   // 계약 팁 
-   contractTip?: {               // ← 추가
+   contractTip?: {               //
     docType: string;
     title: string;
     items: string[];
@@ -66,9 +66,11 @@ export interface RiskItem {
   recommendation?: string;
   searchKeyword?: string; 
   clauseText?: string; 
-   riskLevel?: 'high' | 'medium' | 'low'; 
+  riskLevel?: 'high' | 'medium' | 'low'; 
   reason?: string;                          
   guide?: string; 
+  improvedClause?: string; 
+  checkPoints?: string[];
 }
 
 // 일정

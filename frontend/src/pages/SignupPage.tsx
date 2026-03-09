@@ -156,14 +156,14 @@ export default function SignupPage() {
             py: 5,
           }}
         >
-          {/* 제목 */}
+          {/* 회원가입 텍스트 */}
           <Typography
             sx={{
               fontSize: '24px',
               fontWeight: 700,
               color: colors.gray[800],
-              mb: 3,
-              textAlign: 'center'
+              mb: 5,
+              textAlign: 'center',
             }}
           >
             회원가입

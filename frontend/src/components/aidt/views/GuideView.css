@@ -46,7 +46,7 @@
   display: flex;
   align-items: center;
   gap: 8px;
-  font-size: 16px;
+  font-size: 1em;
   font-weight: 700;
   color: #1976d2;
   margin: 0;
@@ -57,13 +57,13 @@
   background: #1976d2;
   color: white;
   border-radius: 12px;
-  font-size: 12px;
+  font-size: 0.75em;
   font-weight: 600;
 }
 
 /* 토글 아이콘 */
 .tip-toggle-icon {
-  font-size: 12px;
+  font-size: 0.75em;
   color: #1976d2;
   transition: transform 0.3s ease;
 }
@@ -87,7 +87,7 @@
 }
 
 .tip-main-title {
-  font-size: 14px;
+  font-size: 0.875em;
   font-weight: 600;
   color: #1565c0;
   margin: 0 0 10px 0;
@@ -102,7 +102,7 @@
 .tip-content ul li {
   position: relative;
   padding-left: 16px;
-  font-size: 13px;
+  font-size: 0.8125em;
   color: #424242;
   margin-bottom: 7px;
   line-height: 1.7;
@@ -131,7 +131,7 @@
 }
 
 .guide-tips h4 {
-  font-size: 13px;
+  font-size: 0.8125em;
   font-weight: 600;
   color: #1976d2;
   margin: 0 0 10px 0;
@@ -146,7 +146,7 @@
 .guide-tips ul li {
   position: relative;
   padding-left: 14px;
-  font-size: 13px;
+  font-size: 0.8125em;
   color: #616161;
   margin-bottom: 6px;
   line-height: 1.6;
@@ -174,7 +174,7 @@
 }
 
 .guide-header h2 {
-  font-size: 22px;
+  font-size: 1.375em;
   font-weight: 700;
   color: #111111;
   margin: 0 0 6px 0;
@@ -182,7 +182,7 @@
 }
 
 .guide-description {
-  font-size: 13px;
+  font-size: 0.8125em;
   color: #9e9e9e;
   margin: 0;
   line-height: 1.6;
@@ -201,7 +201,7 @@
   background: #e3f2fd;
   color: #1976d2;
   border-radius: 16px;
-  font-size: 12px;
+  font-size: 0.75em;
   font-weight: 600;
 }
 
@@ -229,14 +229,14 @@
 }
 
 .section-header h3 {
-  font-size: 15px;
+  font-size: 0.9375em;
   font-weight: 600;
   color: #111111;
   margin: 0;
 }
 
-.warning-icon { font-size: 18px; color: #EA1C1C; }
-.retouch-icon { font-size: 18px; color: #4caf50; }
+.warning-icon { font-size: 1.125em; color: #EA1C1C; }
+.retouch-icon { font-size: 1.125em; color: #4caf50; }
 
 /* 조항 박스 */
 .clause-box {
@@ -257,7 +257,7 @@
 
 .clause-box p {
   margin: 0;
-  font-size: 13px;
+  font-size: 0.8125em;
   line-height: 1.8;
   color: #333333;
 }
@@ -269,7 +269,7 @@
 }
 
 .check-title {
-  font-size: 14px;
+  font-size: 0.875em;
   font-weight: 600;
   color: #ff9800;
   margin: 0 0 6px 0;
@@ -279,7 +279,7 @@
 }
 
 .check-point-item {
-  font-size: 12px;
+  font-size: 0.75em;
   color: #666666;
   margin: 4px 0;
   line-height: 1.6;
@@ -301,8 +301,8 @@
   background-color: #4099FD;
   color: white;
   border: none;
-  border-radius: 20px;
-  font-size: 14px;
+  border-radius: 8px;
+  font-size: 0.875em;
   font-weight: 600;
   cursor: pointer;
   transition: all 0.3s ease;
@@ -310,11 +310,11 @@
 }
 
 .apply-guide-btn:hover {
-  transform: translateY(-3px);
+  background-color: #2b87f0;
 }
 
 .apply-guide-btn .btn-icon {
-  font-size: 18px;
+  font-size: 1.125em;
 }
 
 /* ── 미리보기 모달 ── */
@@ -351,19 +351,19 @@
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 15px 20px;
+  padding: 16px 24px;
   border-bottom: 2px solid #f0f0f0;
 }
 
 .modal-title-group h2 {
   margin: 0 0 4px 0;
-  font-size: 20px;
+  font-size: 1.25em;
   font-weight: 700;
   color: #111111;
 }
 
 .modal-subtitle {
-  font-size: 13px;
+  font-size: 0.8125em;
   color: #888888;
 }
 
@@ -427,7 +427,7 @@
 .modal-save-btn {
   padding: 10px 22px;
   border-radius: 8px;
-  font-size: 14px;
+  font-size: 0.875em;
   font-weight: 600;
   cursor: pointer;
   transition: all 0.2s;
@@ -444,17 +444,15 @@
 
 .modal-cancel-btn:hover {
   background-color: #f8f9fa;
-  border-color: #999;
 }
 
 .modal-save-btn {
-  background-color: #1976d2;
+  background-color: #4099FD;
   border: none;
   color: white;
 }
 
 .modal-save-btn:hover {
-  transform: translateY(-2px);
   box-shadow: 0 4px 12px rgba(25, 118, 210, 0.3);
 }
 
@@ -464,7 +462,7 @@
     bottom: 20px;
     right: 20px;
     padding: 12px 18px;
-    font-size: 13px;
+    font-size: 0.8125em;
   }
 
   .preview-modal {
@@ -476,7 +474,7 @@
   }
 
   .modal-title-group h2 {
-    font-size: 17px;
+    font-size: 1.0625em;
   }
 
   .preview-content {

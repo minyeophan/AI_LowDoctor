@@ -1,4 +1,5 @@
 // src/pages/auth/LoginPage.tsx
+import LogoImg from '../assets/img/logo.svg';
 import { useState } from 'react';
 import { useNavigate, Link as RouterLink } from 'react-router-dom';
 import {
@@ -103,10 +104,10 @@ export default function LoginPage() {
       sx={{
         minHeight: '100vh',
         display: 'flex',
-        alignItems: 'flex-start',
-        pt: 10,
+        alignItems: 'center',
         justifyContent: 'center',
         background: colors.gray[50],
+        fontFamily: "'KoPub', sans-serif", 
       }}
     >
       <Container maxWidth="xs">
@@ -125,11 +126,13 @@ export default function LoginPage() {
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
-              mb: 4,
+              mb: 6,
               textDecoration: 'none',
               cursor: 'pointer',
+              gap: 0.8,
             }}
           >
+            <img src={LogoImg} width={24} height={24} />
             <Typography
               sx={{
                 fontSize: '24px',
@@ -167,7 +170,7 @@ export default function LoginPage() {
                   fontSize: '13px',
                   fontWeight: 500,
                   color: colors.gray[700],
-                  mb: 0.5,
+                  mb: 1,
                 }}
               >
                 아이디
@@ -183,6 +186,7 @@ export default function LoginPage() {
                   '& .MuiOutlinedInput-root': {
                     height: inputSizes.medium.height,
                     fontSize: inputSizes.medium.fontSize,
+                    fontFamily: "'KoPub', sans-serif",  
                     '& fieldset': {
                       borderColor: errors.email ? colors.error : colors.gray[300],
                     },
@@ -210,7 +214,7 @@ export default function LoginPage() {
                   fontSize: '13px',
                   fontWeight: 500,
                   color: colors.gray[700],
-                  mb: 0.5,
+                  mb: 1,
                 }}
               >
                 비밀번호
@@ -266,7 +270,7 @@ export default function LoginPage() {
             </Box>
 
             {/* 아이디 저장 체크박스 */}
-            <Box sx={{ mb: 3 }}>
+            <Box sx={{ mb: 1 }}>
               <FormControlLabel
                 control={
                   <Checkbox
