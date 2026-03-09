@@ -1,4 +1,4 @@
-import './LoadingCharacter.css';
+import './Loadingcharacter.css';
 
 function LoadingCharacter() {
   return (

@@ -133,13 +133,22 @@ const API_ENABLED = import.meta.env.VITE_API_BASE_URL !== undefined &&
     try {
       
       const analyzeResponse = await analyzeAPI.requestAnalysis(documentId);
-      // polling으로 extractedText 가져오기
-      await new Promise<void>((resolve) => {
+      // polling으로 분석 완료 대기
+      await new Promise<void>((resolve, reject) => {
+        let attempts = 0;
+        const MAX_ATTEMPTS = 60; // 최대 2분 (2초 * 60)
         const poll = async () => {
+          if (attempts >= MAX_ATTEMPTS) {
+            reject(new Error('분석 시간이 초과되었습니다.'));
+            return;
+          }
+          attempts++;
           const result = await analyzeAPI.getAnalysisResult(documentId);
-          if (result.extractedText) {
-            extractedText = result.extractedText;
+          if (result.status === 'completed') {
+            extractedText = result.extractedText || '';
             resolve();
+          } else if (result.status === 'failed') {
+            reject(new Error(result.errorMessage || '분석에 실패했습니다.'));
           } else {
             setTimeout(poll, 2000);
           }
