@@ -195,7 +195,7 @@ function DangerView({
           {riskPositions.map((risk, index) => (
             <div
               key={index}
-              className={`risk-dot severity-${risk.riskLevel}`}
+              className={`risk-dot severity-${risk.riskLevel?.toLowerCase() === 'critical' ? 'high' : risk.riskLevel?.toLowerCase()}`}
               style={{ left: `${risk.position}%` }}
               title={risk.clauseText}
               onClick={() => handleDotClick(index)}
@@ -287,12 +287,12 @@ function DangerView({
                 <div 
                   key={lineIndex}
                   id={`risk-${matchedRiskIndex}`}
-                  className={`danger-item severity-${matchedRisk.riskLevel}`}
+                  className={`danger-item severity-${matchedRisk.riskLevel?.toLowerCase() === 'critical' ? 'high' : matchedRisk.riskLevel?.toLowerCase()}`}
                 >
-                  <p className={`document-line highlight-${matchedRisk.riskLevel}`}>
+                  <p className={`document-line highlight-${matchedRisk.riskLevel?.toLowerCase() === 'critical' ? 'high' : matchedRisk.riskLevel?.toLowerCase()}`}>
                     {line}
                   </p>
-                  <div className={`reason-box severity-${matchedRisk.riskLevel}`}>
+                  <div className={`reason-box severity-${matchedRisk.riskLevel?.toLowerCase() === 'critical' ? 'high' : matchedRisk.riskLevel?.toLowerCase()}`}>
                     <p className="reason">⚠️ {matchedRisk.reason}</p>
                     <p className="guide">[참고] {matchedRisk.improvedClause}</p>
                   </div>
