@@ -6,6 +6,13 @@ import { BiSolidError } from "react-icons/bi";
 import { MdError } from "react-icons/md";
 import "./DangerView.css"
 
+const normalizeRiskLevel = (level?: string): 'high' | 'medium' | 'low' => {
+  const normalized = (level || '').toLowerCase();
+  if (normalized === 'critical' || normalized === 'high') return 'high';
+  if (normalized === 'medium') return 'medium';
+  return 'low';
+};
+
 interface DangerViewProps {
   currentDocument: {
     content: string;
@@ -195,7 +202,7 @@ function DangerView({
           {riskPositions.map((risk, index) => (
             <div
               key={index}
-              className={`risk-dot severity-${risk.riskLevel}`}
+              className={`risk-dot severity-${normalizeRiskLevel(risk.riskLevel)}`}
               style={{ left: `${risk.position}%` }}
               title={risk.clauseText}
               onClick={() => handleDotClick(index)}
@@ -287,12 +294,12 @@ function DangerView({
                 <div 
                   key={lineIndex}
                   id={`risk-${matchedRiskIndex}`}
-                  className={`danger-item severity-${matchedRisk.riskLevel}`}
+                   className={`danger-item severity-${normalizeRiskLevel(matchedRisk.riskLevel)}`}
                 >
-                  <p className={`document-line highlight-${matchedRisk.riskLevel}`}>
+                 <p className={`document-line highlight-${normalizeRiskLevel(matchedRisk.riskLevel)}`}>
                     {line}
                   </p>
-                  <div className={`reason-box severity-${matchedRisk.riskLevel}`}>
+                  <div className={`reason-box severity-${normalizeRiskLevel(matchedRisk.riskLevel)}`}>
                     <p className="reason">⚠️ {matchedRisk.reason}</p>
                     <p className="guide">[참고] {matchedRisk.improvedClause}</p>
                   </div>
