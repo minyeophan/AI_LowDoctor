@@ -1,5 +1,5 @@
 import DocumentMeta from '../shared/DocumentMeta';
-import { SummaryItem } from '../../../services/api';
+import { SummaryItem } from '../../../api/analyze';
 import '../views/SummaryView.css';
 
 interface SummaryViewProps {
@@ -46,9 +46,9 @@ function SummaryView({
             </div>
           </div>
           {(Array.isArray(summaryData) ? summaryData : []).map((item, index) => (
-            <div key={index} className="summary-item" style={{ fontSize: `${zoomLevel}%` }}>
+            <div key={index} className="summary-item">
               <h2 className="summary-highlight">{index + 1}. {item.title}</h2>
-              <p className="summary-content-text">•{item.content}</p>
+              <p className="summary-content-text">{item.content}</p>
               {index < summaryData.length - 1 && <hr className="summary-divider" />}
             </div>
           ))}

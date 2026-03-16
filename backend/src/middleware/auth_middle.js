@@ -3,6 +3,12 @@ import jwt from "jsonwebtoken";
 export const verifyToken = (req, res, next) => {
     try {
         const token = req.headers.authorization?.split(" ")[1];
+        if (!token) {
+            return res.status(401).json({
+                code: 401,
+                message: '토큰이 없습니다.',
+            });
+        }
         res.locals.decoded = jwt.verify(token, process.env.JWT_SECRET);
         return next();
     } catch (error) {

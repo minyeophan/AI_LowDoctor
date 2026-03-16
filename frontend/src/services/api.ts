@@ -39,7 +39,8 @@ export interface RiskItem {
   searchKeyword?: string;
   riskLevel: 'high' | 'medium' | 'low';
   reason: string;
-  guide: string;
+  checkPoints: string[];
+  improvedClause: string;
 }
 
 // 문서 정보
@@ -193,19 +194,19 @@ getAnalysisResult: async (documentId: string): Promise<AnalysisResponse> => {
       }
       
       // 분석 실패
-      if (result.status === 'error') {
+      if (result.status === 'failed') {
         throw new ApiError(result.message || '분석 실패', 500);
       }
       
       // 분석 완료
-      if (result.status === 'success' && result.data) {
+      if (result.status === 'completed') {
         console.log('✅ 분석 완료');
         return {
-          summary: result.data.summary || [],
-          riskItems: result.data.riskItems || [],
+          summary: result.summary || [],
+          riskItems: result.riskItems || [],
           recommendations: [],
-          forms: result.data.forms || [],
-          analyzedAt: result.data.updatedAt || new Date().toISOString(),
+          forms: result.forms || [],
+          analyzedAt: result.updatedAt || new Date().toISOString(),
         };
       }
       

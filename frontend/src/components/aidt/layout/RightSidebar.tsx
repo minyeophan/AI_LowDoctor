@@ -17,7 +17,7 @@ function RightSidebar({ activeSidebar, onClose }: RightSidebarProps) {
       <div className="sidebar-content">
         <div className="sidebar-header">
           <h3>
-            {activeSidebar === 'chatbot' ? '💬 챗봇' : '🔔 알림'}
+            {activeSidebar === 'chatbot' ? ' 챗봇' : '알림'}
           </h3>
           <button className="close-btn" onClick={onClose}>
             ✕

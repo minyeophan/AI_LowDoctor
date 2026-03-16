@@ -12,6 +12,16 @@ const options = {
       title: "AI LawDoctor API",
       version: "1.0.0",
     },
+    components: {
+      securitySchemas: {
+        bearerAuth: {
+          type: 'http',
+          scheme: 'bearer',
+          bearerFormat: 'JWT',
+        }
+      }
+    },
+    security: [{ bearerAuth: [] }],
   },
   apis: [path.join(__dirname, "../routes/*.js")],
 };

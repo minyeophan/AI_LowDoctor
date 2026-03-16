@@ -15,8 +15,10 @@ import uploadRouter from "./routes/upload_routes.js";
 import analyzeRouter from "./routes/analyze_routes.js";
 import resultRouter from "./routes/result_routes.js";
 import authRouter from "./routes/auth_routes.js";
+import { verifyToken } from "./middleware/auth_middle.js";
 
 const app = express();
+
 app.set('port', process.env.PORT || 3001);
 connect();
 
@@ -30,7 +32,10 @@ app.use((req, res, next) => {
 });
 
 app.use(cors({
-    origin: "http://localhost:5173",
+    origin: [
+        "http://localhost:5173",  // 로컬 개발
+        "http://localhost",       // Docker 프로덕션
+    ],
     credentials: true
 }));
 app.use(express.json());
@@ -45,12 +50,13 @@ app.use(session({
         secure: false,
     }
 }));
+
 app.use("/api-docs", swaggerUi.serve, swaggerUi.setup(swaggerSpec));
 
-app.use('/api', uploadRouter);
-app.use('/api', analyzeRouter);
-app.use('/api', resultRouter);
 app.use('/api/auth', authRouter);
+app.use('/api', verifyToken, uploadRouter);
+app.use('/api', verifyToken, analyzeRouter);
+app.use('/api', verifyToken, resultRouter);
 
 app.get('/', (req, res) => {
     res.json({

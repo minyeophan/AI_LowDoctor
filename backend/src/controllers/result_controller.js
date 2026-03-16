@@ -21,9 +21,11 @@ export const getAnalysisResult = async (req, res, next) => {
       status: analysis.status,
       extractedText: analysis.extractedText || "",
       content: analysis.extractedText || "",
-      summary: result?.summary || [],
+      summary: result?.summary || "",
       riskItems: result?.riskItems || [],
       forms: result?.forms || [],
+      improvementGuides: result?.improvementGuides || [],
+      contractTip: result?.contractTip || null,
       errorMessage: analysis.errorMessage || null,
       createdAt: analysis.createdAt,
       updatedAt: analysis.updatedAt

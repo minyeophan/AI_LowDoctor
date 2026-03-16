@@ -4,6 +4,8 @@ __pycache__/
 *.pyo
 *.pyd
 .env
+.venv/
+venv/
 
 # Node.js
 node_modules/
@@ -27,3 +29,4 @@ dist/
 # 업로드 파일
 backend/uploads/*
 !backend/uploads/.gitkeep
+.venv/

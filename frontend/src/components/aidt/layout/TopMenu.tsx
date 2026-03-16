@@ -8,7 +8,7 @@ import './TopMenu.css';
 type MenuItem = 'document' | 'summary' | 'danger' | 'guide' | 'search';
 
 interface TopMenuProps {
-  selectedMenu: MenuItem;
+  selectedMenu: MenuItem | null; 
   onMenuSelect: (menu: MenuItem) => void;
   isSidebarOpen?: boolean;
   isDisabled?: boolean; 
