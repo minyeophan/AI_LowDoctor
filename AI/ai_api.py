@@ -11,8 +11,8 @@ sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 
 # 2. 기존 분석 함수 임포트
 
-from ocr.ocr_example import extract_text_from_pdf 
-from analysis.ai_example import analyze_contract
+from ocr.pdf_extractor import extract_text_from_pdf
+from analysis.contract_analyzer import analyze_contract
 
 
 # 3. FastAPI 애플리케이션 초기화
