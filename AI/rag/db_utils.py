@@ -12,7 +12,7 @@ QDRANT_URL = os.getenv("QDRANT_URL")
 QDRANT_API_KEY = os.getenv("QDRANT_API_KEY")
 
 LAW_COLLECTION = "law_chunks"
-VECTOR_SIZE = 768  # Gemini text-embedding-004 차원 수
+VECTOR_SIZE = 3072  # Gemini gemini-embedding-2-preview 차원 수
 
 
 def get_mongo_db():
