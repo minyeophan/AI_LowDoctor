@@ -3,6 +3,7 @@ import sys
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 
 from google import genai
+from google.genai import types
 from dotenv import load_dotenv
 from bson import ObjectId
 from rag.db_utils import get_mongo_db, get_qdrant, LAW_COLLECTION
@@ -14,8 +15,9 @@ gemini_client = genai.Client(api_key=os.getenv("GEMINI_API_KEY"))
 
 def _embed(text: str) -> list[float]:
     result = gemini_client.models.embed_content(
-        model="text-embedding-004",
-        contents=text
+        model="gemini-embedding-2-preview",
+        contents=text,
+        config=types.EmbedContentConfig(task_type="RETRIEVAL_QUERY")
     )
     return result.embeddings[0].values
 
@@ -38,11 +40,11 @@ def search_laws(query: str, top_k: int = 5) -> list[dict]:
     """
     vector = _embed(query)
 
-    hits = get_qdrant().search(
+    hits = get_qdrant().query_points(
         collection_name=LAW_COLLECTION,
-        query_vector=vector,
+        query=vector,
         limit=top_k
-    )
+    ).points
 
     if not hits:
         return []

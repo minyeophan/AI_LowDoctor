@@ -15,6 +15,7 @@ import xml.etree.ElementTree as ET
 from datetime import date
 from dotenv import load_dotenv
 from google import genai
+from google.genai import types
 from qdrant_client.models import PointStruct
 
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
@@ -149,10 +150,11 @@ def fetch_law_articles(mst: str, law_name: str, filter_articles=None) -> list[di
 
 
 def embed_text(text: str) -> list[float]:
-    """Gemini text-embedding-004로 임베딩"""
+    """Gemini gemini-embedding-2-preview로 임베딩 (저장용)"""
     result = gemini_client.models.embed_content(
-        model="text-embedding-004",
-        contents=text
+        model="gemini-embedding-2-preview",
+        contents=text,
+        config=types.EmbedContentConfig(task_type="RETRIEVAL_DOCUMENT")
     )
     return result.embeddings[0].values
 
