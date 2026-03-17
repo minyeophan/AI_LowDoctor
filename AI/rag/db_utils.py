@@ -8,8 +8,8 @@ from dotenv import load_dotenv
 load_dotenv()
 
 MONGO_URL = os.getenv("MONGO_URL")
-QDRANT_HOST = os.getenv("QDRANT_HOST", "qdrant")
-QDRANT_PORT = int(os.getenv("QDRANT_PORT", "6333"))
+QDRANT_URL = os.getenv("QDRANT_URL")
+QDRANT_API_KEY = os.getenv("QDRANT_API_KEY")
 
 LAW_COLLECTION = "law_chunks"
 VECTOR_SIZE = 768  # Gemini text-embedding-004 차원 수
@@ -21,7 +21,7 @@ def get_mongo_db():
 
 
 def get_qdrant():
-    return QdrantClient(host=QDRANT_HOST, port=QDRANT_PORT)
+    return QdrantClient(url=QDRANT_URL, api_key=QDRANT_API_KEY)
 
 
 def ensure_qdrant_collection(qdrant: QdrantClient):
