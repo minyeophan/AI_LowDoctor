@@ -36,7 +36,7 @@ BASE_URL = "https://www.law.go.kr/DRF"
 # 부동산 계약 관련 법령 (민법은 618~654조만)
 TARGET_LAWS = [
     {"name": "주택임대차보호법",                       "filter_articles": None},
-    {"name": "상가건물임대차보호법",                    "filter_articles": None},
+    {"name": "상가건물 임대차보호법",                    "filter_articles": None},
     {"name": "부동산거래신고등에관한법률",               "filter_articles": None},
     {"name": "공인중개사법",                            "filter_articles": None},
     {"name": "집합건물의소유및관리에관한법률",           "filter_articles": None},
@@ -57,7 +57,7 @@ def fetch_law_mst(law_name: str) -> str | None:
                 "target": "law",
                 "type": "JSON",
                 "query": law_name,
-                "display": 1
+                "display": 10
             },
             timeout=10
         )
