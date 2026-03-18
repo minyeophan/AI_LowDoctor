@@ -16,6 +16,7 @@ import analyzeRouter from "./routes/analyze_routes.js";
 import resultRouter from "./routes/result_routes.js";
 import authRouter from "./routes/auth_routes.js";
 import { verifyToken } from "./middleware/auth_middle.js";
+import postRouter from "./routes/post_routes.js";
 
 const app = express();
 
@@ -57,6 +58,7 @@ app.use('/api/auth', authRouter);
 app.use('/api', verifyToken, uploadRouter);
 app.use('/api', verifyToken, analyzeRouter);
 app.use('/api', verifyToken, resultRouter);
+app.use('/post', verifyToken, postRouter);
 
 app.get('/', (req, res) => {
     res.json({
