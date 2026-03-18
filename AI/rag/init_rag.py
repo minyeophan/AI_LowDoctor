@@ -35,42 +35,49 @@ BASE_URL = "https://www.law.go.kr/DRF"
 
 # 부동산 계약 관련 법령 (민법은 618~654조만)
 TARGET_LAWS = [
-    {"name": "주택임대차보호법",                       "filter_articles": None},
-    {"name": "상가건물 임대차보호법",                    "filter_articles": None},
-    {"name": "부동산거래신고등에관한법률",               "filter_articles": None},
-    {"name": "공인중개사법",                            "filter_articles": None},
-    {"name": "집합건물의소유및관리에관한법률",           "filter_articles": None},
-    {"name": "전세사기피해자지원및주거안정에관한특별법",  "filter_articles": None},
-    {"name": "부동산등기법",                            "filter_articles": None},
-    {"name": "주택법",                                  "filter_articles": None},
-    {"name": "민법",                                    "filter_articles": set(range(618, 655))},
+    {"name": "주택임대차보호법",    "mst": "276291",    "filter_articles": None},
+    {"name": "주택임대차보호법 시행령",    "mst": "280995",     "filter_articles": None},
+
+    {"name": "상가건물 임대차보호법",   "mst": "276285",    "filter_articles": None},
+    {"name": "상가건물 임대차보호법 시행령",    "mst": "280987",    "filter_articles": None},
+
+    {"name": "부동산 거래신고 등에 관한 법률",      "mst": "259641" ,    "filter_articles": None},
+    {"name": "부동산 거래신고 등에 관한 법률 시행령",   "mst": "283653",    "filter_articles": None},
+    {"name": "부동산 거래신고 등에 관한 법률 시행규칙",     "mst": "283339",  "filter_articles": None},
+
+    {"name": "공인중개사법",    "mst": "273341" ,   "filter_articles": None},
+    {"name": "공인중개사법 시행령",      "mst": "279243" ,    "filter_articles": None},
+    {"name": "공인중개사법 시행규칙",      "mst": "263573" ,    "filter_articles": None},
+    {"name": "공인중개사의 매수신청대리인 등록 등에 관한 규칙",      "mst": "244751" ,    "filter_articles": None},
+
+    {"name": "집합건물의 소유 및 관리에 관한 법률",    "mst": "249285" ,   "filter_articles": None},
+    {"name": "집합건물의 소유 및 관리에 관한 법률 시행령",    "mst": "254889" ,   "filter_articles": None},
+
+    {"name": "전세사기피해자 지원 및 주거안정에 관한 특별법",    "mst": "277021" ,   "filter_articles": None},
+    {"name": "전세사기피해자 지원 및 주거안정에 관한 특별법 시행령",    "mst": "266295" ,   "filter_articles": None},
+    {"name": "전세사기피해자 지원 및 주거안정에 관한 특별법 시행규칙",    "mst": "273851" ,   "filter_articles": None},
+
+    {"name": "부동산등기규칙",    "mst": "266847" ,   "filter_articles": None},
+    {"name": "부동산등기법",    "mst": "265377" ,   "filter_articles": None},
+    {"name": "축사의 부동산등기에 관한 특례법",    "mst": "210145" ,   "filter_articles": None},
+
+    {"name": "민간임대주택에 관한 특별법",    "mst": "276995" ,   "filter_articles": None},
+    {"name": "민간임대주택에 관한 특별법 시행령",    "mst": "269343" ,   "filter_articles": None},
+    {"name": "민간임대주택에 관한 특별법 시행규칙",    "mst": "280639" ,   "filter_articles": None},
+    {"name": "부도공공건설임대주택 임차인 보호를 위한 특별법",    "mst": "174491" ,   "filter_articles": None},
+    {"name": "부도공공건설임대주택 임차인 보호를 위한 특별법 시행령",    "mst": "185425" ,   "filter_articles": None},
+    {"name": "장기공공임대주택 입주자 삶의 질 향상 지원법",    "mst": "273421" ,   "filter_articles": None},
+    {"name": "장기공공임대주택 입주자 삶의 질 향상 지원법 시행령",    "mst": "283499" ,   "filter_articles": None},
+    {"name": "장기공공임대주택 입주자 삶의 질 향상 지원법 시행규칙",    "mst": "185553" ,   "filter_articles": None},
+    {"name": "주택법",    "mst": "283191" ,   "filter_articles": None},
+    {"name": "주택법 시행령",    "mst": "281851" ,   "filter_articles": None},
+    {"name": "주택법 시행규칙",    "mst": "284551" ,   "filter_articles": None},
+
+    {"name": "민법",    "mst": "284415" ,   "filter_articles": set(range(618, 655))},
+
+
 ]
 
-
-def fetch_law_mst(law_name: str) -> str | None:
-    """법제처 API: 법령명 -> MST(일련번호) 조회"""
-    try:
-        resp = requests.get(
-            f"{BASE_URL}/lawSearch.do",
-            params={
-                "OC": LAW_OC,
-                "target": "law",
-                "type": "JSON",
-                "query": law_name,
-                "display": 10
-            },
-            timeout=10
-        )
-        data = resp.json()
-        laws = data.get("LawSearch", {}).get("law", [])
-        if isinstance(laws, dict):
-            laws = [laws]
-        for law in laws:
-            if law.get("법령명한글", "").strip() == law_name:
-                return law.get("법령일련번호")
-    except Exception as e:
-        print(f"MST 조회 실패 ({law_name}): {e}")
-    return None
 
 
 def parse_article_text(article) -> str:
@@ -174,10 +181,7 @@ def step1_collect_laws(db):
             continue
 
         print(f"  {law_name} 수집 중...")
-        mst = fetch_law_mst(law_name)
-        if not mst:
-            print(f"  {law_name} MST 조회 실패, 스킵")
-            continue
+        mst = law_info["mst"]
 
         articles = fetch_law_articles(mst, law_name, filter_articles)
         if not articles:
