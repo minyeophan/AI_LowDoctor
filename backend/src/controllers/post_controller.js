@@ -12,3 +12,27 @@ export const uploadPost = async (req, res, next) => {
         next(error);
     }
 };
+
+export const updatePost = async (req, res, next) => {
+    try {
+        const post = await Post.findById(req.params.id);
+
+        if (!post) {
+            return res.status(404).json({ message: "게시글 없음" });
+
+        }
+
+        if (post.userID.toString() !== req.user.id) {
+            return res.status(403).json({ message: "권한 없음" });
+        }
+
+        post.content = req.body.content || post.content;
+
+        await post.save();
+
+        res.json(post);
+    } catch (error) {
+        console.error(error);
+        next(error);
+    }
+};
