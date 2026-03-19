@@ -59,3 +59,33 @@ export const deletePost = async (req, res, next) => {
         next(error);
     }
 };
+
+export const likePost = async (req, res, next) => {
+    try {
+        const post = await Post.findById(req.params.id);
+
+        if (!post) {
+            return res.status(404).json({ message: "게시글 없음" });
+        }
+
+        const userId = req.user.id;
+
+        const isLiked = post.likes.includes(userId);
+
+        if (isLiked) {
+            post.likes = post.likes.filter(id => id !== userId);
+        } else {
+            post.likes.push(userId);
+        }
+
+        await post.save();
+
+        res.json({
+            liked: !isLiked,
+            likesCount: post.likes.length,
+        });
+    } catch (error) {
+        console.error(error);
+        next(error);
+    }
+};
