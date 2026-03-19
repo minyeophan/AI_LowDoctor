@@ -38,3 +38,24 @@ export const updateComment = async (req, res, next) => {
         next(error);
     }
 };
+
+export const deleteComment = async (req, res, next) => {
+    try {
+        const comment = await Comment.findById(req.params.id);
+
+        if (!comment) {
+            return res.status(404).json({ message: "댓글 없음" });
+        }
+
+        if (comment.userID.toString() !== req.user.id) {
+            return res.status(403).json({ message: "권한 없음" });
+        }
+
+        await Comment.findByIdAndDelete(req.params.id);
+
+        res.json({ message: "삭제 완료" });
+    } catch (error) {
+        console.error(error);
+        next(error);
+    }
+};
