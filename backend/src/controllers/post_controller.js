@@ -4,7 +4,7 @@ export const uploadPost = async (req, res, next) => {
     try {
         const post = await Post.create({
             content: req.body.content,
-            UserID: req.user.id,
+            userID: req.user.id,
         });
         res.status(201).json(post);
     } catch (error) {
@@ -26,7 +26,9 @@ export const updatePost = async (req, res, next) => {
             return res.status(403).json({ message: "권한 없음" });
         }
 
-        post.content = req.body.content || post.content;
+        if (req.body.content !== undefined) {
+            post.content = req.body.content;
+        }
 
         await post.save();
 
@@ -45,7 +47,7 @@ export const deletePost = async (req, res, next) => {
             return res.status(404).json({ message: "게시글 없음" });
         }
 
-        if (post.UserID.toString() !== req.user.id) {
+        if (post.userID.toString() !== req.user.id) {
             return res.status(403).json({ message: "권한 없음" });
         }
 
