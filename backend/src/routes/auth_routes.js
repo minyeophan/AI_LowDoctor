@@ -1,12 +1,18 @@
 import express from "express";
-import { verifyToken } from "../middleware/auth_middle.js";
-import { createToken, tokenTest, signup } from "../controllers/auth_controller.js";
+import {
+  signup,
+  login,
+  logout,
+  getMe,
+} from "../controllers/auth_controller.js";
+import authMiddleware from "../middleware/auth_middle.js";
 
 const router = express.Router();
 
-router.post('/signup', signup);                     // 회원가입
-router.post('/login', createToken);             // 로그인 -> 토큰 발급
-router.get('/test', verifyToken, tokenTest);
+router.post("/auth/signup", signup);
+router.post("/auth/login", login);
+router.post("/auth/logout", logout);
+router.get("/auth/me", authMiddleware, getMe);
 
 /**
  * @swagger
