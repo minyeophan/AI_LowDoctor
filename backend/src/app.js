@@ -14,6 +14,7 @@ import analyzeRouter from "./routes/analyze_routes.js";
 import resultRouter from "./routes/result_routes.js";
 import authRouter from "./routes/auth_routes.js";
 import postRouter from "./routes/post_routes.js";
+import commentRouter from "./routes/comment_routes.js";
 
 dotenv.config();
 
@@ -63,6 +64,7 @@ app.use("/api", uploadRouter);
 app.use("/api", analyzeRouter);
 app.use("/api", resultRouter);
 app.use("/post", postRouter);
+app.use("/comment", commentRouter);
 
 app.get("/", (req, res) => {
   res.json({
