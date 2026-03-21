@@ -29,4 +29,7 @@ dist/
 # 업로드 파일
 backend/uploads/*
 !backend/uploads/.gitkeep
+
+# 개인 실험 (팀 공유 제외)
+AI/experiments/
 .venv/
