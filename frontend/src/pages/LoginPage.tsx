@@ -27,8 +27,8 @@ export default function LoginPage() {
   const [errors, setErrors] = useState({
     email: '',
     password: '',
-    general: '',
   });
+  const [toast, setToast] = useState(false);
   const [loading, setLoading] = useState(false);
 
   const { login } = useAuth();
@@ -54,8 +54,8 @@ export default function LoginPage() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
-    setErrors({ email: '', password: '', general: '' });
+
+    setErrors({ email: '', password: '' });
 
     const emailError = validateEmail(email);
     const passwordError = validatePassword(password);
@@ -64,7 +64,6 @@ export default function LoginPage() {
       setErrors({
         email: emailError,
         password: passwordError,
-        general: '',
       });
       return;
     }
@@ -75,11 +74,9 @@ export default function LoginPage() {
       await login({ email, password });
       navigate('/mypage');
     } catch (err) {
-      setErrors({
-        email: '',
-        password: '',
-        general: '로그인에 실패했습니다. 이메일과 비밀번호를 확인해주세요.',
-      });
+      setErrors({ email: '', password: '' });
+      setToast(true);
+      setTimeout(() => setToast(false), 3000);
     } finally {
       setLoading(false);
     }
@@ -100,279 +97,290 @@ export default function LoginPage() {
   };
 
   return (
-    <Box
-      sx={{
-        minHeight: '100vh',
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-        background: colors.gray[50],
-        fontFamily: "'KoPub', sans-serif", 
-      }}
-    >
-      <Container maxWidth="xs">
+    <>
+      {/* 상단 토스트 팝업 */}
+      {toast && (
         <Box
           sx={{
-            borderRadius: borderRadius.lg,
-            px: 4, 
-            py: 5,
+            position: 'fixed',
+            top: 24,
+            left: '50%',
+            transform: 'translateX(-50%)',
+            zIndex: 9999,
+            background: '#1e293b',
+            color: '#fff',
+            px: 3,
+            py: 1.5,
+            borderRadius: '8px',
+            fontSize: '14px',
+            boxShadow: '0 4px 12px rgba(0,0,0,0.15)',
+            whiteSpace: 'nowrap',
           }}
         >
-          {/* 로고 (클릭 시 홈으로) */}
+          로그인에 실패했습니다. 이메일과 비밀번호를 확인해주세요.
+        </Box>
+      )}
+
+      <Box
+        sx={{
+          minHeight: '100vh',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          background: colors.gray[50],
+          fontFamily: "'KoPub', sans-serif",
+          pb: 12,
+        }}
+      >
+        <Container maxWidth="xs">
           <Box
-            component={RouterLink}
-            to="/"
             sx={{
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              mb: 6,
-              textDecoration: 'none',
-              cursor: 'pointer',
-              gap: 0.8,
+              borderRadius: borderRadius.lg,
+              px: 4,
+              py: 5,
             }}
           >
-            <img src={LogoImg} width={24} height={24} />
-            <Typography
-              sx={{
-                fontSize: '24px',
-                fontWeight: 700,
-                color: colors.gray[800],
-              }}
-            >
-              법닥
-            </Typography>
-          </Box>
-
-          {/* 전체 에러 메시지 */}
-          {errors.general && (
+            {/* 로고 (클릭 시 홈으로) */}
             <Box
-              sx={{
-                mb: 3,
-                p: 1.5,
-                background: '#FEF2F2',
-                border: `1px solid ${colors.error}`,
-                borderRadius: borderRadius.md,
-              }}
-            >
-              <Typography sx={{ fontSize: '13px', color: colors.error }}>
-                {errors.general}
-              </Typography>
-            </Box>
-          )}
-
-          {/* 로그인 폼 */}
-          <form onSubmit={handleSubmit}>
-            {/* 이메일 */}
-            <Box sx={{ mb: 2 }}>
-              <Typography
-                sx={{
-                  fontSize: '13px',
-                  fontWeight: 500,
-                  color: colors.gray[700],
-                  mb: 1,
-                }}
-              >
-                아이디
-              </Typography>
-              <TextField
-                fullWidth
-                placeholder="이메일을 입력하세요"
-                value={email}
-                onChange={handleEmailChange}
-                disabled={loading}
-                error={!!errors.email}
-                sx={{
-                  '& .MuiOutlinedInput-root': {
-                    height: inputSizes.medium.height,
-                    fontSize: inputSizes.medium.fontSize,
-                    fontFamily: "'KoPub', sans-serif",  
-                    '& fieldset': {
-                      borderColor: errors.email ? colors.error : colors.gray[300],
-                    },
-                    '&:hover fieldset': {
-                      borderColor: errors.email ? colors.error : colors.gray[400],
-                    },
-                    '&.Mui-focused fieldset': {
-                      borderColor: errors.email ? colors.error : colors.primary.main,
-                      borderWidth: '1px',
-                    },
-                  },
-                }}
-              />
-              {errors.email && (
-                <FormHelperText error sx={{ ml: 0, mt: 0.5, fontSize: '12px' }}>
-                  {errors.email}
-                </FormHelperText>
-              )}
-            </Box>
-
-            {/* 비밀번호 */}
-            <Box sx={{ mb: 1 }}>
-              <Typography
-                sx={{
-                  fontSize: '13px',
-                  fontWeight: 500,
-                  color: colors.gray[700],
-                  mb: 1,
-                }}
-              >
-                비밀번호
-              </Typography>
-              <TextField
-                fullWidth
-                type={showPassword ? 'text' : 'password'}
-                placeholder="••••••"
-                value={password}
-                onChange={handlePasswordChange}
-                disabled={loading}
-                error={!!errors.password}
-                InputProps={{
-                  endAdornment: (
-                    <InputAdornment position="end">
-                      <IconButton
-                        onClick={() => setShowPassword(!showPassword)}
-                        edge="end"
-                        size="small"
-                        disabled={loading}
-                      >
-                        {showPassword ? (
-                          <VisibilityOff sx={{ fontSize: '18px', color: colors.gray[400] }} />
-                        ) : (
-                          <Visibility sx={{ fontSize: '18px', color: colors.gray[400] }} />
-                        )}
-                      </IconButton>
-                    </InputAdornment>
-                  ),
-                }}
-                sx={{
-                  '& .MuiOutlinedInput-root': {
-                    height: inputSizes.medium.height,
-                    fontSize: inputSizes.medium.fontSize,
-                    '& fieldset': {
-                      borderColor: errors.password ? colors.error : colors.gray[300],
-                    },
-                    '&:hover fieldset': {
-                      borderColor: errors.password ? colors.error : colors.gray[400],
-                    },
-                    '&.Mui-focused fieldset': {
-                      borderColor: errors.password ? colors.error : colors.primary.main,
-                      borderWidth: '1px',
-                    },
-                  },
-                }}
-              />
-              {errors.password && (
-                <FormHelperText error sx={{ ml: 0, mt: 0.5, fontSize: '12px' }}>
-                  {errors.password}
-                </FormHelperText>
-              )}
-            </Box>
-
-            {/* 아이디 저장 체크박스 */}
-            <Box sx={{ mb: 1 }}>
-              <FormControlLabel
-                control={
-                  <Checkbox
-                    checked={rememberMe}
-                    onChange={(e) => setRememberMe(e.target.checked)}
-                    size="small"
-                    sx={{
-                      color: colors.gray[400],
-                      '&.Mui-checked': {
-                        color: colors.primary.main,
-                      },
-                    }}
-                  />
-                }
-                label={
-                  <Typography sx={{ fontSize: '13px', color: colors.gray[600] }}>
-                    아이디 저장
-                  </Typography>
-                }
-              />
-            </Box>
-
-            {/* 로그인 버튼 */}
-            <Button
-              fullWidth
-              type="submit"
-              disabled={loading}
-              sx={{
-                height: buttonSizes.medium.height,
-                fontSize: buttonSizes.medium.fontSize,
-                fontWeight: 600,
-                background: colors.primary.main,
-                color: 'white',
-                borderRadius: borderRadius.md,
-                textTransform: 'none',
-                mb: 2,
-                '&:hover': {
-                  background: colors.primary.hover,
-                },
-                '&:disabled': {
-                  background: colors.gray[300],
-                  color: colors.gray[500],
-                },
-              }}
-            >
-              {loading ? '로그인 중...' : '로그인'}
-            </Button>
-
-            {/* 하단 링크 */}
-            <Box
+              component={RouterLink}
+              to="/"
               sx={{
                 display: 'flex',
+                alignItems: 'center',
                 justifyContent: 'center',
-                gap: 2,
+                mb: 6,
+                textDecoration: 'none',
+                cursor: 'pointer',
+                gap: 0.8,
               }}
             >
-              <Link
-                href="#"
-                underline="none"
+              <img src={LogoImg} width={24} height={24} />
+              <Typography
                 sx={{
-                  fontSize: '13px',
-                  color: colors.gray[600],
-                  '&:hover': {
-                    color: colors.gray[800],
-                  },
+                  fontSize: '24px',
+                  fontWeight: 700,
+                  color: colors.gray[800],
                 }}
               >
-                아이디 찾기
-              </Link>
-              <Box sx={{ color: colors.gray[300] }}>|</Box>
-              <Link
-                href="#"
-                underline="none"
-                sx={{
-                  fontSize: '13px',
-                  color: colors.gray[600],
-                  '&:hover': {
-                    color: colors.gray[800],
-                  },
-                }}
-              >
-                비밀번호 재설정
-              </Link>
-              <Box sx={{ color: colors.gray[300] }}>|</Box>
-              <Link
-                component={RouterLink}
-                to="/signup"
-                underline="none"
-                sx={{
-                  fontSize: '13px',
-                  color: colors.gray[600],
-                  '&:hover': {
-                    color: colors.gray[800],
-                  },
-                }}
-              >
-                회원가입
-              </Link>
+                법닥
+              </Typography>
             </Box>
-          </form>
-        </Box>
-      </Container>
-    </Box>
+
+            {/* 로그인 폼 */}
+            <form onSubmit={handleSubmit}>
+              {/* 이메일 */}
+              <Box sx={{ mb: 2 }}>
+                <Typography
+                  sx={{
+                    fontSize: '13px',
+                    fontWeight: 500,
+                    color: colors.gray[700],
+                    mb: 1,
+                  }}
+                >
+                  아이디
+                </Typography>
+                <TextField
+                  fullWidth
+                  placeholder="이메일을 입력하세요"
+                  value={email}
+                  onChange={handleEmailChange}
+                  disabled={loading}
+                  error={!!errors.email}
+                  sx={{
+                    '& .MuiOutlinedInput-root': {
+                      background: '#ffffff',
+                      height: inputSizes.medium.height,
+                      fontSize: inputSizes.medium.fontSize,
+                      fontFamily: "'KoPub', sans-serif",
+                      '& fieldset': {
+                        borderColor: errors.email ? colors.error : colors.gray[300],
+                      },
+                      '&:hover fieldset': {
+                        borderColor: errors.email ? colors.error : colors.gray[400],
+                      },
+                      '&.Mui-focused fieldset': {
+                        borderColor: errors.email ? colors.error : colors.primary.main,
+                        borderWidth: '1px',
+                      },
+                    },
+                  }}
+                />
+                {errors.email && (
+                  <FormHelperText error sx={{ ml: 0, mt: 0.5, fontSize: '12px' }}>
+                    {errors.email}
+                  </FormHelperText>
+                )}
+              </Box>
+
+              {/* 비밀번호 */}
+              <Box sx={{ mb: 1 }}>
+                <Typography
+                  sx={{
+                    fontSize: '13px',
+                    fontWeight: 500,
+                    color: colors.gray[700],
+                    mb: 1,
+                  }}
+                >
+                  비밀번호
+                </Typography>
+                <TextField
+                  fullWidth
+                  type={showPassword ? 'text' : 'password'}
+                  placeholder="••••••"
+                  value={password}
+                  onChange={handlePasswordChange}
+                  disabled={loading}
+                  error={!!errors.password}
+                  InputProps={{
+                    endAdornment: (
+                      <InputAdornment position="end">
+                        <IconButton
+                          onClick={() => setShowPassword(!showPassword)}
+                          edge="end"
+                          size="small"
+                          disabled={loading}
+                        >
+                          {showPassword ? (
+                            <VisibilityOff sx={{ fontSize: '18px', color: colors.gray[400] }} />
+                          ) : (
+                            <Visibility sx={{ fontSize: '18px', color: colors.gray[400] }} />
+                          )}
+                        </IconButton>
+                      </InputAdornment>
+                    ),
+                  }}
+                  sx={{
+                    '& .MuiOutlinedInput-root': {
+                      background: '#ffffff',
+                      height: inputSizes.medium.height,
+                      fontSize: inputSizes.medium.fontSize,
+                      '& fieldset': {
+                        borderColor: errors.password ? colors.error : colors.gray[300],
+                      },
+                      '&:hover fieldset': {
+                        borderColor: errors.password ? colors.error : colors.gray[400],
+                      },
+                      '&.Mui-focused fieldset': {
+                        borderColor: errors.password ? colors.error : colors.primary.main,
+                        borderWidth: '1px',
+                      },
+                    },
+                  }}
+                />
+                {errors.password && (
+                  <FormHelperText error sx={{ ml: 0, mt: 0.5, fontSize: '12px' }}>
+                    {errors.password}
+                  </FormHelperText>
+                )}
+              </Box>
+
+              {/* 아이디 저장 체크박스 */}
+              <Box sx={{ mb: 1,borderRadius: '4px' }}>
+                <FormControlLabel
+                  control={
+                    <Checkbox
+                      checked={rememberMe}
+                      onChange={(e) => setRememberMe(e.target.checked)}
+                      size="small"
+                      sx={{
+                        color: colors.gray[400],
+                        '&.Mui-checked': {
+                          color: colors.primary.main,
+                        },
+                      }}
+                    />
+                  }
+                  label={
+                    <Typography sx={{ fontSize: '13px', color: colors.gray[600] }}>
+                      아이디 저장
+                    </Typography>
+                  }
+                />
+              </Box>
+
+              {/* 로그인 버튼 */}
+              <Button
+                fullWidth
+                type="submit"
+                disabled={loading}
+                sx={{
+                  height: buttonSizes.medium.height,
+                  fontSize: buttonSizes.medium.fontSize,
+                  fontWeight: 600,
+                  background: colors.primary.main,
+                  color: 'white',
+                  borderRadius: borderRadius.md,
+                  textTransform: 'none',
+                  mb: 2,
+                  '&:hover': {
+                    background: colors.primary.hover,
+                  },
+                  '&:disabled': {
+                    background: colors.gray[300],
+                    color: colors.gray[500],
+                  },
+                }}
+              >
+                {loading ? '로그인 중...' : '로그인'}
+              </Button>
+
+              {/* 하단 링크 */}
+              <Box
+                sx={{
+                  display: 'flex',
+                  justifyContent: 'center',
+                  gap: 2,
+                }}
+              >
+                <Link
+                  href="#"
+                  underline="none"
+                  sx={{
+                    fontSize: '13px',
+                    color: colors.gray[600],
+                    '&:hover': {
+                      color: colors.gray[800],
+                    },
+                  }}
+                >
+                  아이디 찾기
+                </Link>
+                <Box sx={{ color: colors.gray[300] }}>|</Box>
+                <Link
+                  href="#"
+                  underline="none"
+                  sx={{
+                    fontSize: '13px',
+                    color: colors.gray[600],
+                    '&:hover': {
+                      color: colors.gray[800],
+                    },
+                  }}
+                >
+                  비밀번호 재설정
+                </Link>
+                <Box sx={{ color: colors.gray[300] }}>|</Box>
+                <Link
+                  component={RouterLink}
+                  to="/signup"
+                  underline="none"
+                  sx={{
+                    fontSize: '13px',
+                    color: colors.gray[600],
+                    '&:hover': {
+                      color: colors.gray[800],
+                    },
+                  }}
+                >
+                  회원가입
+                </Link>
+              </Box>
+            </form>
+          </Box>
+        </Container>
+      </Box>
+    </>
   );
 }

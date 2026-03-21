@@ -3,7 +3,7 @@
 .mypage-container {
   display: grid;
   grid-template-columns: 240px 1fr;
-  min-height: calc(100vh - 70px);
+  min-height: calc(100vh - 60px);
   background: #F4F6FA;
 }
 

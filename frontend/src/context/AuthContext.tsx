@@ -18,31 +18,47 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
-  useEffect(() => {
-    const storedUser = localStorage.getItem('user');
-    if (storedUser) {
-      try {
-        setUser(JSON.parse(storedUser));
-      } catch (error) {
-        console.error('Failed to parse user data:', error);
-        localStorage.removeItem('user');
-      }
+ const API_BASE = 'http://localhost:3001';
+
+useEffect(() => {
+  const restoreUser = async () => {
+    const token = localStorage.getItem('token');
+    if (!token) {
+      setIsLoading(false);
+      return;
     }
-    setIsLoading(false);
-  }, []);
+    try {
+      const res = await fetch(`${API_BASE}/api/auth/me`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      if (!res.ok) throw new Error('인증 실패');
+      const userData = await res.json();
+      setUser(userData);
+    } catch (error) {
+      localStorage.removeItem('token');
+      localStorage.removeItem('user');
+    } finally {
+      setIsLoading(false);
+    }
+  };
+  restoreUser();
+}, []);
 
   const login = async (credentials: LoginCredentials) => {
     try {
       setIsLoading(true);
       
-      const mockUser: User = {
-        id: '1',
-        name: '김가나',
-        email: credentials.email,
-      };
-
-      setUser(mockUser);
-      localStorage.setItem('user', JSON.stringify(mockUser));
+      const res = await fetch(`${API_BASE}/api/auth/login`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(credentials),
+    });
+    if (!res.ok) throw new Error('로그인 실패');
+    const { user, token } = await res.json();
+    setUser(user);
+    localStorage.setItem('token', token);
+    localStorage.setItem('user', JSON.stringify(user));
+      
     } catch (error) {
       console.error('Login failed:', error);
       throw error;
@@ -55,14 +71,17 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     try {
       setIsLoading(true);
       
-      const mockUser: User = {
-        id: Date.now().toString(),
-        name: data.name,
-        email: data.email,
-      };
+      const res = await fetch(`${API_BASE}/api/auth/signup`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(data),
+      });
+      if (!res.ok) throw new Error('회원가입 실패');
+      const { user, token } = await res.json();
+      setUser(user);
+      localStorage.setItem('token', token);
+      localStorage.setItem('user', JSON.stringify(user));
 
-      setUser(mockUser);
-      localStorage.setItem('user', JSON.stringify(mockUser));
     } catch (error) {
       console.error('Signup failed:', error);
       throw error;
@@ -73,6 +92,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const logout = () => {
     setUser(null);
+    localStorage.removeItem('token');
     localStorage.removeItem('user');
   };
 

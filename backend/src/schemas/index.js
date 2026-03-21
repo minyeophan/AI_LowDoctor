@@ -10,7 +10,6 @@ export const connect = async () => {
         if (NODE_ENV !== 'production') {
             mongoose.set('debug', true);
         }
-
         await mongoose.connect(MONGO_URL, {
             serverSelectionTimeoutMS: 5000,
             socketTimeoutMS: 45000,

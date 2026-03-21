@@ -7,6 +7,8 @@ import {documentsAPI} from '../api/documents'
 import { analyzeAPI } from '../api/analyze'
 import { CiSquarePlus } from "react-icons/ci";
 import { CiSaveDown2 } from "react-icons/ci";
+import { mockPosts, getBestPost } from './CommunityPage';
+import PostCard from '../components/community/PostCard';
 
 import './HomePage.css';
 
@@ -134,7 +136,28 @@ function HomePage() {
       <section className='commu-section'>
         <h2 className="section-title">비슷한 사람들의 사례를 확인해 보세요</h2>
         <div className="commu-grid">
+          {(() => {
+            const bestPost = getBestPost();
+            const otherPosts = mockPosts.filter(p => p.id !== bestPost.id);
+            const randomPost = otherPosts[Math.floor(Math.random() * otherPosts.length)];
 
+            return (
+              <div className="commu-list">
+                <div className="commu-item">
+                  <PostCard post={{ ...bestPost, isBest: true }} />
+                </div>
+                <div className="commu-divider" />
+                <div className="commu-item">
+                  <PostCard post={randomPost} />
+                </div>
+              </div>
+            );
+          })()}
+        </div>
+        <div className="commu-more">
+          <button className="commu-more-btn" onClick={() => navigate('/community')}>
+            커뮤니티 바로가기
+          </button>
         </div>
       </section>
     </div>
