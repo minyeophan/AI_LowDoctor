@@ -123,7 +123,7 @@ const API_ENABLED = import.meta.env.VITE_API_BASE_URL !== undefined &&
     const fileUrl = URL.createObjectURL(uploadResult.file);
     console.log('✅ 업로드 응답:', response);
     
-    const documentId = response.document_id!; // ! 로 undefined 제거
+    const documentId = response.documentId!;
 
     // 2. 로딩 화면 표시
     setAnalyzingType('summary');
