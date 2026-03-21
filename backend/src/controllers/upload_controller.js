@@ -24,7 +24,7 @@ export const afterUpload = async (req, res, next) => {
 
         res.status(200).json({
             message: '업로드 및 DB 저장 완료',
-            document_id: documentId,
+            documentId: documentId,
             status: 'uploaded',
             data: saved,
         });
