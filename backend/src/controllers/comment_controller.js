@@ -3,11 +3,12 @@ import Comment from "../schemas/comment_db.js";
 export const uploadComment = async (req, res, next) => {
     try {
         const comment = await Comment.create({
-            commenter: req.body.id,
+            userID: req.user._id,
             comment: req.body.comment,
+            postId: req.params.id,
         });
         console.log(comment);
-        const result = await Comment.populate(comment, { path: 'commenter' });
+        const result = await Comment.populate(comment, { path: 'userID' });
         res.status(201).json(result);
     } catch (error) {
         console.error(error);
@@ -23,7 +24,7 @@ export const updateComment = async (req, res, next) => {
             return res.status(404).json({ message: "댓글 없음" });
         }
 
-        if (comment.userID.toString() !== req.user.id) {
+        if (comment.userID.toString() !== req.user._id.toString()) {
             return res.status(403).json({ message: "권한 없음" });
         }
 
@@ -47,7 +48,7 @@ export const deleteComment = async (req, res, next) => {
             return res.status(404).json({ message: "댓글 없음" });
         }
 
-        if (comment.userID.toString() !== req.user.id) {
+        if (comment.userID.toString() !== req.user._id.toString()) {
             return res.status(403).json({ message: "권한 없음" });
         }
 
