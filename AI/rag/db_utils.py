@@ -2,7 +2,7 @@ import os
 import uuid
 from pymongo import MongoClient
 from qdrant_client import QdrantClient
-from qdrant_client.models import Distance, VectorParams
+from qdrant_client.models import Distance, VectorParams, SparseVectorParams
 from dotenv import load_dotenv
 
 load_dotenv()
@@ -29,7 +29,13 @@ def ensure_qdrant_collection(qdrant: QdrantClient):
     if LAW_COLLECTION not in existing:
         qdrant.create_collection(
             collection_name=LAW_COLLECTION,
-            vectors_config=VectorParams(size=VECTOR_SIZE, distance=Distance.COSINE)
+            vectors_config={
+                "dense": VectorParams(size=VECTOR_SIZE, distance=Distance.COSINE)
+            },
+            sparse_vectors_config={
+                "sparse": SparseVectorParams()
+            }
+
         )
         print(f"Qdrant 컬렉션 '{LAW_COLLECTION}' 생성 완료")
     else:
