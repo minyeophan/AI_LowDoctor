@@ -4,7 +4,7 @@ export const uploadPost = async (req, res, next) => {
     try {
         const post = await Post.create({
             content: req.body.content,
-            userID: req.user.id,
+            userID: req.user._id,
         });
         res.status(201).json(post);
     } catch (error) {
