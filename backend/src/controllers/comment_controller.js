@@ -2,6 +2,10 @@ import Comment from "../schemas/comment_db.js";
 
 export const uploadComment = async (req, res, next) => {
     try {
+        if (!req.body.comment) {
+            return res.status(400).json({ message: "댓글 내용 필요" });
+        }
+
         const comment = await Comment.create({
             userID: req.user._id,
             comment: req.body.comment,
