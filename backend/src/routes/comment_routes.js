@@ -1,7 +1,7 @@
 import express from "express";
 
-import { uploadComment, updateComment, deleteComment, likeComment, categoryComment } from "../controllers/comment_controller";
-import isLoggedIn from "../middleware/auth_middle";
+import { uploadComment, updateComment, deleteComment, likeComment, categoryComment } from "../controllers/comment_controller.js";
+import isLoggedIn from "../middleware/auth_middle.js";
 
 const router = express.Router();
 

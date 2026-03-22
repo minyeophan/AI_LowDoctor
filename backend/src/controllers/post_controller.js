@@ -1,4 +1,4 @@
-import { Post } from "../schemas";
+import { Post } from "../schemas/post_db.js";
 
 export const uploadPost = async (req, res, next) => {
     try {
