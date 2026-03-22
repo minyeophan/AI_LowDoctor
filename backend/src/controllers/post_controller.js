@@ -117,3 +117,21 @@ export const categoryPost = async (req, res, next) => {
     }
 };
 
+export const viewsPost = async (req, res, next) => {
+    try {
+        const post = await Post.findById(req.params.id)
+            .populate("userID")
+
+        if (!post) {
+            return res.status(404).json({ message: "게시글 없음" });
+        }
+
+        post.views += 1;
+        await post.save();
+
+        res.json(post);
+    } catch (error) {
+        console.error(error);
+        next(error);
+    }
+};
