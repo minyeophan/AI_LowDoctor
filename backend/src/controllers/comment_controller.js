@@ -64,3 +64,38 @@ export const deleteComment = async (req, res, next) => {
         next(error);
     }
 };
+
+export const likeComment = async (req, res, next) => {
+    try {
+        const comment = await Comment.findById(req.params.id);
+
+        if (!comment) {
+            return res.status(404).json({ message: "댓글 없음" });
+        }
+
+        const userId = req.user._id.toString();
+
+        const isLiked = comment.likes.some(
+            id => id.toString() === userId
+        );
+        if (isLiked) {
+            comment.likes = comment.likes.filter(
+                id => id.toString() !== userId
+            );
+        } else {
+            comment.likes.push(req.user._id);
+        }
+
+        comment.likesCount = comment.likes.length;
+
+        await comment.save();
+
+        res.json({
+            liked: !isLiked,
+            likesCount: comment.likes.length,
+        });
+    } catch (error) {
+        console.error(error);
+        next(error);
+    }
+};
