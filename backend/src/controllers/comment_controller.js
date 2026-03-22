@@ -99,3 +99,28 @@ export const likeComment = async (req, res, next) => {
         next(error);
     }
 };
+
+export const categoryComment = async (req, res, next) => {
+    try {
+        const { sort = "latest" } = req.query;
+
+        let sortOption = {};
+
+        if (sort === "popular") {
+            sortOption = { likesCount: -1 };
+        } else {
+            sortOption = { createdAt: -1 };
+        }
+
+        const comments = await Comment.find({
+            postId: req.params.id,
+        })
+        .populate("userID")
+        .sort(sortOption);
+
+        res.json(comments);
+    } catch (error) {
+        console.error(error);
+        next(error);
+    }
+};
