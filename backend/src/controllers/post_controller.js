@@ -103,10 +103,10 @@ export const categoryPost = async (req, res, next) => {
         if (sort === "popular") {
             sortOption = { likes: -1 };
         } else {
-            sortOption = { createAt: -1 };
+            sortOption = { createdAt: -1 };
         }
 
-        const posts = await Post.find(fliter)
+        const posts = await Post.find(filter)
             .sort(sortOption)
             .populate("userID");
 
