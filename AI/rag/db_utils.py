@@ -21,7 +21,7 @@ def get_mongo_db():
 
 
 def get_qdrant():
-    return QdrantClient(url=QDRANT_URL, api_key=QDRANT_API_KEY)
+    return QdrantClient(url=QDRANT_URL, api_key=QDRANT_API_KEY, timeout=60)
 
 
 def ensure_qdrant_collection(qdrant: QdrantClient):

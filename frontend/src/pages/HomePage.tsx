@@ -42,7 +42,7 @@ function HomePage() {
       const content = await file.text(); 
       // Context에 문서 저장
       const newDoc = {
-        documentId: response.documentId || response.document_id || '',
+        documentId: response.documentId || '',
         filename: file.name,
         size: file.size,
         uploadDate: new Date().toISOString(),

@@ -7,7 +7,6 @@ const API_BASE_URL = (import.meta.env.VITE_API_URL as string) || 'http://localho
 export interface UploadResponse {
   success: boolean;
   documentId?: string;
-  document_id?: string;
   fileName?: string;
   file_name?: string;
   fileSize?: number;
