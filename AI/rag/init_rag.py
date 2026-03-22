@@ -16,7 +16,10 @@ from datetime import date
 from dotenv import load_dotenv
 from google import genai
 from google.genai import types
-from qdrant_client.models import PointStruct
+from qdrant_client.models import PointStruct, SparseVector
+from fastembed import SparseTextEmbedding
+
+bm25_model = SparseTextEmbedding(model_name="Qdrant/bm25")
 
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 load_dotenv()
@@ -64,11 +67,14 @@ TARGET_LAWS = [
     {"name": "민간임대주택에 관한 특별법",    "mst": "276995" ,   "filter_articles": None},
     {"name": "민간임대주택에 관한 특별법 시행령",    "mst": "269343" ,   "filter_articles": None},
     {"name": "민간임대주택에 관한 특별법 시행규칙",    "mst": "280639" ,   "filter_articles": None},
+
     {"name": "부도공공건설임대주택 임차인 보호를 위한 특별법",    "mst": "174491" ,   "filter_articles": None},
     {"name": "부도공공건설임대주택 임차인 보호를 위한 특별법 시행령",    "mst": "185425" ,   "filter_articles": None},
+
     {"name": "장기공공임대주택 입주자 삶의 질 향상 지원법",    "mst": "273421" ,   "filter_articles": None},
     {"name": "장기공공임대주택 입주자 삶의 질 향상 지원법 시행령",    "mst": "283499" ,   "filter_articles": None},
     {"name": "장기공공임대주택 입주자 삶의 질 향상 지원법 시행규칙",    "mst": "185553" ,   "filter_articles": None},
+
     {"name": "주택법",    "mst": "283191" ,   "filter_articles": None},
     {"name": "주택법 시행령",    "mst": "281851" ,   "filter_articles": None},
     {"name": "주택법 시행규칙",    "mst": "284551" ,   "filter_articles": None},
@@ -193,8 +199,11 @@ def step1_collect_laws(db):
         time.sleep(1)
 
 
+BATCH_SIZE = 20  # 한 번에 Qdrant에 저장할 개수
+
+
 def step2_embed_and_store(db, qdrant):
-    """Step 2: PENDING 항목만 임베딩 -> Qdrant 저장 (이어쓰기 지원)"""
+    """Step 2: PENDING 항목만 임베딩 -> Qdrant 배치 저장 (이어쓰기 지원)"""
     col = db["law_chunks"]
     pending = list(col.find({"process_status": "PENDING"}))
     total = len(pending)
@@ -203,7 +212,10 @@ def step2_embed_and_store(db, qdrant):
         print("\n[Step 2] 모든 항목이 이미 임베딩 완료되었습니다.")
         return
 
-    print(f"\n[Step 2] 임베딩 시작: {total}개 항목")
+    print(f"\n[Step 2] 임베딩 시작: {total}개 항목 (배치 크기: {BATCH_SIZE})")
+
+    batch_points = []   # Qdrant에 배치로 보낼 포인트 누적
+    batch_ids = []      # MongoDB 상태 업데이트용 ID 누적
 
     for i, doc in enumerate(pending, 1):
         print(f"  [{i}/{total}] {doc['law_name']} 제{doc['article_num']}조 임베딩 중...")
@@ -227,28 +239,44 @@ def step2_embed_and_store(db, qdrant):
             continue
 
         qdrant_id = objectid_to_uuid(doc["_id"])
+        sparse_result = list(bm25_model.embed([text]))[0]
 
-        qdrant.upsert(
-            collection_name=LAW_COLLECTION,
-            points=[
-                PointStruct(
-                    id=qdrant_id,
-                    vector=vector,
-                    payload={
-                        "mongo_id": str(doc["_id"]),
-                        "law_name": doc["law_name"],
-                        "article_num": doc["article_num"],
-                        "article_title": doc["article_title"],
-                        "effective_date": doc["effective_date"],
-                    }
+        # 배치에 누적
+        batch_points.append(
+            PointStruct(
+                id=qdrant_id,
+                vector={
+                    "dense": vector,
+                    "sparse": SparseVector(
+                        indices=sparse_result.indices.tolist(),
+                        values=sparse_result.values.tolist()
+                    )
+                },
+                payload={
+                    "mongo_id": str(doc["_id"]),
+                    "law_name": doc["law_name"],
+                    "article_num": doc["article_num"],
+                    "article_title": doc["article_title"],
+                    "effective_date": doc["effective_date"],
+                }
+            )
+        )
+        batch_ids.append(doc["_id"])
+
+        # 배치가 꽉 차거나 마지막 항목이면 Qdrant에 전송
+        if len(batch_points) >= BATCH_SIZE or i == total:
+            print(f"  → Qdrant 배치 저장 중 ({len(batch_points)}개)...")
+            qdrant.upsert(collection_name=LAW_COLLECTION, points=batch_points)
+
+            # MongoDB 상태 일괄 업데이트
+            for doc_id in batch_ids:
+                col.update_one(
+                    {"_id": doc_id},
+                    {"$set": {"process_status": "DONE"}}
                 )
-            ]
-        )
 
-        col.update_one(
-            {"_id": doc["_id"]},
-            {"$set": {"process_status": "DONE", "qdrant_id": qdrant_id}}
-        )
+            batch_points = []
+            batch_ids = []
 
         time.sleep(4)
 
