@@ -89,3 +89,31 @@ export const likePost = async (req, res, next) => {
         next(error);
     }
 };
+
+export const categoryPost = async (req, res, next) => {
+    try {
+        const { sort = "latest", category } = req.body;
+
+        let filter = {};
+        if (category) {
+            filter.category = category;
+        }
+
+        let sortOption = {};
+        if (sort === "popular") {
+            sortOption = { likes: -1 };
+        } else {
+            sortOption = { createAt: -1 };
+        }
+
+        const posts = await Post.find(fliter)
+            .sort(sortOption)
+            .populate("userID");
+
+        res.json(posts);
+    } catch (error) {
+        console.error(error);
+        next(error);
+    }
+};
+
