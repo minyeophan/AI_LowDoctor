@@ -5,9 +5,11 @@ import HomePage from './pages/HomePage';
 import AnalysisPage from './pages/AiPage';
 import LoginPage from './pages/LoginPage';
 import SignupPage from './pages/SignupPage';
+import CommunityPage from './pages/CommunityPage';
+import PostDetailPage from './pages/PostdetailPage';
+import WritePostPage from './pages/WritepostPage';
 import MyPage from './pages/MyPage';
 import { AuthProvider } from './context/AuthContext';
-
 import { RiAccountBoxFill } from "react-icons/ri";
 import logoImage from '../src/assets/img/logo.svg';
 import { HiMenu, HiX } from "react-icons/hi";
@@ -19,8 +21,12 @@ function Navbar() {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
   const isActive = (path: string) => {
-    return location.pathname === path;
-  };
+  if (path === '/community') {
+    return location.pathname === '/community' || 
+           location.pathname.startsWith('/community/');
+  }
+  return location.pathname === path;
+};
 
   const toggleMobileMenu = () => {
     setIsMobileMenuOpen(!isMobileMenuOpen);
@@ -146,7 +152,7 @@ function Navbar() {
 function AppContent() {
   const location = useLocation();
   
-  const hideNavbarPaths = ['/login', '/signup', '/find-id', '/reset-password', '/analysis'];
+  const hideNavbarPaths = ['/login', '/signup', '/find-id', '/reset-password', '/analysis', '/community/write'];
   const shouldHideNavbar = hideNavbarPaths.includes(location.pathname);
 
   return (
@@ -159,6 +165,10 @@ function AppContent() {
           <Route path="/login" element={<LoginPage />} />
           <Route path="/signup" element={<SignupPage />} />
           <Route path="/mypage/*" element={<MyPage />} />
+          <Route path="/community" element={<CommunityPage />} />
+          <Route path="/community/:id" element={<PostDetailPage /> }/>
+          <Route path="/community/write" element={<WritePostPage />} />
+          
           {/* 나중에 추가할 페이지들 */}
           {/* <Route path="/find-id" element={<FindIdPage />} /> */}
           {/* <Route path="/reset-password" element={<ResetPasswordPage />} /> */}

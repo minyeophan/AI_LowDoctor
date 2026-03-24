@@ -9,7 +9,7 @@
 .upload-section {
   margin: 0px;
   padding: 60px 0px;
-  background-color: #F8FAFC;
+  background-color: #fff;
   width: 100%;
   display: flex; justify-content: center;
 }
@@ -141,21 +141,54 @@
 }
 
 .commu-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-  height: 350px;
-  background-color: #2d3748;
+  margin-bottom: 20px;
 }
 
-.schedule-card {
-  background-color: rgb(218, 236, 255);
-  padding: 40px 30px;
-  border-radius: 16px;
+.commu-list {
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+  overflow: hidden;
+}
+
+.commu-item {
+  padding: 8px 20px 0px;
+  background: #ffff;
+}
+
+.commu-item-badges {
+  display: flex;
+  gap: 6px;
+  margin-bottom: 0px;
+  padding-top: 8px;
+}
+
+.commu-divider {
+  height: 1px;
+  background: #e2e8f0;
+  margin: 0 20px;
+}
+
+.commu-more {
   text-align: center;
-  transition: all 0.3s ease;
-  border: 2px solid transparent;
+  margin-top: 12px;
 }
 
+.commu-more-btn {
+  background: #4099FD;
+  color: #fff;
+  border: none;
+  border-radius: 8px;
+  padding: 8px 48px;
+  font-size: 15px;
+  font-weight: 600;
+  cursor: pointer;
+  font-family: 'KoPub', sans-serif;
+}
+
+.commu-more-btn:hover {
+  background: #2563eb;
+}
 /* 반응형 디자인 */
 @media (max-width: 768px) {
   .hero-title {
