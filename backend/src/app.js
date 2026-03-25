@@ -14,7 +14,6 @@ import analyzeRouter from "./routes/analyze_routes.js";
 import resultRouter from "./routes/result_routes.js";
 import authRouter from "./routes/auth_routes.js";
 import postRouter from "./routes/post_routes.js";
-import commentRouter from "./routes/comment_routes.js";
 
 dotenv.config();
 
@@ -34,10 +33,7 @@ app.use((req, res, next) => {
 
 app.use(
   cors({
-    origin: [
-      "http://localhost:5173",
-      "http://localhost",
-    ],
+    origin: ["http://localhost:5173", "http://localhost"],
     credentials: true,
   })
 );
@@ -63,8 +59,7 @@ app.use("/api", authRouter);
 app.use("/api", uploadRouter);
 app.use("/api", analyzeRouter);
 app.use("/api", resultRouter);
-app.use("/post", postRouter);
-app.use("/comment", commentRouter);
+app.use("/api/posts", postRouter);
 
 app.get("/", (req, res) => {
   res.json({
