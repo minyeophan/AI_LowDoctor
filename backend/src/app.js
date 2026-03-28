@@ -61,7 +61,7 @@ app.use("/api", uploadRouter);
 app.use("/api", analyzeRouter);
 app.use("/api", resultRouter);
 app.use("/api/posts", postRouter);
-app.use("/api/myapge", mypageRouter);
+app.use("/api/mypage", mypageRouter);
 
 app.get("/", (req, res) => {
   res.json({

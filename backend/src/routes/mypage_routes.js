@@ -3,6 +3,6 @@ import { getMyPageList } from "../controllers/mypage_controller.js";
 
 const router = express.Router();
 
-router.get('/mypage', getMyPageList);
+router.get('/', getMyPageList);
 
 export default router;

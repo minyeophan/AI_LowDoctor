@@ -23,7 +23,7 @@ const options = {
     },
     security: [{ bearerAuth: [] }],
   },
-  apis: [path.join(__dirname, "./swagger/*.yaml")],
+  apis: [path.join(__dirname, "./*.yaml")],
 };
 
 const swaggerSpec = swaggerJsdoc(options);
