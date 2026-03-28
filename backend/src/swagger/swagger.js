@@ -13,7 +13,7 @@ const options = {
       version: "1.0.0",
     },
     components: {
-      securitySchemas: {
+      securitySchemes: {
         bearerAuth: {
           type: 'http',
           scheme: 'bearer',
@@ -23,7 +23,7 @@ const options = {
     },
     security: [{ bearerAuth: [] }],
   },
-  apis: [path.join(__dirname, "../routes/*.js")],
+  apis: [path.join(__dirname, "./swagger/*.yaml")],
 };
 
 const swaggerSpec = swaggerJsdoc(options);
