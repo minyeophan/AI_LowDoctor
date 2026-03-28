@@ -29,13 +29,16 @@ export const getMyPageList = async (req, res, next) => {
         }
         const currentUserID = req.user.userID;
 
-        let sortOption = {};
-        if (sort === "recent") sortOption = { createdAt: -1 };
-        else if (sort === "old") sortOption = { createdAt: 1 };
-        else if (sort === "name") sortOption = { originalname: 1 };
-        else sortOption = { createdAt: -1 };
+        const sortOption = sort === "name" ? { originalname: 1 } :
+                            sort === "old" ? { createdAt: 1 } : { createdAt: -1 };
 
-        const uploads = await Upload.find().sort(sortOption).lean();
+        const query = { userID: req.user.userID };
+
+        if (contractType && contractType !== "전체") {
+            query.contractType = contractType;
+        }
+
+        const uploads = await Upload.find(query).sort(sortOption).lean();
 
         const items = await Promise.all(
             uploads.map(async (file) => {
