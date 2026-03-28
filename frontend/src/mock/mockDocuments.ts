@@ -9,7 +9,7 @@ import {
 
 // categoryInfo만 여기 유지
 export const categoryInfo: CategoryMap = {
-  real_estate: { label: '부동산', color: '#5B8DEE' },
+  real_estate: { label: '부동산', color: '#5B8DEE',},
   employment: { label: '근로', color: '#D946A6' },
   freelance: { label: '프리랜서', color: '#8B5CF6' },
   other: { label: '기타', color: '#6B7280' },

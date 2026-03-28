@@ -83,7 +83,6 @@
 
 .search-box:focus-within {
   border-color: #4099FD;
-  box-shadow: 0 0 0 3px rgba(64, 153, 253, 0.1);
 }
 
 .search-box input {
@@ -139,7 +138,6 @@
 .filter-select:focus {
   outline: none;
   border-color: #4099FD;
-  box-shadow: 0 0 0 3px rgba(64, 153, 253, 0.1);
 }
 
 /* 작성하기 버튼 */

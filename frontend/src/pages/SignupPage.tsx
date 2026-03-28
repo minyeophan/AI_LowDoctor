@@ -137,6 +137,24 @@ export default function SignupPage() {
     }
   };
 
+  const textFieldSx = (hasError: boolean) => ({
+    '& .MuiOutlinedInput-root': {
+      background: '#ffffff',
+      height: inputSizes.medium.height,
+      fontSize: inputSizes.medium.fontSize,
+      '& fieldset': {
+        borderColor: hasError ? colors.error : colors.gray[300],
+      },
+      '&:hover fieldset': {
+        borderColor: hasError ? colors.error : colors.gray[400],
+      },
+      '&.Mui-focused fieldset': {
+        borderColor: hasError ? colors.error : colors.primary.main,
+        borderWidth: '1px',
+      },
+    },
+  });
+
   return (
     <Box
       sx={{
@@ -193,22 +211,7 @@ export default function SignupPage() {
                 }}
                 disabled={loading}
                 error={!!errors.name}
-                sx={{
-                  '& .MuiOutlinedInput-root': {
-                    height: inputSizes.medium.height,
-                    fontSize: inputSizes.medium.fontSize,
-                    '& fieldset': {
-                      borderColor: errors.name ? colors.error : colors.gray[300],
-                    },
-                    '&:hover fieldset': {
-                      borderColor: errors.name ? colors.error : colors.gray[400],
-                    },
-                    '&.Mui-focused fieldset': {
-                      borderColor: errors.name ? colors.error : colors.primary.main,
-                      borderWidth: '1px',
-                    },
-                  },
-                }}
+                sx={textFieldSx(!!errors.name)}
               />
               {errors.name && (
                 <FormHelperText error sx={{ ml: 0, mt: 0.5, fontSize: '12px' }}>
@@ -236,16 +239,18 @@ export default function SignupPage() {
                   displayEmpty
                   disabled={loading}
                   IconComponent={KeyboardArrowDown}
+
                   sx={{
+                    background: '#ffffff',
                     height: inputSizes.medium.height,
                     fontSize: inputSizes.medium.fontSize,
-                    '& fieldset': {
+                    '& .MuiOutlinedInput-notchedOutline': {
                       borderColor: colors.gray[300],
                     },
-                    '&:hover fieldset': {
+                    '&:hover .MuiOutlinedInput-notchedOutline': {
                       borderColor: colors.gray[400],
                     },
-                    '&.Mui-focused fieldset': {
+                    '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
                       borderColor: colors.primary.main,
                       borderWidth: '1px',
                     },
@@ -287,22 +292,7 @@ export default function SignupPage() {
                 }}
                 disabled={loading}
                 error={!!errors.email}
-                sx={{
-                  '& .MuiOutlinedInput-root': {
-                    height: inputSizes.medium.height,
-                    fontSize: inputSizes.medium.fontSize,
-                    '& fieldset': {
-                      borderColor: errors.email ? colors.error : colors.gray[300],
-                    },
-                    '&:hover fieldset': {
-                      borderColor: errors.email ? colors.error : colors.gray[400],
-                    },
-                    '&.Mui-focused fieldset': {
-                      borderColor: errors.email ? colors.error : colors.primary.main,
-                      borderWidth: '1px',
-                    },
-                  },
-                }}
+                sx={textFieldSx(!!errors.email)}
               />
               {errors.email && (
                 <FormHelperText error sx={{ ml: 0, mt: 0.5, fontSize: '12px' }}>
@@ -352,22 +342,7 @@ export default function SignupPage() {
                     </InputAdornment>
                   ),
                 }}
-                sx={{
-                  '& .MuiOutlinedInput-root': {
-                    height: inputSizes.medium.height,
-                    fontSize: inputSizes.medium.fontSize,
-                    '& fieldset': {
-                      borderColor: errors.password ? colors.error : colors.gray[300],
-                    },
-                    '&:hover fieldset': {
-                      borderColor: errors.password ? colors.error : colors.gray[400],
-                    },
-                    '&.Mui-focused fieldset': {
-                      borderColor: errors.password ? colors.error : colors.primary.main,
-                      borderWidth: '1px',
-                    },
-                  },
-                }}
+                sx={textFieldSx(!!errors.password)}
               />
               {errors.password && (
                 <FormHelperText error sx={{ ml: 0, mt: 0.5, fontSize: '12px' }}>
@@ -417,22 +392,7 @@ export default function SignupPage() {
                     </InputAdornment>
                   ),
                 }}
-                sx={{
-                  '& .MuiOutlinedInput-root': {
-                    height: inputSizes.medium.height,
-                    fontSize: inputSizes.medium.fontSize,
-                    '& fieldset': {
-                      borderColor: errors.confirmPassword ? colors.error : colors.gray[300],
-                    },
-                    '&:hover fieldset': {
-                      borderColor: errors.confirmPassword ? colors.error : colors.gray[400],
-                    },
-                    '&.Mui-focused fieldset': {
-                      borderColor: errors.confirmPassword ? colors.error : colors.primary.main,
-                      borderWidth: '1px',
-                    },
-                  },
-                }}
+                sx={textFieldSx(!!errors.confirmPassword)}
               />
               {errors.confirmPassword && (
                 <FormHelperText error sx={{ ml: 0, mt: 0.5, fontSize: '12px' }}>
@@ -448,6 +408,7 @@ export default function SignupPage() {
                 p: 2,
                 border: `1px solid ${errors.agreements ? colors.error : colors.gray[300]}`,
                 borderRadius: borderRadius.md,
+                background: '#ffffff',
               }}
             >
               <FormControlLabel
@@ -483,9 +444,7 @@ export default function SignupPage() {
                       size="small"
                       sx={{
                         color: colors.gray[400],
-                        '&.Mui-checked': {
-                          color: colors.primary.main,
-                        },
+                        '&.Mui-checked': { color: colors.primary.main },
                       }}
                     />
                   }
@@ -506,9 +465,7 @@ export default function SignupPage() {
                       size="small"
                       sx={{
                         color: colors.gray[400],
-                        '&.Mui-checked': {
-                          color: colors.primary.main,
-                        },
+                        '&.Mui-checked': { color: colors.primary.main },
                       }}
                     />
                   }
@@ -529,9 +486,7 @@ export default function SignupPage() {
                       size="small"
                       sx={{
                         color: colors.gray[400],
-                        '&.Mui-checked': {
-                          color: colors.primary.main,
-                        },
+                        '&.Mui-checked': { color: colors.primary.main },
                       }}
                     />
                   }
@@ -549,9 +504,7 @@ export default function SignupPage() {
                       size="small"
                       sx={{
                         color: colors.gray[400],
-                        '&.Mui-checked': {
-                          color: colors.primary.main,
-                        },
+                        '&.Mui-checked': { color: colors.primary.main },
                       }}
                     />
                   }
@@ -563,6 +516,7 @@ export default function SignupPage() {
                 />
               </Box>
             </Box>
+
             {/* 약관 에러 메시지 */}
             {errors.agreements && (
               <FormHelperText error sx={{ ml: 0, mt: -2, mb: 2, fontSize: '12px' }}>
