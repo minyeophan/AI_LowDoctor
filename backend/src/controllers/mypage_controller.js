@@ -42,17 +42,18 @@ export const getMyPageList = async (req, res, next) => {
 
         const items = await Promise.all(
             uploads.map(async (file) => {
-                const analysis = await Analysis.findOne({ documentId: file.documentId });
+                const analysis = await Analysis.findOne({ documentId: file.documentId }).lean();
 
                 if (category === "draft") {
                     if (analysis?.status === "completed") return null;
 
                     return {
                         documentId: file.documentId,
-                        contractType: "부동산", // 추후 file.contractType으로 변경 권장
+                        contractType: file.contractType || "부동산",
                         title: file.originalname,
                         updatedAt: formatDate(file.updatedAt),
-                        progress: analysis?.status === "processing" ? 50: 10,   // 가상 진행률
+                        progress: analysis?.progress || 0,
+                        statusText: resolveAnalysisStatus(analysis?.status)
                     };
                 } else {
                     if (analysis?.status !== "completed") return null;

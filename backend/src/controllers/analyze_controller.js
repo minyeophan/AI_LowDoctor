@@ -3,6 +3,25 @@ import Analysis from "../schemas/analyze_db.js";
 import Result from "../schemas/result_db.js";
 import { analyzeDocument } from "../service/ai_service.js";
 
+export const startAnalysis = async (documentId) => {
+  try {
+    await Analysis.updateOne({ documentId }, { progress: 20 });
+    const text = await extractTextFromFile(documentId);
+
+    await Analysis.updateOne({ documentId }, { progress: 60 });
+    const aiResult = await requestAIAnalysis(text);
+
+    await Result.create({ documentId, ...aiResult });
+    await Analysis.updateOne({
+      documentId,
+      status: "completed",
+      progress: 100
+    });
+  } catch (error) {
+    await Analysis.updateOne({ documentId }, { status: "failed" });
+  }
+};
+
 export const requestAnalysis = async (req, res, next) => {
   try {
     const { documentId } = req.body;
