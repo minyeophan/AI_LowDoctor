@@ -4,9 +4,9 @@ import Result from "../schemas/result_db.js";
 
 const formatDate = (dateValue) => {
     if (!dateValue) return "";
-    const date = new Date(dataValeu);
+    const date = new Date(dateValue);
     const yyyy = date.getFullYear();
-    const mm = String(date.getmonth() + 1).padStart(2, "0");
+    const mm = String(date.getMonth() + 1).padStart(2, "0");
     const dd = String(date.getDate()).padStart(2, "0");
     return `${yyyy}-${mm}-${dd}`;
 };
@@ -62,7 +62,7 @@ export const getMyPageList = async (req, res, next) => {
                         documentId: file.documentId,
                         contractType: "부동산",
                         title: file.originalname,
-                        uploadDtae: formatDate(file.createdAt),
+                        UploadDate: formatDate(file.createdAt),
                         analysisStatus: resolveAnalysisStatus(analysis.status),
                     };
                 }
