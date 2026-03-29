@@ -9,10 +9,7 @@ import {
 
 // categoryInfo만 여기 유지
 export const categoryInfo: CategoryMap = {
-  real_estate: { label: '부동산', color: '#5B8DEE',},
-  employment: { label: '근로', color: '#D946A6' },
-  freelance: { label: '프리랜서', color: '#8B5CF6' },
-  other: { label: '기타', color: '#6B7280' },
+  real_estate: { label: '부동산', color: '#5B8DEE' },
 };
 
 export const mockDrafts: DraftDocument[] = [
@@ -39,17 +36,6 @@ export const mockDrafts: DraftDocument[] = [
     lastEditedAt: '2024-01-26T12:15:00',
     createdAt: '2024-01-26T09:00:00',
   },
-  {
-    id: 'draft-3',
-    title: '근로 계약서.pdf',
-    category: 'employment',
-    progress: 20,
-    currentStep: 1,
-    totalSteps: 5,
-    stepName: '기본 정보',
-    lastEditedAt: '2023-12-08T16:30:00',
-    createdAt: '2023-12-08T11:20:00',
-  },
 ];
 
 export const mockStorageDocuments: StorageDocument[] = [
@@ -69,13 +55,5 @@ export const mockStorageDocuments: StorageDocument[] = [
     uploadedAt: '2026-01-21T14:20:00',
     analysisStatus: 'unanalyzed',
     fileSize: 1887436,
-  },
-  {
-    id: 'storage-3',
-    title: '근로 계약서.pdf',
-    category: 'employment',
-    uploadedAt: '2025-12-08T11:15:00',
-    analysisStatus: 'completed',
-    fileSize: 3355443,
   },
 ];

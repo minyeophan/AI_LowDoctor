@@ -155,7 +155,6 @@ function DocumentView({ currentDocument, zoomLevel, onZoomIn, onZoomOut }: Docum
         <div className="document-toolbar-new">
           {/* 검색창 */}
           <div className="search-box-new">
-            
             <input
               type="text"
               placeholder="내용을 검색하세요"
@@ -163,7 +162,7 @@ function DocumentView({ currentDocument, zoomLevel, onZoomIn, onZoomOut }: Docum
               onChange={(e) => setSearchTerm(e.target.value)}
               className="search-input-new"
             />
-            <FiSearch className="search-icon" size={16} />
+            
             {searchResults.length > 0 && (
               <div className="search-results">
                 <span>{currentSearchIndex + 1}/{searchResults.length}</span>
