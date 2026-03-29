@@ -15,6 +15,7 @@ import resultRouter from "./routes/result_routes.js";
 import authRouter from "./routes/auth_routes.js";
 import postRouter from "./routes/post_routes.js";
 import mypageRouter from "./routes/mypage_routes.js";
+import chatRouter from "./routes/chat_routes.js";
 
 dotenv.config();
 
@@ -60,6 +61,7 @@ app.use("/api", authRouter);
 app.use("/api", uploadRouter);
 app.use("/api", analyzeRouter);
 app.use("/api", resultRouter);
+app.use("/api", chatRouter);
 app.use("/api/posts", postRouter);
 app.use("/api/mypage", mypageRouter);
 
