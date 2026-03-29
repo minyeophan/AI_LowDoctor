@@ -1,7 +1,11 @@
 google-genai
 python-dotenv==1.0.0
 pytesseract==0.3.10
+<<<<<<< HEAD
 pillow==11.0.0
+=======
+pillow>=10.1.0
+>>>>>>> 993fa18 (feat: 챗봇 RAG 검색 및 법령/용어/지식베이스 연동 구현)
 pdfplumber
 fastapi
 uvicorn
@@ -9,3 +13,5 @@ python-multipart
 httpx
 pymongo
 qdrant-client
+fastembed
+requests

@@ -12,8 +12,18 @@ import resultRouter from './routes/result_routes.js';
 import authRouter from './routes/auth_routes.js';
 import chatRouter from './routes/chat_routes.js';
 
+<<<<<<< HEAD
 import swaggerSpec from './swagger/swagger.js';
 import { connect } from './schemas/index.js';
+=======
+import uploadRouter from "./routes/upload_routes.js";
+import analyzeRouter from "./routes/analyze_routes.js";
+import resultRouter from "./routes/result_routes.js";
+import authRouter from "./routes/auth_routes.js";
+import postRouter from "./routes/post_routes.js";
+import mypageRouter from "./routes/mypage_routes.js";
+import chatRouter from "./routes/chat_routes.js";
+>>>>>>> 993fa18 (feat: 챗봇 RAG 검색 및 법령/용어/지식베이스 연동 구현)
 
 dotenv.config();
 
@@ -53,7 +63,17 @@ app.use(session({
   }
 }));
 
+<<<<<<< HEAD
 app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec));
+=======
+app.use("/api", authRouter);
+app.use("/api", uploadRouter);
+app.use("/api", analyzeRouter);
+app.use("/api", resultRouter);
+app.use("/api", chatRouter);
+app.use("/api/posts", postRouter);
+app.use("/api/mypage", mypageRouter);
+>>>>>>> 993fa18 (feat: 챗봇 RAG 검색 및 법령/용어/지식베이스 연동 구현)
 
 app.get('/', (req, res) => {
   res.json({ msg: 'AI Legal Doctor Backend OK' });

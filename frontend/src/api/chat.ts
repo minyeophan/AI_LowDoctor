@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || "http://localhost:3001/api";
 
 export interface ChatResponse {
@@ -32,3 +33,17 @@ export const chatAPI = {
     return data;
   },
 };
+=======
+import { apiClient } from "./client";
+
+export interface ChatResponse {
+  answer: string;
+}
+
+export async function sendChatMessage(question: string): Promise<ChatResponse> {
+  return apiClient<ChatResponse>("/api/chat", {
+    method: "POST",
+    body: JSON.stringify({ question }),
+  });
+}
+>>>>>>> 993fa18 (feat: 챗봇 RAG 검색 및 법령/용어/지식베이스 연동 구현)
