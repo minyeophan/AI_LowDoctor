@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import logoImage from '../assets/img/logo.svg';
+import { communityAPI } from '../api/community';
 import './CommunityPage.css';
 
 const CATEGORIES = ['부동산'];
@@ -15,20 +16,19 @@ export default function WritePostPage() {
 
   const isValid = title.trim().length > 0 && content.trim().length > 0 && agreed;
 
-  const handleSubmit = async () => {
-    if (!isValid) return;
-    setIsSubmitting(true);
-    try {
-      // 백엔드 연동 시 여기서 API 호출
-      // await communityAPI.createPost({ category, title, content });
-      console.log('게시글 등록:', { category, title, content });
-      navigate('/community');
-    } catch (error) {
-      console.error('게시글 등록 실패:', error);
-    } finally {
-      setIsSubmitting(false);
-    }
-  };
+const handleSubmit = async () => {
+  if (!isValid) return;
+  setIsSubmitting(true);
+  try {
+    await communityAPI.createPost({ category, title, content });
+    navigate('/community');
+  } catch (error) {
+    console.error('게시글 등록 실패:', error);
+    alert('게시글 등록에 실패했습니다. 다시 시도해주세요.');
+  } finally {
+    setIsSubmitting(false);
+  }
+};
 
   return (
      <div className="write-wrapper">

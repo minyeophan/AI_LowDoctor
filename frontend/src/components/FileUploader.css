@@ -1,7 +1,7 @@
 /* ===== 전체 래퍼 ===== */
 .file-uploader-simple {
   width: 100%;
-  max-width: 400px;
+  max-width: 500px;
   margin: 0 auto; 
 }
 
@@ -11,12 +11,13 @@
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  gap: 16px;
-  padding: 48px 80px;
-  background: #f5f6f8;
-  border-radius: 12px;
-  border: 2px dashed transparent;
+  gap: 20px;
+  padding: 40px 0px;
+  background: #f7fafc;
+  border: 2px dotted #e5e7eb;
+  border-radius: 8px;
   transition: all 0.2s;
+  width: 500px;
 }
 
 .upload-area:hover {
@@ -30,14 +31,15 @@
 }
 
 /* ===== 업로드 아이콘 ===== */
+
 .upload-icon-simple {
-  font-size: 40px;
+  font-size: 18px;
   color: #4099FD;
 }
 
 /* ===== 파일 선택 버튼 ===== */
 .select-button {
-  padding: 10px 48px;
+  padding: 11px 72px; 
   background: #4099FD;
   color: #fff;
   border: none;
@@ -45,7 +47,8 @@
   font-size: 15px;
   font-weight: 600;
   cursor: pointer;
-  width: 100%;
+  gap: 8px;
+  display: flex; justify-content: center; align-items: center;
 }
 
 .select-button:hover {
@@ -59,6 +62,20 @@
   text-align: center;
   margin: 0;
 }
+.upload-drag-text {
+  font-size: 13px;
+  color: #64748b;
+  margin: 0;
+  text-align: center;
+  line-height: 1.8;
+}
+
+.upload-notice {
+  font-size: 12px;
+  color: #4099FD;
+  margin: 0;
+  font-weight: 500;
+}
 
 /* ===== 파일 선택 후 영역 ===== */
 .file-selected-area {
@@ -67,7 +84,7 @@
   align-items: center;
   justify-content: center;
   gap: 8px;
-  width: 388px;
+  width: 100%;
   padding: 40px 40px;
   background: #f5f6f8;
   border-radius: 12px;
@@ -84,7 +101,6 @@
 
 .file-icon-large {
   color: #4099FD;
-  font-size: 40px;
 }
 
 .file-name-simple {
@@ -105,7 +121,7 @@
 /* ===== 액션 버튼들 ===== */
 .action-buttons {
   display: flex;
-  gap: 8px;
+  gap: 16px;
   width: 100%;
 }
 

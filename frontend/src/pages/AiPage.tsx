@@ -18,9 +18,9 @@ import { mockContractTip, mockImprovementGuides, mockRiskItems, mockSummaryData 
 import { UploadResult } from '../types';
 import './AiPage.css';
 
-type MenuItem = 'document' | 'summary' | 'danger' | 'guide' | 'search';
+type MenuItem = 'document' | 'summary' | 'danger' | 'guide';
 type AnalysisType = 'summary' | 'danger' | 'guide' | null;
-type SidebarType = 'chatbot' | 'notification' | null;
+type SidebarType = 'chatbot' | 'notification' | 'search' | null;
 
 
 function AnalysisPage() {
@@ -161,7 +161,7 @@ const API_ENABLED = import.meta.env.VITE_API_BASE_URL !== undefined &&
 
     // 4. 텍스트 화면 표시
     const newDoc = {
-      documentId: response.document_id,
+      documentId: response.documentId,
       status: response.status,
       filename: uploadResult.file.name,
       size: uploadResult.file.size,
@@ -240,9 +240,9 @@ const handleAnalysisCancel = () => {
 };
 
   // 사이드바 토글
-  const toggleSidebar = (type: 'chatbot' | 'notification') => {
-    setActiveSidebar(activeSidebar === type ? null : type);
-  };
+  const toggleSidebar = (type: 'chatbot' | 'notification' | 'search') => {
+  setActiveSidebar(activeSidebar === type ? null : type);
+};
 
   // 줌 인/아웃 함수
 const handleZoomIn = () => {
@@ -277,7 +277,16 @@ const getAnalysisKey = (type: AnalysisType) => {
         <div className="content-section upload-prompt">
           <div className="upload-prompt-content">
             <div className="file-uploader-wrapper">
+              <div className="upload-guide">
+                <p className="upload-guide-title">계약서 업로드</p>
+                <ul className="upload-guide-list">
+                  <li>현재 부동산 계약서만 업로드 가능합니다.</li>
+                  <li>PDF, HWP, DOC, TXT 파일을 업로드할 수 있습니다.</li>
+                  
+                </ul>
+              </div>
               <FileUploader onUploadSuccess={handleFileUploadSuccess} />
+
             </div>
           </div>
         </div>
@@ -374,15 +383,7 @@ const getAnalysisKey = (type: AnalysisType) => {
           onZoomOut={handleZoomOut}
         />
       );
-
-      case 'search':
-        return (
-          <div className="content-section">
-            <h2>🔍 검색</h2>
-            <p>문서 내 검색 기능이 곧 제공됩니다...</p>
-          </div>
-        );
-
+        
       default:
         return null;
     }

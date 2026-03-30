@@ -47,17 +47,19 @@ function GuideView({
 
   // 개선된 문서 생성
   const generateImprovedDocument = () => {
-    let modifiedContent = currentDocument.content;
-    
-    improvementGuides.forEach(guide => {
-      modifiedContent = modifiedContent.replace(
-        guide.originalClause,
-        guide.improvedClause
-      );
-    });
-    
-    return modifiedContent;
-  };
+  let modifiedContent = currentDocument.content;
+  
+  improvementGuides.forEach(guide => {
+    // 정규식으로 공백/줄바꿈 무시하고 교체
+    const escaped = guide.originalClause
+      .replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
+      .replace(/\s+/g, '\\s+');
+    const regex = new RegExp(escaped, 'g');
+    modifiedContent = modifiedContent.replace(regex, guide.improvedClause);
+  });
+  
+  return modifiedContent;
+};
 
   // 대응 가이드 적용하기 클릭
   const handleApplyGuide = () => {

@@ -1,0 +1,218 @@
+/* ===== 커뮤니티 활동 페이지 ===== */
+.mycommunity-page {
+  width: 100%;
+}
+
+.mycommunity-header {
+  margin-bottom: 30px;
+}
+
+.mycommunity-header h1 {
+  font-size: 22px;
+  font-weight: 700;
+  color: #111827;
+  margin: 0;
+}
+
+/* ===== 탭 ===== */
+.mycommunity-tabs-wrap {
+  margin-bottom: 24px;
+}
+
+.mycommunity-tabs {
+  display: inline-flex;
+  position: relative;
+  background: #fff;
+  border-radius: 50px;
+  border: 1px solid #e2e8f0;
+  overflow: hidden;
+}
+
+.mycommunity-tab-btn {
+  position: relative;
+  padding: 8px 0px;
+  background: transparent;
+  border: none;
+  color: #6B7280;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: color 0.3s;
+  z-index: 2;
+  min-width: 120px;
+  font-family: 'KoPub', sans-serif;
+}
+
+.mycommunity-tab-btn.active {
+  color: white;
+}
+
+.mycommunity-tab-slider {
+  position: absolute;
+  top: 0;
+  left: 0;
+  height: 100%;
+  background: #4099FD;
+  border-radius: 50px;
+  transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  z-index: 1;
+}
+
+/* ===== 컨트롤 ===== */
+.mycommunity-controls {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 12px;
+}
+
+.mycommunity-count {
+  font-size: 14px;
+  color: #6B7280;
+}
+
+.mycommunity-count b {
+  color: #111827;
+  font-weight: 600;
+}
+
+.mycommunity-delete-btn {
+  height: 34px;
+  padding: 0 16px;
+  background: #fff;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  font-size: 13px;
+  font-weight: 500;
+  color: #E53E3E;
+  cursor: pointer;
+  font-family: 'KoPub', sans-serif;
+  transition: all 0.15s;
+}
+
+.mycommunity-delete-btn:hover:not(:disabled) {
+  border-color: #E53E3E;
+}
+
+.mycommunity-delete-btn:disabled {
+  color: #9CA3AF;
+  border-color: #e2e8f0;
+  cursor: not-allowed;
+}
+
+/* ===== 테이블 ===== */
+.mycommunity-table-wrap {
+  border: 1px solid #E5E7EB;
+  border-radius: 12px;
+  overflow: hidden;
+}
+
+.mycommunity-table {
+  width: 100%;
+  border-collapse: collapse;
+  background: #fff;
+}
+
+.mycommunity-table thead tr {
+  background: #F9FAFB;
+}
+
+.mycommunity-table th {
+  padding: 8px 22px;
+  font-size: 13px;
+  font-weight: 600;
+  color: #6B7280;
+  text-align: left;
+  border-bottom: 1px solid #E5E7EB;
+}
+
+.mycommunity-table td {
+  padding: 8px 22px;
+  font-size: 14px;
+  color: #6B7280;
+  border-bottom: 1px solid #F3F4F6;
+  vertical-align: middle;
+  text-align: left;
+}
+
+.mycommunity-table tr:last-child td {
+  border-bottom: none;
+}
+
+.mycommunity-table tr:hover td {
+  background: #FAFBFC;
+}
+
+.mycommunity-table tr.selected td {
+  background: #eff6ff;
+}
+
+/* 컬럼 너비 */
+.col-check {  width: 20px; text-align: center;line-height: 1.2px; }
+.col-title { width: 50%; }
+.col-body { width: 40%; }
+.col-date { width: 120px; color: #6B7280; font-size: 13px; }
+.col-views { width: 80px; color: #6B7280; font-size: 13px; }
+.col-post { width: 25%; }
+
+/* 체크박스 */
+.mycommunity-table input[type="checkbox"] {
+  width: 15px;
+  height: 15px;
+  accent-color: #3993fa;
+  cursor: pointer;
+}
+
+/* 제목 */
+.mycommunity-title {
+  cursor: pointer;
+  color: #111827;
+  font-weight: 500;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.mycommunity-title:hover {
+  color: #4099FD;
+  text-decoration: underline;
+}
+
+.mycommunity-comment-count {
+  font-size: 12px;
+  color: #4099FD;
+  font-weight: 600;
+}
+
+/* 댓글 내용 */
+.mycommunity-body {
+  display: -webkit-box;
+  -webkit-line-clamp: 1;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  color: #374151;
+}
+
+/* 게시글 제목 링크 */
+.mycommunity-post-title {
+  cursor: pointer;
+  color: #6B7280;
+  font-size: 13px;
+  display: -webkit-box;
+  -webkit-line-clamp: 1;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.mycommunity-post-title:hover {
+  color: #4099FD;
+  text-decoration: underline;
+}
+
+/* 빈 상태 */
+.mycommunity-empty {
+  text-align: center;
+  padding: 60px;
+  color: #9CA3AF;
+  font-size: 14px;
+}

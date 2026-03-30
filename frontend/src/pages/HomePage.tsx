@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import FileUploader from '../components/FileUploader';
 import { useDocument } from '../context/DocumentContext';
@@ -7,8 +7,10 @@ import {documentsAPI} from '../api/documents'
 import { analyzeAPI } from '../api/analyze'
 import { CiSquarePlus } from "react-icons/ci";
 import { CiSaveDown2 } from "react-icons/ci";
-import { mockPosts, getBestPost } from './CommunityPage';
+import { Post } from './CommunityPage';
+import { communityAPI } from '../api/community';
 import PostCard from '../components/community/PostCard';
+
 
 import './HomePage.css';
 
@@ -16,6 +18,25 @@ function HomePage() {
   const navigate = useNavigate();
   const { setCurrentDocument } = useDocument();
   const [isUploading, setIsUploading] = useState(false);
+  const [bestPost, setBestPost] = useState<Post | null>(null);
+const [randomPost, setRandomPost] = useState<Post | null>(null);
+
+useEffect(() => {
+  const fetchPosts = async () => {
+    try {
+      const best = await communityAPI.getBestPost();
+      setBestPost(best);
+      const all = await communityAPI.getPosts();
+      const others = all.filter((p: Post) => p.id !== best?.id);
+      const random = others[Math.floor(Math.random() * others.length)];
+      setRandomPost(random);
+    } catch (err) {
+      console.error('게시글 로딩 실패:', err);
+    }
+  };
+  fetchPosts();
+}, []);
+
 
   // 백엔드 API 사용 여부 확인
   const API_ENABLED = import.meta.env.VITE_API_BASE_URL !== undefined && 
@@ -70,8 +91,8 @@ function HomePage() {
   };
   return (
     <div className="home-page">
-      {/* 파일 업로드 섹션 */}
-      <section className="upload-section">
+
+       <section className="upload-section">
         <div className='file-upload-box'>
           <div className='upload-section-box'>
             <h2 className="file-title">AIDT</h2>
@@ -136,23 +157,28 @@ function HomePage() {
       <section className='commu-section'>
         <h2 className="section-title">비슷한 사람들의 사례를 확인해 보세요</h2>
         <div className="commu-grid">
-          {(() => {
-            const bestPost = getBestPost();
-            const otherPosts = mockPosts.filter(p => p.id !== bestPost.id);
-            const randomPost = otherPosts[Math.floor(Math.random() * otherPosts.length)];
-
-            return (
-              <div className="commu-list">
+          <div className="commu-list">
+            {bestPost && (
+              <>
                 <div className="commu-item">
                   <PostCard post={{ ...bestPost, isBest: true }} />
                 </div>
-                <div className="commu-divider" />
-                <div className="commu-item">
-                  <PostCard post={randomPost} />
-                </div>
+                {randomPost && (
+                  <>
+                    <div className="commu-divider" />
+                    <div className="commu-item">
+                      <PostCard post={randomPost} />
+                    </div>
+                  </>
+                )}
+              </>
+            )}
+            {!bestPost && (
+              <div style={{ padding: '40px', textAlign: 'center', color: '#94a3b8' }}>
+                게시글이 없습니다.
               </div>
-            );
-          })()}
+            )}
+          </div>
         </div>
         <div className="commu-more">
           <button className="commu-more-btn" onClick={() => navigate('/community')}>
@@ -160,6 +186,9 @@ function HomePage() {
           </button>
         </div>
       </section>
+      <footer>
+        
+      </footer>
     </div>
   );
 }
