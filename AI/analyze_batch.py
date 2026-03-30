@@ -44,7 +44,7 @@ def analyze_text(text: str) -> dict:
     response = requests.post(
         f"{AI_SERVER}/api/ai-analyze",
         json={"extracted_text": text},
-        timeout=180,
+        timeout=600,
     )
     response.raise_for_status()
     return response.json()
