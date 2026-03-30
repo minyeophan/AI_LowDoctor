@@ -136,7 +136,7 @@ const API_ENABLED = import.meta.env.VITE_API_BASE_URL !== undefined &&
       // polling으로 분석 완료 대기
       await new Promise<void>((resolve, reject) => {
         let attempts = 0;
-        const MAX_ATTEMPTS = 60; // 최대 2분 (2초 * 60)
+        const MAX_ATTEMPTS = 300; // 최대 10분 (2초 * 300)
         const poll = async () => {
           if (attempts >= MAX_ATTEMPTS) {
             reject(new Error('분석 시간이 초과되었습니다.'));
