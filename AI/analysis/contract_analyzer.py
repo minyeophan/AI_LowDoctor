@@ -70,7 +70,7 @@ def analyze_contract(text: str) -> dict:
                 ),
                 response_mime_type="application/json",  # JSON 외 텍스트 출력 방지
                 temperature=0.0,                        # 동일 계약서 재분석 시 항상 같은 결과 보장
-                max_output_tokens=65536,                # 긴 계약서도 잘리지 않도록 최대값 설정
+                max_output_tokens=16384,                # 긴 계약서도 잘리지 않도록 최대값 설정
                 thinking_config=types.ThinkingConfig(thinking_budget=0)  # 법령 컨텍스트를 직접 제공하므로 비활성화, 정답 데이터 확보 후 최적값 실험 예정
             )
         )
