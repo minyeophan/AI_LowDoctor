@@ -2,6 +2,7 @@
 from google import genai
 from google.genai import types
 from dotenv import load_dotenv
+from json_repair import repair_json
 import os
 import json
 import re
@@ -78,11 +79,8 @@ def analyze_contract(text: str) -> dict:
         if match:
             result_str = match.group(1)
 
-        # Gemini가 JSON 내부에 잘못된 이스케이프 문자(\)를 포함하는 경우 처리
-        # 유효한 JSON 이스케이프: \\ \" \/ \b \f \n \r \t \uXXXX
-        result_str = re.sub(r'\\(?!["\\/bfnrtu])', r'\\\\', result_str)
-
-        result = json.loads(result_str)
+        # Gemini가 잘못된 JSON을 반환하는 경우 자동 수리 후 파싱
+        result = json.loads(repair_json(result_str))
 
         # 3. 검색된 법령을 lawRefs로 추가
         result["lawRefs"] = [
