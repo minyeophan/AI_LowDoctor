@@ -32,4 +32,5 @@ backend/uploads/*
 
 # 개인 실험 (팀 공유 제외)
 AI/experiments/
+AI/분석결과/
 .venv/
