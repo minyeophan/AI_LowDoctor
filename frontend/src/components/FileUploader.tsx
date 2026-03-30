@@ -1,6 +1,6 @@
 import { useState, ChangeEvent, DragEvent } from 'react';
 import { GoFileDirectoryFill } from "react-icons/go";
-import { IoCloudUpload } from "react-icons/io5";
+import { IoMdCloudUpload } from "react-icons/io";
 import './FileUploader.css';
 
 interface FileUploaderProps {
@@ -68,17 +68,19 @@ function FileUploader({ onFileSelect, onUploadSuccess, onUploadError }: FileUplo
             accept=".pdf,.doc,.docx,.txt,.hwp"
             style={{ display: 'none' }}
           />
-          <IoCloudUpload className="upload-icon-simple" />
-          <button
-            onClick={() => document.getElementById("file-input-simple")?.click()}
-            type="button"
-            className="select-button"
-          >
-            파일 선택
-          </button>
-          <p className="upload-description">
-            파일을 드래그하거나 클릭하여 업로드하세요
-          </p>
+          <p className="upload-drag-text">
+          첨부할 파일을 여기에 끌어다 놓거나,<br />
+          파일 선택 버튼을 눌러 파일을 직접 선택해 주세요.
+        </p>
+        <button
+          onClick={() => document.getElementById("file-input-simple")?.click()}
+          type="button"
+          className="select-button"
+        >
+          <IoMdCloudUpload size={20}/>
+          파일 선택
+        </button>
+          
         </div>
       ) : (
         <div className="file-selected-area">

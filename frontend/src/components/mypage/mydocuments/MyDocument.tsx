@@ -66,9 +66,6 @@ export default function Documents() {
           >
             <option value="all">계약유형</option>
             <option value="real_estate">부동산</option>
-            <option value="employment">근로</option>
-            <option value="freelance">프리랜서</option>
-            <option value="other">기타</option>
           </select>
 
           <select 

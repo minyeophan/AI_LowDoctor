@@ -62,7 +62,7 @@ export default function StorageTableMUI() {
               sx={{ 
                 fontWeight: 600, 
                 color: '#6B7280',
-                fontSize: '14px',
+                fontSize: '13px',
                 borderBottom: '1px solid #E5E7EB',
               }}
               
@@ -74,7 +74,7 @@ export default function StorageTableMUI() {
               sx={{ 
                 fontWeight: 600, 
                 color: '#6B7280',
-                fontSize: '14px',
+                fontSize: '13px',
                 borderBottom: '1px solid #E5E7EB',
               }}
             >
@@ -85,7 +85,7 @@ export default function StorageTableMUI() {
               sx={{ 
                 fontWeight: 600, 
                 color: '#6B7280',
-                fontSize: '14px',
+                fontSize: '13px',
                 borderBottom: '1px solid #E5E7EB',
               }}
             >
@@ -96,7 +96,7 @@ export default function StorageTableMUI() {
               sx={{ 
                 fontWeight: 600, 
                 color: '#6B7280',
-                fontSize: '14px',
+                fontSize: '13px',
                 borderBottom: '1px solid #E5E7EB',
               }}
             >
@@ -187,13 +187,13 @@ function StorageRow({ document }: { document: StorageDocument }) {
         <Chip
           label={categoryInfo[document.category].label}
           sx={{
-            backgroundColor: categoryInfo[document.category].color,
-            color: 'white',
+            backgroundColor: '#dbeafe',
+            color: '#1d4ed8;',
             fontWeight: 600,
-            fontSize: '12px',
+            fontSize: '11px',
+            width: '55px',
             height: '24px',
             borderRadius: '6px',
-            width: '60px',
           }}
         />
       </TableCell>

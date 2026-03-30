@@ -2,10 +2,10 @@ import { FaFile } from "react-icons/fa6";
 import { MdFactCheck } from "react-icons/md";
 import { PiWarningOctagonFill } from "react-icons/pi";
 import { RiGuideFill } from "react-icons/ri";
-import { RiUserCommunityFill } from "react-icons/ri";
+
 import './TopMenu.css';
 
-type MenuItem = 'document' | 'summary' | 'danger' | 'guide' | 'search';
+type MenuItem = 'document' | 'summary' | 'danger' | 'guide';
 
 interface TopMenuProps {
   selectedMenu: MenuItem | null; 
@@ -72,20 +72,6 @@ function TopMenu({ selectedMenu, onMenuSelect, isSidebarOpen }: TopMenuProps) {
             )}
           </span>
           <span className="menu-label">대응 가이드</span>
-        </button>
-
-        <button
-          className={`menu-item ${selectedMenu === 'search' ? 'active' : ''}`}
-          onClick={() => onMenuSelect('search')}
-        >
-          <span className="menu-icon">
-            {selectedMenu === 'search' ? (
-              <RiUserCommunityFill size={22} color="#4099FD"/>
-            ) : (
-              <RiUserCommunityFill size={22} color="#858D99"/>
-            )}
-          </span>
-          <span className="menu-label">사례 검색</span>
         </button>
       </nav>
     </aside>
