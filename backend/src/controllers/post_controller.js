@@ -79,19 +79,6 @@ const serializePost = async (postDoc) => {
   };
 };
 
-const serializeComment = async (commentDoc) => {
-  const authorName = await resolveAuthorName(commentDoc);
-
-  return {
-    id: commentDoc._id.toString(),
-    postId: commentDoc.postId.toString(),
-    author: maskName(authorName),
-    content: commentDoc.content,
-    date: formatDate(commentDoc.createdAt),
-    likes: Array.isArray(commentDoc.likes) ? commentDoc.likes.length : 0,
-  };
-};
-
 export const createPost = async (req, res, next) => {
   try {
     const title = safeString(req.body.title);
@@ -139,7 +126,9 @@ export const getPosts = async (req, res, next) => {
   try {
     const sort = safeString(req.query.sort || "latest");
     const category = safeString(req.query.category || "");
-    const keyword = safeString(req.query.keyword || req.query.search || req.query.q || "");
+    const keyword = safeString(
+      req.query.keyword || req.query.search || req.query.q || ""
+    );
 
     const filter = {};
 
@@ -161,7 +150,9 @@ export const getPosts = async (req, res, next) => {
         const commentsCount = await Comment.countDocuments({ postId: post._id });
         const authorName = post.userRef?.name
           ? post.userRef.name
-          : (await User.findOne({ userID: post.userID }).select("name").lean())?.name || "익명";
+          : (
+              await User.findOne({ userID: post.userID }).select("name").lean()
+            )?.name || "익명";
 
         return {
           id: post._id.toString(),
@@ -210,7 +201,9 @@ export const getBestPost = async (req, res, next) => {
         const commentsCount = await Comment.countDocuments({ postId: post._id });
         const authorName = post.userRef?.name
           ? post.userRef.name
-          : (await User.findOne({ userID: post.userID }).select("name").lean())?.name || "익명";
+          : (
+              await User.findOne({ userID: post.userID }).select("name").lean()
+            )?.name || "익명";
 
         return {
           id: post._id.toString(),
@@ -364,110 +357,6 @@ export const togglePostLike = async (req, res, next) => {
     });
   } catch (error) {
     console.error("togglePostLike error:", error);
-    next(error);
-  }
-};
-
-export const getPostComments = async (req, res, next) => {
-  try {
-    const { id } = req.params;
-
-    if (!Types.ObjectId.isValid(id)) {
-      return res.status(400).json({ message: "유효하지 않은 게시글 ID입니다." });
-    }
-
-    const postExists = await Post.exists({ _id: id });
-    if (!postExists) {
-      return res.status(404).json({ message: "게시글 없음" });
-    }
-
-    const comments = await Comment.find({ postId: id })
-      .populate("userRef", "name")
-      .sort({ createdAt: 1 });
-
-    const response = await Promise.all(comments.map(serializeComment));
-
-    return res.status(200).json(response);
-  } catch (error) {
-    console.error("getPostComments error:", error);
-    next(error);
-  }
-};
-
-export const createComment = async (req, res, next) => {
-  try {
-    const { id } = req.params;
-    const content = safeString(req.body.content);
-
-    if (!req.user) {
-      return res.status(401).json({ message: "로그인이 필요합니다." });
-    }
-
-    if (!content) {
-      return res.status(400).json({ message: "댓글 내용을 입력해주세요." });
-    }
-
-    const post = await Post.findById(id);
-    if (!post) {
-      return res.status(404).json({ message: "게시글 없음" });
-    }
-
-    const comment = await Comment.create({
-      postId: post._id,
-      userRef: req.user._id,
-      userID: req.user.userID,
-      content,
-      likes: [],
-    });
-
-    const populatedComment = await Comment.findById(comment._id).populate(
-      "userRef",
-      "name"
-    );
-
-    return res.status(201).json(await serializeComment(populatedComment));
-  } catch (error) {
-    console.error("createComment error:", error);
-    next(error);
-  }
-};
-
-export const toggleCommentLike = async (req, res, next) => {
-  try {
-    const { commentId } = req.params;
-
-    if (!req.user) {
-      return res.status(401).json({ message: "로그인이 필요합니다." });
-    }
-
-    if (!Types.ObjectId.isValid(commentId)) {
-      return res.status(400).json({ message: "유효하지 않은 댓글 ID입니다." });
-    }
-
-    const comment = await Comment.findById(commentId);
-
-    if (!comment) {
-      return res.status(404).json({ message: "댓글 없음" });
-    }
-
-    const currentUserID = req.user.userID;
-    const alreadyLiked = comment.likes.includes(currentUserID);
-
-    if (alreadyLiked) {
-      comment.likes = comment.likes.filter((userID) => userID !== currentUserID);
-    } else {
-      comment.likes.push(currentUserID);
-    }
-
-    await comment.save();
-
-    return res.status(200).json({
-      id: comment._id.toString(),
-      liked: !alreadyLiked,
-      likes: comment.likes.length,
-    });
-  } catch (error) {
-    console.error("toggleCommentLike error:", error);
     next(error);
   }
 };

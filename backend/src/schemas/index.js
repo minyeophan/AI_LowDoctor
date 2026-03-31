@@ -6,6 +6,7 @@ import "./analyze_db.js";
 import "./result_db.js";
 import "./post_db.js";
 import "./comment_db.js";
+import "./chat_db.js";
 
 dotenv.config();
 

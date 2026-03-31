@@ -18,7 +18,7 @@ const postSchema = new Schema(
     category: {
       type: String,
       required: true,
-      enum: ["부동산"],
+      trim: true,
       default: "부동산",
     },
 

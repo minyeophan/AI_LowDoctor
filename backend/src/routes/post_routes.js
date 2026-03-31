@@ -9,25 +9,23 @@ import {
   updatePost,
   deletePost,
   togglePostLike,
-  getPostComments,
-  createComment,
-  toggleCommentLike,
 } from "../controllers/post_controller.js";
 
 const router = express.Router();
 
+// 게시글 조회
 router.get("/", getPosts);
 router.get("/best", getBestPost);
 router.get("/:id", getPostDetail);
 
+// 게시글 작성/수정/삭제/좋아요
 router.post("/", authMiddleware, createPost);
+
+// 기존 이름 호환용
 router.post("/upload", authMiddleware, uploadPost);
+
 router.patch("/:id", authMiddleware, updatePost);
 router.delete("/:id", authMiddleware, deletePost);
 router.post("/:id/like", authMiddleware, togglePostLike);
-
-router.get("/:id/comments", getPostComments);
-router.post("/:id/comments", authMiddleware, createComment);
-router.post("/comments/:commentId/like", authMiddleware, toggleCommentLike);
 
 export default router;
