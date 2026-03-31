@@ -15,7 +15,7 @@ export const afterUpload = async (req, res, next) => {
         const saved = await Upload.create({
             documentId,
             filename: file.filename,
-            originalname: file.originalname,
+            originalname: Buffer.from(file.originalname, 'latin1').toString('utf8'),
             filePath: file.path,
             fileSize: file.size,
             mimetype: file.mimetype,
