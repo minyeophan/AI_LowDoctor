@@ -15,6 +15,7 @@ import uploadRouter from "./routes/upload_routes.js";
 import analyzeRouter from "./routes/analyze_routes.js";
 import resultRouter from "./routes/result_routes.js";
 import authRouter from "./routes/auth_routes.js";
+import convertRouter from "./routes/convert_routes.js";
 
 const app = express();
 app.set('port', process.env.PORT || 3001);
@@ -54,6 +55,7 @@ app.use('/api', uploadRouter);
 app.use('/api', analyzeRouter);
 app.use('/api', resultRouter);
 app.use('/api/auth', authRouter);
+app.use('/api', convertRouter);
 
 app.get('/', (req, res) => {
     res.json({
