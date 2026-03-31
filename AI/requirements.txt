@@ -10,3 +10,5 @@ httpx
 pymongo
 qdrant-client
 json-repair
+pyhwp
+six

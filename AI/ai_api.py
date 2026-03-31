@@ -12,6 +12,8 @@ sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 
 from ocr.pdf_extractor import extract_text_from_pdf
 from analysis.contract_analyzer import analyze_contract
+import subprocess
+import tempfile
 
 
 # 3. FastAPI 애플리케이션 초기화
@@ -61,10 +63,47 @@ async def ocr_pdf_file(file: UploadFile = File(...)):
         raise HTTPException(status_code=500, detail=f"OCR 서버 오류: {str(e)}")
 
 
-# ----------------------------------------------------
-# 6. AI 분석 엔드포인트: 텍스트를 받아 JSON 분석 결과를 반환
-# POST /api/ai-analyze
-# ----------------------------------------------------
+@app.post("/api/convert-hwp")
+async def convert_hwp(file: UploadFile = File(...)):
+    if not file.filename.lower().endswith(('.hwp', '.hwpx')):
+        raise HTTPException(status_code=400, detail="HWP/HWPX 파일만 지원합니다.")
+
+    ext = os.path.splitext(file.filename.lower())[1]
+
+    with tempfile.TemporaryDirectory() as tmpdir:
+        input_path = os.path.join(tmpdir, f"input{ext}")
+        output_dir = os.path.join(tmpdir, "out")
+        os.makedirs(output_dir, exist_ok=True)
+
+        with open(input_path, "wb") as f:
+            shutil.copyfileobj(file.file, f)
+
+        try:
+            result = subprocess.run(
+                ["hwp5html", "--output", output_dir, input_path],
+                capture_output=True, text=True, timeout=30
+            )
+            if result.returncode != 0:
+                raise HTTPException(status_code=500, detail=f"HWP 변환 실패: {result.stderr}")
+
+            # hwp5html은 index.xhtml로 출력
+            html_files = [f for f in os.listdir(output_dir) if f.endswith(('.html', '.xhtml', '.htm'))]
+            if not html_files:
+                raise HTTPException(status_code=500, detail=f"HTML 파일 생성 실패. 생성된 파일: {os.listdir(output_dir)}")
+
+            with open(os.path.join(output_dir, html_files[0]), "r", encoding="utf-8") as f:
+                html = f.read()
+
+            return JSONResponse(content={"html": html})
+
+        except subprocess.TimeoutExpired:
+            raise HTTPException(status_code=500, detail="HWP 변환 시간 초과")
+        except HTTPException:
+            raise
+        except Exception as e:
+            raise HTTPException(status_code=500, detail=f"변환 오류: {str(e)}")
+
+
 @app.post("/api/ai-analyze") # <--- Node.js가 텍스트 보내는 경로
 async def analyze_text(request: AnalyzeRequest):
     try:
