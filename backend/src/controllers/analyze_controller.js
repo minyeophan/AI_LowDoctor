@@ -3,22 +3,95 @@ import Analysis from "../schemas/analyze_db.js";
 import Result from "../schemas/result_db.js";
 import { analyzeDocument } from "../service/ai_service.js";
 
+// 기존 함수 유지
 export const startAnalysis = async (documentId) => {
   try {
-    await Analysis.updateOne({ documentId }, { progress: 20 });
-    const text = await extractTextFromFile(documentId);
+    const currentDocument = await Upload.findOne({ documentId });
 
-    await Analysis.updateOne({ documentId }, { progress: 60 });
-    const aiResult = await requestAIAnalysis(text);
+    if (!currentDocument) {
+      await Analysis.updateOne(
+        { documentId },
+        { status: "failed", errorMessage: "업로드된 문서를 찾을 수 없습니다." }
+      );
+      return;
+    }
 
-    await Result.create({ documentId, ...aiResult });
-    await Analysis.updateOne({
-      documentId,
-      status: "completed",
-      progress: 100
-    });
+    await Analysis.updateOne(
+      { documentId },
+      { status: "processing", progress: 20, errorMessage: null },
+      { upsert: true }
+    );
+
+    const resultData = await analyzeDocument(currentDocument.filePath);
+
+    const safeSummary = Array.isArray(resultData.summary)
+      ? JSON.stringify(resultData.summary)
+      : resultData.summary || "";
+
+    const safeRiskItems = Array.isArray(resultData.riskItems)
+      ? resultData.riskItems
+      : [];
+
+    const safeForms = Array.isArray(resultData.forms)
+      ? resultData.forms
+      : [];
+
+    const safeImprovementGuides = Array.isArray(resultData.riskItems)
+      ? resultData.riskItems.map((item, index) => ({
+          id: index + 1,
+          originalClause: item.clauseText || "",
+          checkPoints: Array.isArray(item.checkPoints) ? item.checkPoints : [],
+          improvedClause: item.improvedClause || "",
+        }))
+      : [];
+
+    await Analysis.updateOne(
+      { documentId },
+      {
+        status: "completed",
+        progress: 100,
+        extractedText: resultData.extractedText || "",
+        result: resultData,
+      }
+    );
+
+    await Result.findOneAndUpdate(
+      { documentId },
+      {
+        documentId,
+        summary: safeSummary,
+        riskItems: safeRiskItems,
+        forms: safeForms,
+        improvementGuides: safeImprovementGuides,
+        contractTip: resultData.contractTip || null,
+
+        // Hybrid 구조 핵심
+        analysis: resultData,
+        engine: resultData.engine || resultData.provider || "unknown",
+        model: resultData.model || resultData.modelName || "",
+        status: "done",
+      },
+      { upsert: true, new: true, setDefaultsOnInsert: true }
+    );
   } catch (error) {
-    await Analysis.updateOne({ documentId }, { status: "failed" });
+    const errorMessage =
+      error?.response?.status === 429
+        ? "AI 분석 실패: 쿼터 초과"
+        : error?.message || String(error);
+
+    await Analysis.updateOne(
+      { documentId },
+      { status: "failed", errorMessage }
+    );
+
+    await Result.findOneAndUpdate(
+      { documentId },
+      {
+        documentId,
+        status: "failed",
+      },
+      { upsert: true, new: true, setDefaultsOnInsert: true }
+    );
   }
 };
 
@@ -34,11 +107,11 @@ export const requestAnalysis = async (req, res, next) => {
     const existing = await Analysis.findOne({ documentId });
 
     if (existing && existing.status === "processing") {
-      return res.status(400).json({ message: "이미 분석 진행 중입니다. "});
+      return res.status(400).json({ message: "이미 분석 진행 중입니다. " });
     }
 
     const newAnalysis = await Analysis.findOneAndUpdate(
-      { documentId},
+      { documentId },
       { status: "processing", errorMessage: null },
       { upsert: true, new: true }
     );
@@ -66,35 +139,41 @@ export const requestAnalysis = async (req, res, next) => {
       const safeImprovementGuides = Array.isArray(resultData.riskItems)
         ? resultData.riskItems.map((item, index) => ({
             id: index + 1,
-            originalClause: item.clauseText || '',
+            originalClause: item.clauseText || "",
             checkPoints: Array.isArray(item.checkPoints) ? item.checkPoints : [],
-            improvedClause: item.improvedClause || '',
+            improvedClause: item.improvedClause || "",
           }))
         : [];
 
       await Analysis.findOneAndUpdate(
-        { documentId: documentId },
+        { documentId },
         {
           status: "completed",
           extractedText: resultData.extractedText || "",
           result: resultData,
-        },
+        }
       );
 
       await Result.findOneAndUpdate(
-        { documentId: documentId },
+        { documentId },
         {
+          documentId,
           summary: safeSummary,
           riskItems: safeRiskItems,
           forms: safeForms,
           improvementGuides: safeImprovementGuides,
           contractTip: resultData.contractTip || null,
+
+          // Hybrid 구조 핵심
+          analysis: resultData,
+          engine: resultData.engine || resultData.provider || "unknown",
+          model: resultData.model || resultData.modelName || "",
+          status: "done",
         },
-        { upsert: true, returnDocument: "after" }
+        { upsert: true, new: true, setDefaultsOnInsert: true }
       );
 
       console.log(`전체 분석 완료 [${documentId}]`);
-
     } catch (err) {
       console.error(`분석 실패 [${documentId}]:`, err?.message || String(err));
 
@@ -104,12 +183,20 @@ export const requestAnalysis = async (req, res, next) => {
           : err?.message || String(err);
 
       await Analysis.findOneAndUpdate(
-        { documentId: documentId },
+        { documentId },
         { status: "failed", errorMessage },
-        { returnDocument: "after" }
+        { new: true }
+      );
+
+      await Result.findOneAndUpdate(
+        { documentId },
+        {
+          documentId,
+          status: "failed",
+        },
+        { upsert: true, new: true, setDefaultsOnInsert: true }
       );
     }
-
   } catch (err) {
     console.error(err);
     next(err);
