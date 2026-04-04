@@ -21,7 +21,6 @@ export const afterUpload = async (req, res, next) => {
             mimetype: file.mimetype,
             createdAt: new Date()
         });
-
         res.status(200).json({
             message: '업로드 및 DB 저장 완료',
             documentId: documentId,

@@ -15,6 +15,10 @@ const analysisSchema = new Schema(
       enum: ["processing", "completed", "failed"],
       default: "processing"
     },
+    progress: {
+      type: Number,
+      default: 0
+    },
     extractedText: {
       type: String
     },
