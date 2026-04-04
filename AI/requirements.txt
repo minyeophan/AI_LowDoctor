@@ -1,7 +1,7 @@
 google-genai
 python-dotenv==1.0.0
 pytesseract==0.3.10
-pillow==10.1.0
+pillow>=10.1.0
 pdfplumber
 fastapi
 uvicorn
@@ -9,4 +9,6 @@ python-multipart
 httpx
 pymongo
 qdrant-client
+fastembed
+requests
 json-repair
