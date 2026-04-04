@@ -1,5 +1,11 @@
 import mongoose from "mongoose";
 import dotenv from "dotenv";
+import "./user_db.js";
+import "./upload_db.js";
+import "./analyze_db.js";
+import "./result_db.js";
+import "./post_db.js";
+import "./comment_db.js";
 
 dotenv.config();
 
@@ -10,7 +16,6 @@ export const connect = async () => {
         if (NODE_ENV !== 'production') {
             mongoose.set('debug', true);
         }
-
         await mongoose.connect(MONGO_URL, {
             serverSelectionTimeoutMS: 5000,
             socketTimeoutMS: 45000,
