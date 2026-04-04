@@ -5,66 +5,66 @@ const { Schema } = mongoose;
 const lawRefSchema = new Schema({
   name: {
     type: String,
-    required: true
+    required: true,
   },
   article: {
     type: String,
-    required: true
+    required: true,
   },
   url: {
-    type: String
-  }
+    type: String,
+  },
 }, { _id: false });
 
 const riskItemSchema = new Schema({
   id: {
     type: Number,
-    required: true
+    required: true,
   },
   clauseText: {
     type: String,
-    required: true
+    required: true,
   },
   riskLevel: {
     type: String,
     enum: ["low", "medium", "high"],
-    required: true
+    required: true,
   },
   reason: {
     type: String,
-    required: true
+    required: true,
   },
   lawRefs: [lawRefSchema],
   checkPoints: [{ type: String }],
   improvedClause: {
-    type: String
-  }
+    type: String,
+  },
 }, { _id: false });
 
 const formSchema = new Schema({
   type: {
     type: String,
-    required: true
+    required: true,
   },
   description: {
-    type: String
+    type: String,
   },
   downloadUrl: {
-    type: String
-  }
+    type: String,
+  },
 }, { _id: false });
 
 const improvementGuideSchema = new Schema({
   id: { type: Number },
   originalClause: { type: String },
   checkPoints: [{ type: String }],
-  improvedClause: { type: String }
+  improvedClause: { type: String },
 }, { _id: false });
 
 const contractTipSchema = new Schema({
   docType: { type: String },
   title: { type: String },
-  items: [{ type: String }]
+  items: [{ type: String }],
 }, { _id: false });
 
 const resultSchema = new Schema(
@@ -73,19 +73,46 @@ const resultSchema = new Schema(
       type: String,
       required: true,
       unique: true,
-      index: true
+      index: true,
     },
+
+    // Hybrid 구조 핵심: 프론트/조회용 고정 필드
     summary: {
       type: String,
-      required: true
+      required: true,
+      default: "",
     },
     riskItems: [riskItemSchema],
     forms: [formSchema],
     improvementGuides: [improvementGuideSchema],
-    contractTip: contractTipSchema
+    contractTip: contractTipSchema,
+
+    // Hybrid 구조 핵심: 원본 AI 결과 전체 저장
+    analysis: {
+      type: Schema.Types.Mixed,
+      default: null,
+    },
+
+    // 어떤 엔진/모델로 생성됐는지 기록
+    engine: {
+      type: String,
+      enum: ["openai", "gemini", "unknown"],
+      default: "unknown",
+    },
+    model: {
+      type: String,
+      default: "",
+    },
+
+    // 결과 저장 상태
+    status: {
+      type: String,
+      enum: ["done", "failed"],
+      default: "done",
+    },
   },
   {
-    timestamps: true
+    timestamps: true,
   }
 );
 

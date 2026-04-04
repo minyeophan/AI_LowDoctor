@@ -19,9 +19,11 @@ from google.genai import types as genai_types
 from dotenv import load_dotenv
 
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
+sys.path.append(os.path.abspath(os.path.dirname(__file__)))
 
 from ocr.pdf_extractor import extract_text_from_pdf
 from analysis.contract_analyzer import analyze_contract
+from analysis.chatbot_analyzer import answer_chat
 
 load_dotenv()
 _gemini_client = genai.Client(api_key=os.getenv("GEMINI_API_KEY"))
@@ -112,27 +114,38 @@ class AnalyzeRequest(BaseModel):
     extracted_text: str
 
 
+class ChatRequest(BaseModel):
+    question: str
+
+
+@app.get("/")
+async def root():
+    return {"message": "AI server is running"}
+
+
 @app.post("/api/ocr")
 async def ocr_pdf_file(file: UploadFile = File(...)):
     if not file.filename.lower().endswith(('.pdf', '.jpg', '.jpeg', '.png', '.txt')):
         raise HTTPException(status_code=400, detail="지원하지 않는 파일 형식입니다.")
 
-    file_location = f"temp_files/{file.filename}"
-    os.makedirs(os.path.dirname(file_location), exist_ok=True)
+    temp_dir = "temp_files"
+    os.makedirs(temp_dir, exist_ok=True)
+    file_location = os.path.join(temp_dir, file.filename)
 
     try:
         with open(file_location, "wb") as buffer:
             shutil.copyfileobj(file.file, buffer)
 
         extracted_text = extract_text_from_pdf(file_location)
-        os.remove(file_location)
         return JSONResponse(content={"text": extracted_text})
 
     except Exception as e:
         print(f"❌ OCR 처리 중 에러 발생: {e}")
+        raise HTTPException(status_code=500, detail=f"OCR 서버 오류: {str(e)}")
+
+    finally:
         if os.path.exists(file_location):
             os.remove(file_location)
-        raise HTTPException(status_code=500, detail=f"OCR 서버 오류: {str(e)}")
 
 
 @app.post("/api/convert-hwp")
@@ -165,7 +178,6 @@ async def convert_hwp(file: UploadFile = File(...)):
             with open(os.path.join(output_dir, html_files[0]), "r", encoding="utf-8") as f:
                 html = f.read()
 
-            # 이미지 base64 embed + OCR 처리 (임시폴더 삭제 전에 실행)
             html = _process_hwp_images(html, output_dir)
 
             return JSONResponse(content={"html": html})
@@ -193,7 +205,6 @@ async def convert_pdf(file: UploadFile = File(...)):
 
             with pdfplumber.open(input_path) as pdf:
                 for page in pdf.pages:
-                    # 페이지 전체를 이미지로 변환 후 Gemini Vision으로 HTML 생성
                     pil_image = page.to_image(resolution=150).original
                     buffer = io.BytesIO()
                     pil_image.save(buffer, format='PNG')
@@ -208,7 +219,6 @@ async def convert_pdf(file: UploadFile = File(...)):
                     )
 
                     page_html = response.text.strip()
-                    # 마크다운 코드 블록 혹시 포함되면 제거
                     match = re.search(r"```(?:html)?\s*(.*?)```", page_html, re.DOTALL)
                     if match:
                         page_html = match.group(1).strip()
@@ -229,5 +239,15 @@ async def analyze_text(request: AnalyzeRequest):
     except Exception as e:
         print(f"❌ AI 분석 중 에러 발생: {e}")
         raise HTTPException(status_code=500, detail=f"AI 분석 서버 오류: {str(e)}")
+
+
+@app.post("/api/chat")
+async def chat_api(request: ChatRequest):
+    try:
+        answer = answer_chat(request.question)
+        return JSONResponse(content={"answer": answer})
+    except Exception as e:
+        print(f"❌ 챗봇 응답 중 에러 발생: {e}")
+        raise HTTPException(status_code=500, detail=f"챗봇 서버 오류: {str(e)}")
 
 # uvicorn ai_api:app --host 0.0.0.0 --port 8000
