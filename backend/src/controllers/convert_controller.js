@@ -40,8 +40,20 @@ export const convertDocument = async (req, res, next) => {
             );
             htmlContent = response.data.html;
 
+        } else if (ext === '.pdf') {
+            // PDF: AI 서버(pdfplumber)로 변환
+            const formData = new FormData();
+            formData.append('file', fs.createReadStream(originalPath), { filename: 'input.pdf' });
+
+            const response = await axios.post(
+                `${AI_SERVER_URL}/api/convert-pdf`,
+                formData,
+                { headers: formData.getHeaders(), timeout: 90000 }
+            );
+            htmlContent = response.data.html;
+
         } else {
-            // PDF 등: LibreOffice로 변환
+            // 기타 형식: LibreOffice로 변환
             const tmpDir = `/tmp/convert_${documentId}`;
             const safeSrcPath = `/tmp/input_${documentId}${ext}`;
 
@@ -75,6 +87,10 @@ export const convertDocument = async (req, res, next) => {
         $('*').each((_, el) => {
             if (el.type !== 'tag') return;
             const tag = el.name;
+
+            // img 태그는 src/alt 유지를 위해 속성 제거 제외
+            if (tag === 'img') return;
+
             const colspan = $(el).attr('colspan');
             const rowspan = $(el).attr('rowspan');
 
