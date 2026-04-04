@@ -2,6 +2,7 @@
 from google import genai
 from google.genai import types
 from dotenv import load_dotenv
+from json_repair import repair_json
 import os
 import json
 import re
@@ -37,11 +38,9 @@ def analyze_contract(text: str) -> dict:
     # 2. 법령 컨텍스트를 포함한 프롬프트 구성
     prompt = f"""
     아래 계약서 내용을 읽고 조항별로 매우 세세하게 위험을 분석해줘.
-    - 핵심 내용은 summary 필드에 매우 상세하고 구조적으로 요약하며, 최소 500자 이상으로 작성할 것.
-    - 위험 조항은 riskItems 배열로 반환, 핵심 위험 항목 최대 5개만 포함
-    - riskItems 배열 각 항목에는 clauseText, riskLevel, reason, checkPoints(배열), improvedClause 필드가 있어야 한다.
-    - JSON만 반환하고 추가 설명 금지
-    - forms 배열 각 항목에는 type, description, downloadUrl을 포함할 것.
+    - summary: 핵심 내용을 매우 상세하고 구조적으로 요약하며, 최소 500자 이상으로 작성할 것.
+    - riskItems: 핵심 위험 항목 최대 5개만 포함. riskLevel은 HIGH/MEDIUM/LOW 중 하나.
+    - forms: 계약서 유형에 맞는 첨부 양식을 추천할 것.
     {law_context}
     계약서 내용:
     {text}
@@ -52,11 +51,27 @@ def analyze_contract(text: str) -> dict:
             model="gemini-2.5-flash",
             contents=prompt,
             config=types.GenerateContentConfig(
-                system_instruction="너는 한국 계약서 분석 전문가야. 반드시 JSON 형식만 출력하고, 최상위 키 (summary, riskItems, forms)를 포함해야 한다. riskItems 각 항목에는 clauseText, riskLevel, reason, checkPoints(배열), improvedClause 필드가 있어야 한다.",
-                response_mime_type="application/json",
-                temperature=0.0,
-                max_output_tokens=65536,
-                thinking_config=types.ThinkingConfig(thinking_budget=0)
+                system_instruction=(
+                    "너는 한국 부동산 계약서 분석 전문가야.\n"
+                    "반드시 JSON 형식만 출력해.\n"
+                    "최상위 키는 summary(string), riskItems(array), forms(array)이며,\n"
+                    # riskItems 각 항목 필드:
+                    # - clauseText: 위험 조항 원문
+                    # - riskLevel: 위험 등급 (HIGH / MEDIUM / LOW)
+                    # - reason: 위험한 이유
+                    # - checkPoints: 확인해야 할 사항 목록 (문자열 배열)
+                    # - improvedClause: 개선된 조항 제안
+                    "riskItems 각 항목은 clauseText, riskLevel, reason, checkPoints(string array), improvedClause 필드를 포함해야 해.\n"
+                    # forms 각 항목 필드:
+                    # - type: 양식 종류 (예: 내용증명, 보증금 반환 청구서)
+                    # - description: 양식 설명
+                    # - downloadUrl: 양식 다운로드 링크 (추후 구현 예정)
+                    "forms 각 항목은 type, description, downloadUrl 필드를 포함해야 해."
+                ),
+                response_mime_type="application/json",  # JSON 외 텍스트 출력 방지
+                temperature=0.0,                        # 동일 계약서 재분석 시 항상 같은 결과 보장
+                max_output_tokens=16384,                # 긴 계약서도 잘리지 않도록 최대값 설정
+                thinking_config=types.ThinkingConfig(thinking_budget=0)  # 법령 컨텍스트를 직접 제공하므로 비활성화, 정답 데이터 확보 후 최적값 실험 예정
             )
         )
         result_str = response.text.strip()
@@ -64,7 +79,8 @@ def analyze_contract(text: str) -> dict:
         if match:
             result_str = match.group(1)
 
-        result = json.loads(result_str)
+        # Gemini가 잘못된 JSON을 반환하는 경우 자동 수리 후 파싱
+        result = json.loads(repair_json(result_str))
 
         # 3. 검색된 법령을 lawRefs로 추가
         result["lawRefs"] = [

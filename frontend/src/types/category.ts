@@ -1,6 +1,6 @@
 // src/types/category.ts
 
-export type CategoryType = 'real_estate' | 'employment' | 'freelance' | 'other';
+export type CategoryType = 'real_estate';
 
 export interface CategoryInfo {
   label: string;

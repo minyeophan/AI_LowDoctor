@@ -22,7 +22,7 @@
 .menu-nav {
   display: flex;
   flex-direction: row;
-  gap: 80px;
+  gap: 120px;
   overflow-x: auto;
   width: 1200px;
   max-width: 100%;
@@ -34,7 +34,7 @@
 .menu-item {
   display: flex;
   flex-direction: column;
-  gap: 6px;
+  gap: 1px;
   padding: 3px 50px;
   background: none;
   border: none;
@@ -46,7 +46,6 @@
   flex-shrink: 0;
   width: 6%;
   position: relative;
-  gap: 0px;
   background-color: #ffffff;
   justify-content: center;
   align-items: center;
@@ -57,7 +56,6 @@
   color: #4A9EFF;
   font-weight: 600;
 }
-
 
 .menu-icon {
   font-size: 10px;

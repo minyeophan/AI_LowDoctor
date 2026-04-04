@@ -46,7 +46,7 @@ export default function DraftTableMUI() {
         minHeight: '38px',  
         padding: '0px 16px',  
         boxSizing: 'border-box', 
-        fontSize: '14px'
+        fontSize: '13px'
     },
       }}
     >
@@ -204,13 +204,13 @@ function DraftRow({ draft }: { draft: DraftDocument }){
         <Chip
           label={categoryInfo[draft.category].label}
           sx={{
-            backgroundColor: categoryInfo[draft.category].color,
-            color: 'white',
+            backgroundColor: '#dbeafe',
+            color: '#1d4ed8;',
             fontWeight: 600,
-            fontSize: '12px',
+            fontSize: '11px',
+            width: '55px',
             height: '24px',
             borderRadius: '6px',
-            width: '60px',
           }}
         />
       </TableCell>
@@ -259,7 +259,7 @@ function DraftRow({ draft }: { draft: DraftDocument }){
                 borderRadius: 3,
                 backgroundColor: '#E5E7EB',
                 '& .MuiLinearProgress-bar': {
-                  backgroundColor: '#1F2937',
+                  backgroundColor: '#4f617b',
                   borderRadius: 3,
                 },
               }}
@@ -269,7 +269,7 @@ function DraftRow({ draft }: { draft: DraftDocument }){
             sx={{
               fontSize: '14px',
               fontWeight: 600,
-              color: '#1F2937',
+              color: '#4f617b',
               minWidth: '45px',
               textAlign: 'right',
             }}

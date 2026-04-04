@@ -8,9 +8,10 @@ import SignupPage from './pages/SignupPage';
 import CommunityPage from './pages/CommunityPage';
 import PostDetailPage from './pages/PostdetailPage';
 import WritePostPage from './pages/WritepostPage';
+import SchedulePage from './pages/SchedulePage';
 import MyPage from './pages/MyPage';
 import { AuthProvider } from './context/AuthContext';
-import { RiAccountBoxFill } from "react-icons/ri";
+import { MdAccountCircle } from "react-icons/md";
 import logoImage from '../src/assets/img/logo.svg';
 import { HiMenu, HiX } from "react-icons/hi";
 
@@ -141,7 +142,7 @@ function Navbar() {
             회원가입
           </Link>
           <Link to="/mypage" className="mypage-icon" aria-label="마이페이지">
-            <RiAccountBoxFill className="user-icon" size={24}/>
+            <MdAccountCircle className="user-icon" size={24}/>
           </Link>
         </div>
       </div>
@@ -168,7 +169,7 @@ function AppContent() {
           <Route path="/community" element={<CommunityPage />} />
           <Route path="/community/:id" element={<PostDetailPage /> }/>
           <Route path="/community/write" element={<WritePostPage />} />
-          
+          <Route path="/schedule" element={<SchedulePage />} />
           {/* 나중에 추가할 페이지들 */}
           {/* <Route path="/find-id" element={<FindIdPage />} /> */}
           {/* <Route path="/reset-password" element={<ResetPasswordPage />} /> */}

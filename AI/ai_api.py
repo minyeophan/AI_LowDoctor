@@ -29,8 +29,10 @@ async def root():
 
 @app.post("/api/ocr")
 async def ocr_pdf_file(file: UploadFile = File(...)):
-    if not file.filename.lower().endswith((".pdf", ".jpg", ".jpeg", ".png", ".txt")):
-        raise HTTPException(status_code=400, detail="지원하지 않는 파일 형식입니다.")
+  if not file.filename.lower().endswith(('.pdf', '.jpg', '.jpeg',       
+  '.png', '.txt')):
+          raise HTTPException(status_code=400, detail="지원하지 않는 파일   
+  형식입니다.")
 
     temp_dir = "temp_files"
     os.makedirs(temp_dir, exist_ok=True)

@@ -27,7 +27,7 @@ export const analyzeDocument = async (filePath) => {
     const aiResponse = await axios.post(
       `${AI_SERVER_URL}/api/ai-analyze`,
       { extracted_text: extractedText },
-      { headers: { "Content-Type": "application/json" }, timeout: 120000 }
+      { headers: { "Content-Type": "application/json" }, timeout: 600000 }
     );
     const aiData = aiResponse.data;
     console.log("AI 분석 완료");

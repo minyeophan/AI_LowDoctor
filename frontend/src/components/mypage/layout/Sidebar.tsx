@@ -7,6 +7,7 @@ import { IoDocumentTextSharp } from "react-icons/io5";
 import { BsPeopleFill } from "react-icons/bs";
 import { IoMdSettings } from "react-icons/io";
 import { IoLogOut } from "react-icons/io5";
+import { MdAccountCircle } from "react-icons/md";
 
 export default function Sidebar() {
   const { user, logout } = useAuth();
@@ -34,7 +35,11 @@ export default function Sidebar() {
       <div className="profile-section">
         <div className="profile-info">
           <div className="profile-avatar">
-            {user?.name?.[0] || ''}
+            {user?.avatar ? (
+              <img src={user.avatar} alt="프로필" className="profile-avatar-img" />
+            ) : (
+              <MdAccountCircle size={55} color="#d0d0d0" />
+            )}
           </div>
           <div className="profile-text">
             <h3 className="profile-name">{user?.name || '가나다님'}</h3>

@@ -11,3 +11,4 @@ pymongo
 qdrant-client
 fastembed
 requests
+json-repair

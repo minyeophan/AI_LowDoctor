@@ -153,6 +153,7 @@ def fetch_law_articles(mst: str, law_name: str, filter_articles=None) -> list[di
         articles.append({
             "type": "law",
             "law_name": law_name,
+            "mst": mst,             # 법령 고유번호 (법제처 API 재수집 시 필요)
             "article_num": num_str,
             "article_title": (article.findtext("조문제목") or "").strip(),
             "content": content,
