@@ -9,6 +9,8 @@ python-multipart
 httpx
 pymongo
 qdrant-client
+json-repair
+pyhwp
+six
 fastembed
 requests
-json-repair

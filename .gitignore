@@ -34,3 +34,7 @@ backend/uploads/*
 AI/experiments/
 AI/분석결과/
 .venv/
+
+# AI 실험/분석 결과
+AI/experiments/
+AI/분석결과/

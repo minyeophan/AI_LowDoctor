@@ -13,6 +13,7 @@ import uploadRouter from "./routes/upload_routes.js";
 import analyzeRouter from "./routes/analyze_routes.js";
 import resultRouter from "./routes/result_routes.js";
 import authRouter from "./routes/auth_routes.js";
+import convertRouter from "./routes/convert_routes.js";
 import postRouter from "./routes/post_routes.js";
 import commentRouter from "./routes/comment_routes.js";
 import mypageRouter from "./routes/mypage_routes.js";
@@ -58,15 +59,15 @@ app.use(
 
 app.use("/api-docs", swaggerUi.serve, swaggerUi.setup(swaggerSpec));
 
-app.use("/api", authRouter);
+app.use("/api/auth", authRouter);
 app.use("/api", uploadRouter);
 app.use("/api", analyzeRouter);
 app.use("/api", resultRouter);
+app.use("/api", convertRouter);
 app.use("/api", chatRouter);
 app.use("/api/posts", postRouter);
 app.use("/api", commentRouter);
 app.use("/api/mypage", mypageRouter);
-app.use("/api", chatRouter);
 
 app.get("/", (req, res) => {
   res.json({

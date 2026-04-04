@@ -1,7 +1,7 @@
 import Upload from "../schemas/upload_db.js";
 import Analysis from "../schemas/analyze_db.js";
 import Result from "../schemas/result_db.js";
-import { analyzeDocument } from "../service/ai_service.js";
+import { analyzeDocument, analyzeDocumentFromText } from "../service/ai_service.js";
 
 // 기존 함수 유지
 export const startAnalysis = async (documentId) => {
@@ -122,7 +122,9 @@ export const requestAnalysis = async (req, res, next) => {
     });
 
     try {
-      const resultData = await analyzeDocument(currentDocument.filePath);
+      const resultData = req.body.editedText
+        ? await analyzeDocumentFromText(req.body.editedText)
+        : await analyzeDocument(currentDocument.filePath);
 
       const safeSummary = Array.isArray(resultData.summary)
         ? JSON.stringify(resultData.summary)

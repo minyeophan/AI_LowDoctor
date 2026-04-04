@@ -112,10 +112,10 @@ export const analyzeAPI = {
    * 문서 분석 요청
    * POST /api/analyze
    */
-  requestAnalysis: async (documentId: string): Promise<AnalyzeResponse> => {
+  requestAnalysis: async (documentId: string, editedText?: string): Promise<AnalyzeResponse> => {
     return apiClient<AnalyzeResponse>('/api/analyze', {
       method: 'POST',
-      body: JSON.stringify({documentId }),
+      body: JSON.stringify({ documentId, ...(editedText && { editedText }) }),
     });
   },
 
