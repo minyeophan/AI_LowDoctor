@@ -1,0 +1,28 @@
+# swagger/form.yaml
+/api/form:
+  get:
+    summary: "법률 양식 목록 조회"
+    tags: [LegalForm]
+    parameters:
+      - in: query
+        name: category
+        schema: { type: string }
+      - in: query
+        name: keyword
+        schema: { type: string }
+    responses:
+      200:
+        description: "목록 반환 성공"
+
+/api/form/{id}/download:
+  get:
+    summary: "양식 다운로드 URL 요청"
+    tags: [LegalForm]
+    parameters:
+      - in: path
+        name: id
+        required: true
+        schema: { type: string }
+    responses:
+      200:
+        description: "다운로드 경로 반환"
