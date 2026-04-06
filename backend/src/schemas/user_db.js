@@ -66,13 +66,8 @@ const userSchema = new Schema(
 
     // 사용자가 다운로드한 양식 목록을 배열로 관리
     savedForms: [{
-      formId: { 
-        type: Schema.Types.ObjectId, 
-        ref: 'Form' 
-      },
-      save_date: { 
-        type: Date, 
-        default: Date.now }
+      formId: { type: Schema.Types.ObjectId, ref: 'Form' },
+      save_date: { type: Date, default: Date.now }
     }]
   },
   { collection: "users" }
