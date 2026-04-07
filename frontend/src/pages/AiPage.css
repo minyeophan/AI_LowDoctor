@@ -33,6 +33,8 @@ align-items: center; justify-content: center;
   color: #475569;
   padding-left: 12px;
   position: relative;
+  letter-spacing: -0.4px;
+
 }
 
 .upload-guide-list li::before {
