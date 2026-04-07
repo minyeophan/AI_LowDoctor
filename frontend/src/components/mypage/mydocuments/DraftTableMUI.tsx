@@ -26,9 +26,21 @@ import CreateRoundedIcon from '@mui/icons-material/CreateRounded';
 import ShareRoundedIcon from '@mui/icons-material/ShareRounded';
 import { DraftDocument } from '../../../types'; 
 
+interface DraftTableProps {
+  sortOrder: string;
+  categoryFilter: string;
+  searchQuery: string;
+}
 
-export default function DraftTableMUI() {
-  const drafts = mockDrafts;
+export default function DraftTableMUI({ sortOrder, categoryFilter, searchQuery }: DraftTableProps) {
+  const drafts = mockDrafts
+    .filter(d => categoryFilter === 'all' || d.category === categoryFilter)
+    .filter(d => !searchQuery || d.title.toLowerCase().includes(searchQuery.toLowerCase()))
+    .sort((a, b) => {
+      if (sortOrder === 'oldest') return new Date(a.lastEditedAt).getTime() - new Date(b.lastEditedAt).getTime();
+      if (sortOrder === 'name') return a.title.localeCompare(b.title);
+      return new Date(b.lastEditedAt).getTime() - new Date(a.lastEditedAt).getTime(); // 최신순
+    });
 
 
 

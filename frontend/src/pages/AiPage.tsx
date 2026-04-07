@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useLocation } from 'react-router-dom';
 import FloatingButtons from '../components/aidt/layout/FloatingButtons';
 import RightSidebar from '../components/aidt/layout/RightSidebar';
@@ -7,7 +7,7 @@ import AnalysisConfirmModal from '../components/aidt/shared/AnalysisConfirmModal
 import AnalysisLoadingOverlay from '../components/aidt/shared/AnalysisLoadingOverlay';
 import LoadingOverlay from '../components/aidt/shared/LoadingOverlay';
 import DangerView from '../components/aidt/views/DangerView';
-import DocumentView from '../components/aidt/views/DocumentView';
+import DocumentEditor, { DocumentEditorRef } from '../components/aidt/views/DocumentEditor';
 import GuideView from '../components/aidt/views/GuideView';
 import SummaryView from '../components/aidt/views/SummaryView';
 import FileUploader from '../components/FileUploader';
@@ -35,14 +35,28 @@ function AnalysisPage() {
   const [pendingAnalysis, setPendingAnalysis] = useState<AnalysisType>(null);
   const [analyzingType, setAnalyzingType] = useState<AnalysisType>(null);
   const [analyzedMenus, setAnalyzedMenus] = useState<Set<string>>(new Set());
+  const [editedHtml, setEditedHtml] = useState<string>('');
+  const [isConverting, setIsConverting] = useState(false);
+  const editorRef = useRef<DocumentEditorRef>(null);
   const location = useLocation();
 
 useEffect(() => {
   if (location.state?.autoAnalyze && currentDocument?.documentId) {
-    setAnalyzingType('summary');
-    setTimeout(() => {
-      handleFileUploadSuccess({ file: currentDocument.file } as any);
-    }, 0);
+    // HomePage에서 넘어온 경우 - 이미 업로드됨, convert만 실행
+    const convertExisting = async () => {
+      setIsConverting(true);
+      try {
+        const { html } = await documentsAPI.convertDocument(currentDocument.documentId!);
+        setEditedHtml(html);
+      } catch (e) {
+        console.error('HTML 변환 실패:', e);
+        setEditedHtml('<p>문서 변환에 실패했습니다. 텍스트를 직접 입력해주세요.</p>');
+      } finally {
+        setIsConverting(false);
+      }
+      setSelectedMenu('document');
+    };
+    convertExisting();
   }
 }, []);
   
@@ -61,8 +75,9 @@ const API_ENABLED = import.meta.env.VITE_API_BASE_URL !== undefined &&
   setIsAnalyzing(true);
 
   try {
+    const editedText = editorRef.current?.getHTML() || editedHtml;
     console.log('🔍 분석 요청:', currentDocument.documentId);
-    await analyzeAPI.requestAnalysis(currentDocument.documentId);
+    await analyzeAPI.requestAnalysis(currentDocument.documentId, editedText || undefined);
 
     // polling을 Promise로 감싸서 완료될 때까지 기다림
     await new Promise<void>((resolve, reject) => {
@@ -122,56 +137,34 @@ const API_ENABLED = import.meta.env.VITE_API_BASE_URL !== undefined &&
     const response = await documentsAPI.uploadDocument(uploadResult.file);
     const fileUrl = URL.createObjectURL(uploadResult.file);
     console.log('✅ 업로드 응답:', response);
-    
-    const documentId = response.documentId!;
 
-    // 2. 로딩 화면 표시
-    setAnalyzingType('summary');
+    const documentId = (response.documentId || response.document_id)!;
 
-    // 3. OCR 요청해서 텍스트 추출
-    let extractedText = '';
-    try {
-      
-      const analyzeResponse = await analyzeAPI.requestAnalysis(documentId);
-      // polling으로 분석 완료 대기
-      await new Promise<void>((resolve, reject) => {
-        let attempts = 0;
-        const MAX_ATTEMPTS = 60; // 최대 2분 (2초 * 60)
-        const poll = async () => {
-          if (attempts >= MAX_ATTEMPTS) {
-            reject(new Error('분석 시간이 초과되었습니다.'));
-            return;
-          }
-          attempts++;
-          const result = await analyzeAPI.getAnalysisResult(documentId);
-          if (result.status === 'completed') {
-            extractedText = result.extractedText || '';
-            resolve();
-          } else if (result.status === 'failed') {
-            reject(new Error(result.errorMessage || '분석에 실패했습니다.'));
-          } else {
-            setTimeout(poll, 2000);
-          }
-        };
-        poll();
-      });
-    } catch (e) {
-      console.error('OCR 실패:', e);
-    }
-
-    // 4. 텍스트 화면 표시
+    // 2. 문서 상태 저장
     const newDoc = {
-      documentId: response.documentId,
+      documentId,
       status: response.status,
       filename: uploadResult.file.name,
       size: uploadResult.file.size,
       uploadDate: new Date().toISOString(),
-      content: extractedText,
+      content: '',
       fileUrl,
       file: uploadResult.file,
     };
     setCurrentDocument(newDoc as any);
-    setAnalyzingType(null);  // 로딩 끝
+
+    // 3. HTML 변환
+    setIsConverting(true);
+    try {
+      const { html } = await documentsAPI.convertDocument(documentId);
+      setEditedHtml(html);
+    } catch (e) {
+      console.error('HTML 변환 실패:', e);
+      setEditedHtml('<p>문서 변환에 실패했습니다. 텍스트를 직접 입력해주세요.</p>');
+    } finally {
+      setIsConverting(false);
+    }
+
     setSelectedMenu('document');
 
   } catch (error) {
@@ -319,6 +312,16 @@ const getAnalysisKey = (type: AnalysisType) => {
     );
   }
 
+  // 변환 로딩
+  if (isConverting) {
+    return (
+      <div className="content-section" style={{ position: 'relative', minHeight: '400px' }}>
+        <AnalysisLoadingOverlay type="summary" />
+        <p style={{ textAlign: 'center', color: '#666', marginTop: 8 }}>문서를 변환하는 중입니다...</p>
+      </div>
+    );
+  }
+
   // 분석 로딩
   if (analyzingType) {
     return (
@@ -328,14 +331,32 @@ const getAnalysisKey = (type: AnalysisType) => {
     );
   }
     switch (selectedMenu) {
-      case 'document': // 본문
+      case 'document':
         return (
-          <DocumentView
-          currentDocument={currentDocument}
-          zoomLevel={zoomLevel}
-          onZoomIn={handleZoomIn}
-          onZoomOut={handleZoomOut}
-        />
+          <div className="content-section" style={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
+            <div style={{ display: 'flex', justifyContent: 'flex-end', padding: '8px 16px', borderBottom: '1px solid #e5e7eb' }}>
+              <button
+                onClick={() => setPendingAnalysis('summary')}
+                disabled={isAnalyzing}
+                style={{
+                  padding: '8px 20px',
+                  background: '#2563eb',
+                  color: '#fff',
+                  border: 'none',
+                  borderRadius: '8px',
+                  fontWeight: 600,
+                  fontSize: '14px',
+                  cursor: isAnalyzing ? 'not-allowed' : 'pointer',
+                  opacity: isAnalyzing ? 0.6 : 1,
+                }}
+              >
+                분석 요청
+              </button>
+            </div>
+            <div style={{ flex: 1, overflow: 'auto' }}>
+              <DocumentEditor ref={editorRef} initialContent={editedHtml} />
+            </div>
+          </div>
         );
 
       case 'summary':

@@ -17,6 +17,20 @@ export interface UploadResponse {
 }
 
 export const documentsAPI = {
+  convertDocument: async (documentId: string): Promise<{ html: string }> => {
+    const token = localStorage.getItem('token');
+    const response = await fetch(`${API_BASE_URL}/api/convert`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        ...(token && { 'Authorization': `Bearer ${token}` }),
+      },
+      body: JSON.stringify({ documentId }),
+    });
+    if (!response.ok) throw new Error('문서 변환에 실패했습니다.');
+    return response.json();
+  },
+
   uploadDocument: async (file: File): Promise<UploadResponse> => {
     console.log('🚀 업로드 시작:', {
       fileName: file.name,

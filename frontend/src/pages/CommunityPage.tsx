@@ -34,7 +34,6 @@ export default function CommunityPage() {
   const TOTAL_PAGES = 10;
   const POSTS_PER_PAGE = 10;
 
- // 교체 후
 useEffect(() => {
   const fetchPosts = async () => {
     setIsLoading(true);

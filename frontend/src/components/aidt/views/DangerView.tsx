@@ -37,14 +37,13 @@ function DangerView({
   const lines = documentContent.split('\n');
   const totalLength = documentContent.length;
 
-  // ✅ 1단계: 각 위험 항목이 처음 나타나는 줄 번호 찾기
+  // 1단계: 각 위험 항목이 처음 나타나는 줄 번호 찾기
   const riskFirstAppearance = useMemo(() => {
-    const appearances = new Map<number, number>(); // riskIndex → lineIndex
+    const appearances = new Map<number, number>(); 
     const matchedRisks = new Set<number>();
 
     lines.forEach((line, lineIndex) => {
       const trimmedLine = line.trim();
-      
       if (trimmedLine.length < 10) return;
       
       const matchedRiskIndex = riskData.findIndex((risk: RiskItem) => {
@@ -81,7 +80,7 @@ function DangerView({
     return appearances;
   }, [lines, riskData]);
 
-  // ✅ 2단계: 위험 포인트 위치 계산 (실제 줄 번호 기반)
+  // 2단계: 위험 포인트 위치 계산 (실제 줄 번호 기반)
   const riskPositions = useMemo(() => {
     return riskData.map((risk: RiskItem, index: number) => {
       const lineIndex = riskFirstAppearance.get(index);
@@ -153,13 +152,14 @@ function DangerView({
       
       <div className="dangerous-box">
         <div className='danger-box-text'>
-  <div className="info-icon-wrapper">
-    <span 
-      className={`info-icon ${isGuideOpen ? 'active' : ''}`}
-      onClick={() => setIsGuideOpen(!isGuideOpen)}
-    >
-      <MdError />
-    </span>
+  <div
+  className="info-icon-wrapper"
+>
+  <span className="info-icon">
+    <MdError 
+       onMouseEnter={() => setIsGuideOpen(true)}
+        onMouseLeave={() => setIsGuideOpen(false)}/>
+  </span>
      <p>{riskData.length}개의 위험 포인트를 찾았어요</p>
     {isGuideOpen && (
       <div className="risk-guide-content">
