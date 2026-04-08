@@ -86,16 +86,25 @@ def search_legal_sources(query: str, top_k: int = 8) -> Dict[str, List[Dict]]:
         "others": [],
     }
 
+    mongo_ids = []
     for hit in results.points:
         payload = hit.payload or {}
-        mongo_doc = None
-
         mongo_id = payload.get("mongo_id")
         if mongo_id:
             try:
-                mongo_doc = col.find_one({"_id": ObjectId(mongo_id)})
+                mongo_ids.append(ObjectId(mongo_id))
             except Exception:
-                mongo_doc = None
+                pass
+
+    mongo_docs = {}
+    if mongo_ids:
+        for doc in col.find({"_id": {"$in": mongo_ids}}):
+            mongo_docs[str(doc["_id"])] = doc
+
+    for hit in results.points:
+        payload = hit.payload or {}
+        mongo_id = payload.get("mongo_id")
+        mongo_doc = mongo_docs.get(mongo_id) if mongo_id else None
 
         doc = _normalize_payload(payload, mongo_doc, getattr(hit, "score", 0))
         doc_type = doc["type"]
