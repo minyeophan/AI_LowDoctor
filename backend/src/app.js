@@ -64,7 +64,7 @@ app.use("/api", authRouter);
 app.use("/api", uploadRouter);
 app.use("/api", analyzeRouter);
 app.use("/api", resultRouter);
-app.use("/api/forms", formRouter);
+app.use("/api/form", formRouter);
 app.use("/api", convertRouter);
 app.use("/api", chatRouter);
 app.use("/api/posts", postRouter);
