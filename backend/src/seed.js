@@ -22,6 +22,12 @@ const klacForms = [
         category: "부동산",
         source: "대한법률구조공단",
         fileUrl: "https://support.klac.or.kr/cmm/fms/FileDown_docs.do?repositoryPath=%2fECM%2f2018%2f07%2f16%2f10%2f11%2fef808a69-5c85-493d-9a8d-9c8aa9c5dae2&filename=%ea%b1%b4%eb%ac%bc%ec%9e%84%eb%8c%80%ec%b0%a8%ea%b3%84%ec%95%bd%ec%84%9c.hwp"
+    },
+    {
+        form_name: "임대차계약서(임대인 부재)",
+        category: "부동산",
+        source: "대한법률구조공단",
+        fileUrl: "https://support.klac.or.kr/cmm/fms/FileDown_docs.do?repositoryPath=%2fECM%2f2018%2f07%2f16%2f10%2f14%2f20d5aab5-1fbc-4a5c-8ac0-527bfa2cb0d6&filename=%ec%9e%84%eb%8c%80%ec%b0%a8%ea%b3%84%ec%95%bd%ec%84%9c(%ec%9e%84%eb%8c%80%ec%9d%b8+%eb%b6%80%ec%9e%ac).hwp"
     }
 ];
 
