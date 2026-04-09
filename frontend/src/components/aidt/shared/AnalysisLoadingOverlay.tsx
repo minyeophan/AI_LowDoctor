@@ -15,7 +15,7 @@ function AnalysisLoadingOverlay({ type }: AnalysisLoadingOverlayProps) {
   return (
     <div className="analysis-loading-overlay">
       <div className="loading-content">
-        <div className="loading-spinner"></div>
+        <LoadingCharacter />
         <p className="loading-message">{messages[type]}</p>
       </div>
     </div>

@@ -24,6 +24,7 @@
     "@types/react-calendar": "^3.9.0",
     "docx": "^9.5.1",
     "file-saver": "^2.0.5",
+    "prosemirror-search": "^1.1.0",
     "react": "^19.2.0",
     "react-calendar": "^6.0.0",
     "react-dom": "^19.2.0",

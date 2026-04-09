@@ -15,6 +15,7 @@ import { useDocument , DocumentData } from '../context/DocumentContext';
 import { documentsAPI, UploadResponse } from '../api/documents';
 import { analyzeAPI, AnalyzeResponse, AnalysisResult } from '../api/analyze';
 import { mockContractTip, mockImprovementGuides, mockRiskItems, mockSummaryData } from '../mock/mockData';
+import DocumentView from '../components/aidt/views/DocumentView';
 import { UploadResult } from '../types';
 import './AiPage.css';
 
@@ -180,52 +181,44 @@ const API_ENABLED = import.meta.env.VITE_API_BASE_URL !== undefined &&
   }
 };
 
-//메뉴 선택
-  const handleMenuSelect = (menu: MenuItem) => {
+// handleMenuSelect 수정
+const handleMenuSelect = (menu: MenuItem) => {
   if (!currentDocument) {
     alert('⚠️ 먼저 문서를 업로드해주세요!');
     return;
   }
 
-  // 분석이 필요한 메뉴
   if (menu === 'summary' || menu === 'danger' || menu === 'guide') {
-    // 이미 분석된 메뉴인지 확인
-    if (analyzedMenus.has(menu)) {
+    // 분석 결과가 이미 있으면 바로 탭 전환
+    if (analysisData) {
       setSelectedMenu(menu);
       return;
     }
-    
-    // 분석 확인 팝업 표시
+    // 한 번도 분석 안 했으면 분석 요청
     setPendingAnalysis(menu);
   } else {
     setSelectedMenu(menu);
   }
 };
 
-// 분석 확인\
-// 분석 확인
+// handleAnalysisConfirm 수정
 const handleAnalysisConfirm = async () => {
   if (!pendingAnalysis) return;
-
   const currentAnalysis = pendingAnalysis;
   setAnalyzingType(currentAnalysis);
   setSelectedMenu(currentAnalysis);
   setPendingAnalysis(null);
-
   try {
-   
-    // 백엔드 연결시 실제 API 호출
     if (API_ENABLED) {
       await requestAnalysis();
     }
-     setAnalyzedMenus(prev => new Set(prev).add(currentAnalysis));
+    // analyzedMenus 대신 analysisData로 판단하므로 삭제 가능
   } catch (error) {
     console.error('분석 실패:', error);
   } finally {
     setAnalyzingType(null);
   }
 };
-
 
 // 분석 취소
 const handleAnalysisCancel = () => {
@@ -333,39 +326,32 @@ const getAnalysisKey = (type: AnalysisType) => {
     switch (selectedMenu) {
       case 'document':
         return (
-          <div className="content-section" style={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
-            <div style={{ display: 'flex', justifyContent: 'flex-end', padding: '8px 16px', borderBottom: '1px solid #e5e7eb' }}>
-              <button
-                onClick={() => setPendingAnalysis('summary')}
-                disabled={isAnalyzing}
-                style={{
-                  padding: '8px 20px',
-                  background: '#2563eb',
-                  color: '#fff',
-                  border: 'none',
-                  borderRadius: '8px',
-                  fontWeight: 600,
-                  fontSize: '14px',
-                  cursor: isAnalyzing ? 'not-allowed' : 'pointer',
-                  opacity: isAnalyzing ? 0.6 : 1,
-                }}
-              >
-                분석 요청
-              </button>
-            </div>
-            <div style={{ flex: 1, overflow: 'auto' }}>
-              <DocumentEditor ref={editorRef} initialContent={editedHtml} />
-            </div>
-          </div>
+          <DocumentView
+            currentDocument={currentDocument}
+            zoomLevel={zoomLevel}
+            onZoomIn={handleZoomIn}
+            onZoomOut={handleZoomOut}
+            editedHtml={editedHtml}
+            editorRef={editorRef}
+            onAnalyze={() => setPendingAnalysis('summary')}
+            isAnalyzing={isAnalyzing}
+          />
         );
 
       case 'summary':
        const rawSummary = analysisData?.summary;
-        const summaryData = typeof rawSummary === 'string'
-          ? JSON.parse(rawSummary)
-          : Array.isArray(rawSummary) && rawSummary.length > 0
-            ? rawSummary
-            : mockSummaryData;
+          let summaryData = mockSummaryData;
+          try {
+            if (typeof rawSummary === 'string' && (rawSummary as string).length > 0) {
+              const parsed = JSON.parse(rawSummary as string);
+              summaryData = Array.isArray(parsed) && parsed.length > 0 ? parsed : mockSummaryData;
+            } else if (Array.isArray(rawSummary) && rawSummary.length > 0) {
+              summaryData = rawSummary as any;
+            }
+          } catch (e) {
+            console.error('summary 파싱 실패, mock 데이터 사용:', e);
+            summaryData = mockSummaryData;
+          }
       return (
         <SummaryView
           currentDocument={currentDocument}
@@ -377,16 +363,17 @@ const getAnalysisKey = (type: AnalysisType) => {
       );
 
       case 'danger':
-        const riskData = analysisData?.riskItems || mockRiskItems;
-      return (
-        <DangerView
-          currentDocument={currentDocument}
-          riskData={riskData as any}
-          zoomLevel={zoomLevel}
-          onZoomIn={handleZoomIn}
-          onZoomOut={handleZoomOut}
-        />
-      );
+    const riskData = analysisData?.riskItems || mockRiskItems;
+    return (
+      <DangerView
+        currentDocument={currentDocument}
+        riskData={riskData as any}
+        zoomLevel={zoomLevel}
+        onZoomIn={handleZoomIn}
+        onZoomOut={handleZoomOut}
+        editedHtml={editedHtml}
+      />
+    );
 
       case 'guide':
         console.log('analysisData:', analysisData); 

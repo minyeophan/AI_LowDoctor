@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import Calendar from 'react-calendar';
 import 'react-calendar/dist/Calendar.css';
 import './SchedulePage.css';
@@ -6,6 +6,7 @@ import { IoSearch } from 'react-icons/io5';
 import { IoClose } from 'react-icons/io5';
 import { BiSolidBell, BiSolidBellOff } from "react-icons/bi";
 import { MdError } from "react-icons/md";
+import { useLocation } from 'react-router-dom';
 
 export interface Schedule {
   id: string;
@@ -152,6 +153,15 @@ const filtered = schedules
     // 백엔드 연동 시: DELETE /api/schedule/:id
     setSchedules(prev => prev.filter(s => s.id !== id));
   };
+
+  const location = useLocation();
+
+useEffect(() => {
+  if (location.state?.autoSchedules) {
+    const newSchedules = location.state.autoSchedules as Schedule[];
+    setSchedules(prev => [...prev, ...newSchedules]);
+  }
+}, []);
 
   return (
     <div className="schedule-page">
@@ -451,7 +461,7 @@ function ScheduleModal({ schedule, onSave, onClose }: ModalProps) {
 
           {/* 카테고리 */}
           <div className="modal-field">
-            <label className="modal-label">카테고리 *</label>
+            <label className="modal-label">계약 유형 *</label>
             <select
               className="modal-select"
               value={type}
@@ -594,7 +604,7 @@ function ScheduleDetailModal({
               <span className="detail-info-value">{schedule.title}</span>
             </div>
             <div className="detail-info-row">
-              <span className="detail-info-label">카테고리</span>
+              <span className="detail-info-label">계약 유형</span>
               <span className={`schedule-type-badge ${typeColor[schedule.type]}`}>
                 {schedule.type}
               </span>
