@@ -42,8 +42,6 @@ export default function DraftTableMUI({ sortOrder, categoryFilter, searchQuery }
       return new Date(b.lastEditedAt).getTime() - new Date(a.lastEditedAt).getTime(); // 최신순
     });
 
-
-
   return (
     <TableContainer 
       component={Paper} 

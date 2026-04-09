@@ -1,22 +1,21 @@
-import { useState, useMemo, useEffect } from 'react';
-import DocumentMeta from '../shared/DocumentMeta';
-import { FiSearch, FiPrinter, FiFileText } from 'react-icons/fi';
+import { useState, useEffect, useRef } from 'react';
 import { BsFillPrinterFill } from "react-icons/bs";
 import { RiEditBoxFill } from "react-icons/ri";
 import { FaBookmark } from "react-icons/fa";
-import { MdOutlineTextFields } from 'react-icons/md';
+import DocumentEditor, { DocumentEditorRef } from './DocumentEditor';
+import { FaCaretUp } from "react-icons/fa";
+import { FaCaretDown } from "react-icons/fa";
 import '../views/DocumentView.css';
 
 interface Memo {
   id: string;
   text: string;
-  page: number;
   createdAt: string;
 }
 
 interface Bookmark {
-  page: number;
   label: string;
+  scrollTop: number;
 }
 
 interface DocumentViewProps {
@@ -30,13 +29,20 @@ interface DocumentViewProps {
   zoomLevel: number;
   onZoomIn: () => void;
   onZoomOut: () => void;
+  editedHtml: string;
+  editorRef: React.RefObject<DocumentEditorRef>;
+  onAnalyze: () => void;
+  isAnalyzing: boolean;
 }
 
-function DocumentView({ currentDocument, zoomLevel, onZoomIn, onZoomOut }: DocumentViewProps) {
-  const [currentPage, setCurrentPage] = useState(1);
+function DocumentView({
+  currentDocument, zoomLevel, onZoomIn, onZoomOut,
+  editedHtml, editorRef, onAnalyze, isAnalyzing
+}: DocumentViewProps) {
   const [searchTerm, setSearchTerm] = useState('');
-  const [searchResults, setSearchResults] = useState<number[]>([]);
+  const [matchCount, setMatchCount] = useState(0);
   const [currentSearchIndex, setCurrentSearchIndex] = useState(0);
+  const editorBodyRef = useRef<HTMLDivElement>(null);
 
   // 메모 상태
   const [memos, setMemos] = useState<Memo[]>([]);
@@ -47,73 +53,42 @@ function DocumentView({ currentDocument, zoomLevel, onZoomIn, onZoomOut }: Docum
   const [bookmarks, setBookmarks] = useState<Bookmark[]>([]);
   const [showBookmarkPanel, setShowBookmarkPanel] = useState(false);
 
-  const linesPerPage = 40;
-
-  const pages = useMemo(() => {
-    if (!currentDocument.content) return [];
-    const lines = currentDocument.content.split('\n');
-    const pageArray = [];
-    for (let i = 0; i < lines.length; i += linesPerPage) {
-      pageArray.push(lines.slice(i, i + linesPerPage).join('\n'));
-    }
-    return pageArray;
-  }, [currentDocument.content]);
-
-  const totalPages = pages.length || 1;
-  const isCurrentPageBookmarked = bookmarks.some(b => b.page === currentPage);
-
+  // 검색어 변경 시 하이라이팅 개수 카운트
   useEffect(() => {
-    if (searchTerm.trim()) {
-      const results: number[] = [];
-      pages.forEach((page, index) => {
-        if (page.toLowerCase().includes(searchTerm.toLowerCase())) {
-          results.push(index + 1);
-        }
-      });
-      setSearchResults(results);
+    if (!searchTerm.trim()) {
+      setMatchCount(0);
       setCurrentSearchIndex(0);
-      if (results.length > 0) setCurrentPage(results[0]);
-    } else {
-      setSearchResults([]);
-      setCurrentSearchIndex(0);
+      return;
     }
-  }, [searchTerm, pages]);
-
-  const handlePrevPage = () => setCurrentPage(prev => Math.max(1, prev - 1));
-  const handleNextPage = () => setCurrentPage(prev => Math.min(totalPages, prev + 1));
+    setTimeout(() => {
+      const highlights = document.querySelectorAll('.search-highlight');
+      setMatchCount(highlights.length);
+      setCurrentSearchIndex(0);
+    }, 150);
+  }, [searchTerm]);
 
   const handleSearchPrev = () => {
-    if (searchResults.length > 0) {
-      const newIndex = currentSearchIndex > 0 ? currentSearchIndex - 1 : searchResults.length - 1;
-      setCurrentSearchIndex(newIndex);
-      setCurrentPage(searchResults[newIndex]);
-    }
+    const highlights = document.querySelectorAll('.search-highlight');
+    if (highlights.length === 0) return;
+    const newIndex = currentSearchIndex > 0 ? currentSearchIndex - 1 : highlights.length - 1;
+    setCurrentSearchIndex(newIndex);
+    highlights[newIndex].scrollIntoView({ behavior: 'smooth', block: 'center' });
   };
 
   const handleSearchNext = () => {
-    if (searchResults.length > 0) {
-      const newIndex = currentSearchIndex < searchResults.length - 1 ? currentSearchIndex + 1 : 0;
-      setCurrentSearchIndex(newIndex);
-      setCurrentPage(searchResults[newIndex]);
-    }
+    const highlights = document.querySelectorAll('.search-highlight');
+    if (highlights.length === 0) return;
+    const newIndex = currentSearchIndex < highlights.length - 1 ? currentSearchIndex + 1 : 0;
+    setCurrentSearchIndex(newIndex);
+    highlights[newIndex].scrollIntoView({ behavior: 'smooth', block: 'center' });
   };
 
-  const highlightText = (text: string, highlight: string) => {
-    if (!highlight.trim()) return text;
-    const regex = new RegExp(`(${highlight})`, 'gi');
-    const parts = text.split(regex);
-    return parts.map((part, index) =>
-      regex.test(part) ? <mark key={index} className="highlight">{part}</mark> : part
-    );
-  };
-
-  // 메모 추가
+  // 메모
   const handleAddMemo = () => {
     if (!memoInput.trim()) return;
     const newMemo: Memo = {
       id: Date.now().toString(),
       text: memoInput,
-      page: currentPage,
       createdAt: new Date().toLocaleString('ko-KR'),
     };
     setMemos(prev => [...prev, newMemo]);
@@ -124,23 +99,31 @@ function DocumentView({ currentDocument, zoomLevel, onZoomIn, onZoomOut }: Docum
     setMemos(prev => prev.filter(m => m.id !== id));
   };
 
-  // 북마크 토글
-  const handleToggleBookmark = () => {
-    if (isCurrentPageBookmarked) {
-      setBookmarks(prev => prev.filter(b => b.page !== currentPage));
-    } else {
-      setBookmarks(prev => [...prev, { page: currentPage, label: `${currentPage}페이지` }]);
-    }
+  // 북마크
+  const handleAddBookmark = () => {
+    const scrollTop = editorBodyRef.current?.scrollTop || 0;
+    const label = `북마크 ${bookmarks.length + 1}`;
+    setBookmarks(prev => [...prev, { label, scrollTop }]);
   };
 
+  const handleJumpBookmark = (scrollTop: number) => {
+    editorBodyRef.current?.scrollTo({ top: scrollTop, behavior: 'smooth' });
+    setShowBookmarkPanel(false);
+  };
+
+  const handleDeleteBookmark = (idx: number) => {
+    setBookmarks(prev => prev.filter((_, i) => i !== idx));
+  };
+
+  // 인쇄
   const handlePrint = () => {
     const printWindow = window.open('', '', 'height=600,width=800');
     if (printWindow) {
       printWindow.document.write('<html><head><title>인쇄</title>');
-      printWindow.document.write('<style>body { font-family: "Noto Sans KR", sans-serif; line-height: 1.8; padding: 20px; } pre { white-space: pre-wrap; }</style>');
+      printWindow.document.write('<style>body { font-family: "Noto Sans KR", sans-serif; line-height: 1.8; padding: 20px; }</style>');
       printWindow.document.write('</head><body>');
       printWindow.document.write(`<h2>${currentDocument.filename}</h2>`);
-      printWindow.document.write(`<pre>${currentDocument.content}</pre>`);
+      printWindow.document.write(editedHtml);
       printWindow.document.write('</body></html>');
       printWindow.document.close();
       printWindow.print();
@@ -150,9 +133,10 @@ function DocumentView({ currentDocument, zoomLevel, onZoomIn, onZoomOut }: Docum
   return (
     <div className="content-section">
       <div className="content-analysis-box">
-        {/* 툴바 */}<div className="document-info-header">
-      </div>
+
+        {/* 툴바 */}
         <div className="document-toolbar-new">
+
           {/* 검색창 */}
           <div className="search-box-new">
             <input
@@ -162,39 +146,47 @@ function DocumentView({ currentDocument, zoomLevel, onZoomIn, onZoomOut }: Docum
               onChange={(e) => setSearchTerm(e.target.value)}
               className="search-input-new"
             />
-            
-            {searchResults.length > 0 && (
+            {searchTerm && (
               <div className="search-results">
-                <span>{currentSearchIndex + 1}/{searchResults.length}</span>
-                <button onClick={handleSearchPrev}>▲</button>
-                <button onClick={handleSearchNext}>▼</button>
+                <span className="search-count">{matchCount}개</span>
+                <div className='search-btn-wrap'>
+                  <button onClick={handleSearchPrev} disabled={matchCount === 0}><FaCaretUp size={16}/></button>
+                  <button onClick={handleSearchNext} disabled={matchCount === 0}><FaCaretDown size={16}/></button>
+                </div>
               </div>
             )}
           </div>
 
           {/* 우측 아이콘들 */}
           <div className="toolbar-actions">
-            {/* 메모 */}
+             {/* 맨위로/맨아래로 */}
+            <button
+              className="scroll-btn"
+              onClick={() => editorBodyRef.current?.scrollTo({ top: 0, behavior: 'smooth' })}
+              title="맨 위로"
+            ><FaCaretUp size={22}/></button>
+            <button
+              className="scroll-btn"
+              onClick={() => editorBodyRef.current?.scrollTo({ top: 99999, behavior: 'smooth' })}
+              title="맨 아래로"
+            ><FaCaretDown size={22}/></button>
+
             <button
               className={`icon-btn ${showMemoPanel ? 'active' : ''}`}
               onClick={() => { setShowMemoPanel(!showMemoPanel); setShowBookmarkPanel(false); }}
               title="메모"
             >
-              <RiEditBoxFill size={16} />
+              <RiEditBoxFill size={14} />
             </button>
-
-            {/* 북마크 */}
             <button
-              className={`icon-btn ${isCurrentPageBookmarked ? 'bookmarked' : ''}`}
+              className={`icon-btn ${showBookmarkPanel ? 'active' : ''}`}
               onClick={() => { setShowBookmarkPanel(!showBookmarkPanel); setShowMemoPanel(false); }}
               title="북마크"
             >
-              <FaBookmark  size={16} />
+              <FaBookmark size={14} />
             </button>
-
-            {/* 인쇄 */}
             <button className="icon-btn" onClick={handlePrint} title="인쇄">
-              <BsFillPrinterFill size={16} />
+              <BsFillPrinterFill size={14} />
             </button>
           </div>
         </div>
@@ -203,7 +195,7 @@ function DocumentView({ currentDocument, zoomLevel, onZoomIn, onZoomOut }: Docum
         {showMemoPanel && (
           <div className="side-panel">
             <div className="panel-header">
-              <span>📝 메모 ({currentPage}페이지)</span>
+              <span>📝 메모</span>
               <button onClick={() => setShowMemoPanel(false)}>✕</button>
             </div>
             <div className="memo-input-box">
@@ -222,7 +214,6 @@ function DocumentView({ currentDocument, zoomLevel, onZoomIn, onZoomOut }: Docum
                 memos.map(memo => (
                   <div key={memo.id} className="memo-item">
                     <div className="memo-meta">
-                      <span className="memo-page">{memo.page}페이지</span>
                       <span className="memo-date">{memo.createdAt}</span>
                     </div>
                     <p className="memo-text">{memo.text}</p>
@@ -241,20 +232,20 @@ function DocumentView({ currentDocument, zoomLevel, onZoomIn, onZoomOut }: Docum
               <span>🔖 북마크</span>
               <button onClick={() => setShowBookmarkPanel(false)}>✕</button>
             </div>
-            <button
-              className={`bookmark-toggle-btn ${isCurrentPageBookmarked ? 'remove' : 'add'}`}
-              onClick={handleToggleBookmark}
-            >
-              {isCurrentPageBookmarked ? '🔖 현재 페이지 북마크 해제' : '🔖 현재 페이지 북마크 추가'}
+            <button className="bookmark-toggle-btn add" onClick={handleAddBookmark}>
+              🔖 현재 위치 북마크 추가
             </button>
             <div className="bookmark-list">
               {bookmarks.length === 0 ? (
                 <p className="empty-msg">북마크가 없습니다.</p>
               ) : (
                 bookmarks.map((bm, idx) => (
-                  <div key={idx} className="bookmark-item" onClick={() => { setCurrentPage(bm.page); setShowBookmarkPanel(false); }}>
-                    <FaBookmark size={14} />
-                    <span>{bm.label}</span>
+                  <div key={idx} className="bookmark-item">
+                    <div onClick={() => handleJumpBookmark(bm.scrollTop)}>
+                      <FaBookmark size={14} />
+                      <span>{bm.label}</span>
+                    </div>
+                    <button className="memo-delete" onClick={() => handleDeleteBookmark(idx)}>삭제</button>
                   </div>
                 ))
               )}
@@ -263,37 +254,15 @@ function DocumentView({ currentDocument, zoomLevel, onZoomIn, onZoomOut }: Docum
         )}
 
         {/* 문서 본문 */}
-       {/* 문서 본문 */}
-<div className="document-body">
-  {currentDocument.content ? (
-    <>
-      <pre style={{ fontSize: `${zoomLevel}%` }}>
-        {searchTerm ? highlightText(pages[currentPage - 1] || '', searchTerm) : pages[currentPage - 1] || ''}
-      </pre>
-      {/* 페이지 네비게이션 */}
-      {totalPages > 1 && (
-        <div className="page-navigation">
-          {/* 줌 컨트롤 */}
-          <div className="page-nav-zoom">
-            <button className="zoom-btn" onClick={onZoomOut}>－</button>
-            <span className="zoom-level">{zoomLevel}%</span>
-            <button className="zoom-btn" onClick={onZoomIn}>＋</button>
-          </div>
-          {/* 페이지 이동 */}
-          <div className="page-nav-right">
-            <button className="page-arrow-btn" onClick={handlePrevPage} disabled={currentPage === 1}>‹</button>
-            <span className="page-current-total">
-              <strong>{currentPage}</strong> / {totalPages}
-            </span>
-            <button className="page-arrow-btn" onClick={handleNextPage} disabled={currentPage === totalPages}>›</button>
-          </div>
+        <div className="document-body" ref={editorBodyRef}>
+          <DocumentEditor
+            ref={editorRef}
+            initialContent={editedHtml}
+            searchTerm={searchTerm}
+            zoomLevel={zoomLevel}
+          />
         </div>
-      )}
-    </>
-  ) : (
-    <p className="no-content">문서 내용을 불러오는 중입니다...</p>
-  )}
-</div>
+
       </div>
     </div>
   );

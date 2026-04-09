@@ -23,6 +23,7 @@ interface DangerViewProps {
   zoomLevel: number;
   onZoomIn: () => void;
   onZoomOut: () => void;
+  editedHtml?: string;
 }
 
 function DangerView({ 
@@ -31,9 +32,18 @@ function DangerView({
   zoomLevel, 
   onZoomIn, 
   onZoomOut,
+  editedHtml = '',
 }: DangerViewProps) {
   
-  const documentContent = currentDocument.content || mockDocumentContent;
+  const documentContent = useMemo(() => {
+  if (editedHtml) {
+    const div = document.createElement('div');
+    div.innerHTML = editedHtml;
+    return div.innerText || div.textContent || '';
+  }
+  return currentDocument.content || mockDocumentContent;
+}, [editedHtml, currentDocument.content]);
+
   const lines = documentContent.split('\n');
   const totalLength = documentContent.length;
 
@@ -130,20 +140,31 @@ function DangerView({
     });
   }, [riskData, riskFirstAppearance, documentContent, lines.length, totalLength]);
   
+console.log('총 위험요소:', riskData.length);
+console.log('매칭된 위험요소 (위치바):', riskFirstAppearance.size);
+riskData.forEach((risk: RiskItem, idx: number) => {
+  if (!riskFirstAppearance.has(idx)) {
+    console.warn(`⚠️ 매칭 실패 [${idx + 1}]:`, risk.clauseText, '| keyword:', risk.searchKeyword);
+  }
+});
+
   // 점 클릭 시 해당 위치로 스크롤
-  const handleDotClick = (riskIndex: number) => {
-    const element = document.getElementById(`risk-${riskIndex}`);
-    console.log('클릭:', riskIndex, element);
+ const handleDotClick = (riskIndex: number) => {
+  const element = document.getElementById(`risk-${riskIndex}`);
+  if (!element) return;
 
-    if (element) {
-      element.scrollIntoView({ behavior: 'smooth', block: 'center' });
+  // 여러 가능한 스크롤 컨테이너 시도
+  const containers = [
+    document.querySelector('.content-analysis-box'),
+    document.querySelector('.document-with-danger'),
+    document.querySelector('.danger-scroll'),
+    document.documentElement,
+  ];
 
-      element.classList.add('highlight-active');
-      setTimeout(() => {
-        element.classList.remove('highlight-active');
-      }, 2000);
-    }
-  };
+  element.scrollIntoView({ behavior: 'smooth', block: 'center' });
+  element.classList.add('highlight-active');
+  setTimeout(() => element.classList.remove('highlight-active'), 2000);
+};
 
   const [isGuideOpen, setIsGuideOpen] = useState(false);
 
@@ -235,60 +256,30 @@ function DangerView({
             </p>
           </div>
           {(() => {
-            const matchedRiskIndices = new Set<number>();
+  const matchedRiskIndices = new Set<number>();
 
-            return lines.map((line, lineIndex) => {
-              const trimmedLine = line.trim();
-              
-              if (trimmedLine.length < 10) {
-                return (
-                  <p key={lineIndex} className="document-line">
-                    {line || '\u00A0'}
-                  </p>
-                );
-              }
-              
-              const matchedRiskIndex = riskData.findIndex((risk: RiskItem) => {
-                if (risk.searchKeyword) {
-                  const keyword = risk.searchKeyword.trim();
-                  if (trimmedLine.includes(keyword)) {
-                    return true;
-                  }
-                }
-                
-                const clauseText = risk.clauseText?.trim()??'';
-                
-                if (trimmedLine.includes(clauseText)) {
-                  return true;
-                }
-                
-                if (clauseText.includes(trimmedLine) && trimmedLine.length > 10) {
-                  return true;
-                }
-                
-                const keywords = clauseText.split(' ').filter(w => w.length > 3);
-                return keywords.some(keyword => trimmedLine.includes(keyword));
-              });
-              
-              if (matchedRiskIndex >= 0 && matchedRiskIndices.has(matchedRiskIndex)) {
-                return (
-                  <p key={lineIndex} className="document-line">
-                    {line || '\u00A0'}
-                  </p>
-                );
-              }
+  return lines.map((line, lineIndex) => {
+    const trimmedLine = line.trim();
+    
+    if (trimmedLine.length < 10) {
+      return <p key={lineIndex} className="document-line">{line || '\u00A0'}</p>;
+    }
 
-              const matchedRisk = matchedRiskIndex >= 0 ? riskData[matchedRiskIndex] : null;
-              
-              if (!matchedRisk) {
-                return (
-                  <p key={lineIndex} className="document-line">
-                    {line || '\u00A0'}
-                  </p>
-                );
-              }
-              
-              matchedRiskIndices.add(matchedRiskIndex);
+    // riskFirstAppearance에서 이 줄에 해당하는 위험요소 찾기
+    let matchedRiskIndex = -1;
+    riskFirstAppearance.forEach((appearLineIndex, riskIdx) => {
+      if (appearLineIndex === lineIndex && !matchedRiskIndices.has(riskIdx)) {
+        matchedRiskIndex = riskIdx;
+      }
+    });
+
+    if (matchedRiskIndex < 0) {
+      return <p key={lineIndex} className="document-line">{line || '\u00A0'}</p>;
+    }
+
+    const matchedRisk = riskData[matchedRiskIndex];
+    matchedRiskIndices.add(matchedRiskIndex);
+;
               
               return (
                 <div 

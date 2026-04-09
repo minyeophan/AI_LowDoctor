@@ -13,7 +13,6 @@
   position: relative;
 }
 
-/* 몸통 - 좌우로 살짝 흔들림 */
 .character-body {
   animation: bodyWiggle 1.2s ease-in-out infinite alternate;
   transform-origin: center bottom;
@@ -46,8 +45,8 @@
 
 /* SVG 전체 크기 */
 .character-svg {
-  width: 120px;
-  height: 120px;
+  width: 100px;
+  height: 100px;
   filter: drop-shadow(0 8px 16px rgba(64, 153, 253, 0.3));
 }
 

@@ -8,12 +8,14 @@ import { IoMdCheckmark, IoIosExit } from "react-icons/io";
 import ChatbotLogo from '../../../assets/img/ChatbotLogo.svg';
 import { useDocument } from '../../../context/DocumentContext';
 import { BsFillPeopleFill } from "react-icons/bs";
+import { IoMdShare } from "react-icons/io";
 
 type SidebarType = 'chatbot' | 'notification' | 'search' | null;
 
 interface FloatingButtonsProps {
   activeSidebar: SidebarType;
   onToggle: (type: 'chatbot' | 'notification' | 'search') => void;
+  
 }
 
 function FloatingButtons({ activeSidebar, onToggle }: FloatingButtonsProps) {
@@ -60,12 +62,16 @@ function FloatingButtons({ activeSidebar, onToggle }: FloatingButtonsProps) {
         </div>
 
         <div className="floating-buttons-bottom">
+          <button className="floating-btn shared-btn" title="공유">
+            <IoMdShare size={18} color="#FFFFFF" />
+            <span className="fbtn-span">공유</span>
+          </button>
           <button className="floating-btn save-btn" title="저장" onClick={() => setShowSaveModal(true)}>
-            <FaSave size={20} color="#FFFFFF" />
+            <FaSave size={17} color="#FFFFFF" />
             <span className="fbtn-span">저장</span>
           </button>
           <button className="floating-btn exit-btn" title="나가기" onClick={() => setShowExitModal(true)}>
-            <IoLogOut size={20} color="#FFFFFF" />
+            <IoLogOut size={19} color="#FFFFFF" />
             <span className="fbtn-span">나가기</span>
           </button>
         </div>
