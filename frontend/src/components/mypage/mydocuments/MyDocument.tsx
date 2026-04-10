@@ -87,26 +87,29 @@ export default function Documents() {
 
       {/* 탭 컨텐츠 */}
       <div className="tab-content">
-        {activeTab === 'draft' ? <DraftTab /> : <StorageTab />}
+        {activeTab === 'draft' 
+          ? <DraftTab sortOrder={sortOrder} categoryFilter={categoryFilter} searchQuery={searchQuery} />
+          : <StorageTab sortOrder={sortOrder} categoryFilter={categoryFilter} searchQuery={searchQuery} />
+        }
       </div>
     </div>
   );
 }
 
 // 작성 중 탭
-function DraftTab() {
+function DraftTab({ sortOrder, categoryFilter, searchQuery }: { sortOrder: string; categoryFilter: string; searchQuery: string }) {
   return (
     <div className="draft-tab">
-         <DraftTableMUI />
+      <DraftTableMUI sortOrder={sortOrder} categoryFilter={categoryFilter} searchQuery={searchQuery} />
     </div>
   );
 }
 
 // 보관함 탭
-function StorageTab() {
+function StorageTab({ sortOrder, categoryFilter, searchQuery }: { sortOrder: string; categoryFilter: string; searchQuery: string }) {
   return (
     <div className="storage-tab">
-      <StorageTableMUI/>
+      <StorageTableMUI sortOrder={sortOrder} categoryFilter={categoryFilter} searchQuery={searchQuery} />
     </div>
   );
 }

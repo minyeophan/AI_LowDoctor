@@ -1,7 +1,13 @@
 /* 본문 */
 .document-body {
-width: 100%; height: auto; min-height: 0;  font-size: 14px;
-padding: 40px 48px; flex: 1; overflow-y: auto;}
+  width: 100%;
+  font-size: 14px;
+  padding: 8px 0px;
+  flex: 1;
+  overflow-y: auto;
+  height: 0;
+  min-height: 0;
+}
 
 .document-body pre { line-height: 2.2; color: #222222;;
   white-space: pre-wrap;
@@ -73,8 +79,22 @@ padding: 40px 48px; flex: 1; overflow-y: auto;}
   gap: 5px;
   padding-left: 10px;
   border-left: 1px solid #e9ecef;
-  font-size: 13px;
+  font-size: 12px;
   color: #666;
+  height: 14px;
+}
+.search-btn-wrap {display: flex; width: 13px; flex-wrap:wrap;
+}
+
+.search-results button {
+  border: none;
+  background: none;
+  color: #666;
+  padding: 0px;
+  width: 13px;
+  height: 8px;
+  display: flex; align-items: center;
+  cursor: pointer;
 }
 
 .search-nav-btn {
@@ -136,13 +156,22 @@ padding: 40px 48px; flex: 1; overflow-y: auto;}
 }
 
 /* 툴바 새 디자인 */
+.toolbar-left {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+
 .document-toolbar-new {
   width: 100%;
   display: flex;
   align-items: center;
+  justify-content: space-between;
   gap: 8px;
-  padding: 8px 8px;
- background-color: #F9FAFB;
+  padding: 7px 14px;
+ background-color: #ffffff;
+ border-bottom: 1px solid rgb(239, 239, 239);
 }
 
 .view-mode-toggle {
@@ -174,19 +203,17 @@ padding: 40px 48px; flex: 1; overflow-y: auto;}
 }
 
 .search-box-new {
-  flex: 1;
+  flex: 0.4;
   display: flex;
   align-items: center;
-  gap: 8px;
-  background-color: #ffffff;
-  border: 1px solid #E5E7EA;
+  background-color: #f5f5f5;
   border-radius: 4px;
-  padding: 8px 12px;
+  padding: 6px 12px;
   transition: all 0.2s;
+  border-radius: 4px;
 }
 
 .search-box-new:focus-within {
-  background: #fff;
   border-color: #4099FD;
 }
 
@@ -194,34 +221,34 @@ padding: 40px 48px; flex: 1; overflow-y: auto;}
   flex: 1;
   border: none;
   background: transparent;
-  font-size: 13px;
+  font-size: 12px;
   outline: none;
-  color: #333;
+  color: #666;
 }
 
 .toolbar-actions {
   display: flex;
   align-items: center;
-  gap: 4px;
+  gap: 14px;
 }
 
 .icon-btn {
-  width: 36px;
-  height: 36px;
+  width: 28px;
+  height: 28px;
   display: flex;
   align-items: center;
   justify-content: center;
   border: none;
-  border-radius: 100%;
   color: #666;
   cursor: pointer;
   transition: all 0.2s;
-  background-color: #ebebeb;
+  background: none;
 }
 
 .icon-btn:hover {
   background: #f5f5f5;
   color: #333;
+  border-radius: 4px;
 }
 
 
@@ -378,97 +405,40 @@ padding: 40px 48px; flex: 1; overflow-y: auto;}
   padding: 20px 0;
 }
 
-/* 줌 컨트롤 */
-.zoom-controls {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 12px;
-  padding: 10px;
-  border-top: 1px solid #e8e8e8;
-}
-
-.zoom-btn {
+.scroll-btn{
   width: 28px;
   height: 28px;
-  border: 1px solid #e8e8e8;
-  border-radius: 6px;
-  background: #fff;
-  cursor: pointer;
-  font-size: 16px;
   display: flex;
   align-items: center;
   justify-content: center;
-  transition: all 0.2s;
-}
-
-.zoom-btn:hover { background: #f5f5f5; }
-
-.zoom-level {
-  font-size: 12px;
+  border: none;
   color: #666;
-  min-width: 40px;
-  text-align: center;
-}
-
-
-/* ===== 페이지 네비게이션 ===== */
-.page-navigation {
-  position: sticky;
-  bottom: 0px;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  margin: 24px auto 0;
-  padding: 8px 20px;
-  background: #fff;
-  border-radius: 8px;
-  box-shadow: 0 1px 4px rgba(110, 110, 110, 0.08);
-  max-width: 350px;
-  border: 1px solid #f0f0f0;
-  gap:22px;
-}
-
-.page-nav-zoom {
-  display: flex;
-  align-items: center;
-  gap: 5px;
-}
-
-.page-nav-right {
-  display: flex;
-  align-items: center;
-  gap: 20px;
-}
-
-.page-arrow-btn {
-  width: 28px;
-  height: 28px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  border: 1px solid #e8e8e8;
-  border-radius: 6px;
-  background: #fff;
-  color: #555;
-  font-size: 18px;
   cursor: pointer;
   transition: all 0.2s;
-  padding: 1;
+  background: none;
 }
-.page-current-total {font-size: 12px;}
 
-.page-arrow-btn:hover:not(:disabled) {
+.scroll-btn:hover {
   background: #f5f5f5;
-  border-color: #ccc;
-}
-
-.page-arrow-btn:disabled {
-  opacity: 0.3;
-  cursor: not-allowed;
+  color: #333;
+  border-radius: 4px;
 }
 
 #viewer {width: 100%; padding: 0px; margin: 0px; height: 100%;}
+
+.toolbar-pagination {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-shrink: 1;
+  background-color: skyblue;
+}
+
+.search-highlight {
+  background: #FFF3A3;
+  border-radius: 2px;
+  color: inherit;
+}
 
 /* 반응형 */
 @media (max-width: 768px) {

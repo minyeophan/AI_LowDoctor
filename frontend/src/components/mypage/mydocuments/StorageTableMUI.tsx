@@ -1,5 +1,5 @@
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import {
   Table,
   TableBody,
@@ -25,10 +25,46 @@ import RemoveRedEyeIcon from '@mui/icons-material/RemoveRedEye';
 import CheckCircleIcon from '@mui/icons-material/CheckCircle';
 import AccessTimeFilledRoundedIcon from '@mui/icons-material/AccessTimeFilledRounded';
 import { StorageDocument } from '../../../types';
-import { mockStorageDocuments, categoryInfo } from '../../../mock/mockDocuments';
+import { mypageAPI } from '../../../api/mypage';
+import { mockStorageDocuments,categoryInfo } from '../../../mock/mockDocuments';
 
-export default function StorageTableMUI() {
-  const documents = mockStorageDocuments;
+interface StorageTableProps {
+  sortOrder: string;
+  categoryFilter: string;
+  searchQuery: string;
+}
+
+export default function StorageTableMUI({ sortOrder, categoryFilter, searchQuery }: StorageTableProps) {
+  const [documents, setDocuments] = useState<StorageDocument[]>([]);
+  const [isLoading, setIsLoading] = useState(false);
+
+  useEffect(() => {
+    const fetchData = async () => {
+      setIsLoading(true);
+      try {
+        const sort = sortOrder === 'recent' ? 'recent' : sortOrder === 'oldest' ? 'old' : 'name';
+        const data = await mypageAPI.getStorage(sort, categoryFilter === 'all' ? '' : categoryFilter);
+        const mapped = data.list.map((item: any) => ({
+          id: item.documentId,
+          title: item.title,
+          category: 'real_estate',
+          uploadedAt: item.UploadDate,
+          analysisStatus: item.analysisStatus === '분석 완료' ? 'completed' : 'pending',
+        }));
+        // 검색 필터링
+        const filtered = searchQuery
+          ? mapped.filter((doc: StorageDocument) => doc.title.toLowerCase().includes(searchQuery.toLowerCase()))
+          : mapped;
+        setDocuments(filtered);
+      } catch (err) {
+        console.error('보관함 로딩 실패:', err);
+        setDocuments(mockStorageDocuments);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+    fetchData();
+  }, [sortOrder, categoryFilter, searchQuery]);
 
   const columnWidths = {
     category: '15%',
@@ -116,28 +152,30 @@ export default function StorageTableMUI() {
         </TableHead>
 
         <TableBody>
-          {documents.map((doc) => (
+          {isLoading ? (
+          <TableRow>
+            <TableCell colSpan={5} sx={{ textAlign: 'center', padding: '40px', color: '#6B7280' }}>
+              로딩 중...
+            </TableCell>
+          </TableRow>
+        ) : (
+          documents.map((doc) => (
             <StorageRow key={doc.id} document={doc} />
-          ))}
+          ))
+        )}
         </TableBody>
       </Table>
 
       {documents.length === 0 && (
         <Box
           sx={{
-            padding: '80px 40px',
+            padding: '50px 40px',
             textAlign: 'center',
-            backgroundColor: '#FAFBFC',
+            backgroundColor: '#fff',
           }}
         >
-          <Typography sx={{ fontSize: '64px', marginBottom: '24px', opacity: 0.5 }}>
-            📁
-          </Typography>
-          <Typography sx={{ fontSize: '20px', fontWeight: 600, color: '#111827', marginBottom: '8px' }}>
+          <Typography sx={{ fontSize: '14px', color: '#6B7280' }}>
             보관 중인 계약서가 없습니다
-          </Typography>
-          <Typography sx={{ fontSize: '15px', color: '#6B7280' }}>
-            계약서를 업로드하거나 작성해보세요!
           </Typography>
         </Box>
       )}

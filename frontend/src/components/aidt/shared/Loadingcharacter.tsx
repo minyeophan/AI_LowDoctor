@@ -39,9 +39,6 @@ function LoadingCharacter() {
         </svg>
       </div>
 
-      {/* 로딩 텍스트 */}
-      <p className="loading-text">문서를 처리하는 중입니다
-        <span className="dot-animation">...</span></p>
     </div>
   );
 }

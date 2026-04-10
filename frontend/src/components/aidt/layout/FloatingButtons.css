@@ -33,7 +33,7 @@
 }
 .fbtn-span {
   width: 80%;
-  margin-top: -6px;
+  margin-top: -8px;
   font-size: 11px;
   font-weight: 600;
   color: #666;
@@ -48,8 +48,18 @@
   flex-direction: column;
   justify-content: center;
   align-items: center;
-  height: 130px;
+  height: 195px;
+  
 }
+.shared-btn {
+ background: linear-gradient(135deg, #5c7685 0%, #4F646F 100%);
+}
+
+.shared-btn .fbtn-span {
+  color: white;
+  font-weight: 600;
+}
+
 .save-btn {
   background: linear-gradient(135deg, #6b7bc5 0%, #5872CA 100%);
 }
@@ -58,7 +68,8 @@
   font-weight: 600;
 }
 .exit-btn {
-  background: #E53E3E !important;
+  background: linear-gradient(135deg, #de5d5d 0%, #E53E3E 100%) !important;
+
 }
 .exit-btn .fbtn-span {
   color: white;

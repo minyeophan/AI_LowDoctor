@@ -6,7 +6,7 @@ margin: 0 auto;
   overflow-y: auto;
   display: flex;
   flex-direction: column;
-  gap: 20px;
+  gap: 16px;
 }
 
 /* ===== 헤더 ===== */

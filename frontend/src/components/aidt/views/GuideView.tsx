@@ -50,12 +50,17 @@ function GuideView({
   let modifiedContent = currentDocument.content;
   
   improvementGuides.forEach(guide => {
-    // 정규식으로 공백/줄바꿈 무시하고 교체
-    const escaped = guide.originalClause
-      .replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
-      .replace(/\s+/g, '\\s+');
-    const regex = new RegExp(escaped, 'g');
-    modifiedContent = modifiedContent.replace(regex, guide.improvedClause);
+    const trimmed = guide.originalClause.trim();
+    if (!trimmed) return;
+
+    const lines = modifiedContent.split('\n');
+    const newLines = lines.map(line => {
+      if (line.includes(trimmed)) {
+        return line.replace(trimmed, guide.improvedClause);
+      }
+      return line;
+    });
+    modifiedContent = newLines.join('\n');
   });
   
   return modifiedContent;

@@ -27,21 +27,11 @@
 /* 로딩 컨텐츠 */
 .loading-content {
   text-align: center;
-  padding: 40px;
+  padding: 60px;
   width: 320px;
   height: 250px;
 }
 
-/* 스피너 */
-.loading-spinner {
-  width: 60px;
-  height: 60px;
-  margin: 0 auto 20px;
-  border: 4px solid #e3f2fd;
-  border-top-color: #1976d2;
-  border-radius: 50%;
-  animation: spin 1s linear infinite;
-}
 
 @keyframes spin {
   to {
@@ -52,7 +42,7 @@
 /* 로딩 메시지 */
 .loading-message {
   margin: 0;
-  font-size: 16px;
+  font-size: 13px;
   color: #424242;
-  font-weight: 500;
+  font-weight: 600;
 }
