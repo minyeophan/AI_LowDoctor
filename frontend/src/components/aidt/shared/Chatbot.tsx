@@ -2,7 +2,7 @@ import { useState, useRef, useEffect } from "react";
 import ChatbotIcon from "../../../assets/img/ChatbotIcon.svg";
 import ChatbotAvatar from "../../../assets/img/ChatboAvatar.svg";
 import { RiSendPlane2Fill } from "react-icons/ri";
-import { sendChatMessage } from "../../../api/chat";
+import { getChatHistory, sendChatMessage } from "../../../api/chat";
 import "./Chatbot.css";
 
 interface Message {
@@ -11,12 +11,38 @@ interface Message {
   content: string;
 }
 
-function Chatbot() {
+interface ChatbotProps {
+  documentId?: string;
+}
+
+function Chatbot({ documentId }: ChatbotProps) {
   const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
+  // 문서 변경 시 채팅 기록 불러오기
+  useEffect(() => {
+    if (!documentId) return;
+    const loadHistory = async () => {
+      try {
+        const history = await getChatHistory(documentId);
+        if (history.messages?.length > 0) {
+          const loaded = history.messages.map((m, i) => ({
+            id: i,
+            role: (m.role === "user" ? "user" : "bot") as "user" | "bot",
+            content: m.content,
+          }));
+          setMessages(loaded);
+        }
+      } catch {
+        // 기록 없으면 빈 상태로 시작
+      }
+    };
+    loadHistory();
+  }, [documentId]);
+
+  // 메시지 추가 시 스크롤 하단 이동
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages, isLoading]);
@@ -25,25 +51,34 @@ function Chatbot() {
     const text = input.trim();
     if (!text || isLoading) return;
 
+    if (!documentId) {
+      setMessages((prev) => [
+        ...prev,
+        {
+          id: Date.now(),
+          role: "bot",
+          content: "문서를 먼저 선택해 주세요.",
+        },
+      ]);
+      return;
+    }
+
     const userMsg: Message = {
       id: Date.now(),
       role: "user",
       content: text,
     };
-
     setMessages((prev) => [...prev, userMsg]);
     setInput("");
     setIsLoading(true);
 
     try {
-      const result = await sendChatMessage(text);
-
+      const result = await sendChatMessage(documentId, text);
       const botMsg: Message = {
         id: Date.now() + 1,
         role: "bot",
         content: result.answer || "응답이 없습니다.",
       };
-
       setMessages((prev) => [...prev, botMsg]);
     } catch (error: any) {
       const errorMsg: Message = {
@@ -51,7 +86,6 @@ function Chatbot() {
         role: "bot",
         content: `오류: ${error?.message || "챗봇 요청 실패"}`,
       };
-
       setMessages((prev) => [...prev, errorMsg]);
     } finally {
       setIsLoading(false);
@@ -88,7 +122,6 @@ function Chatbot() {
                 <div className={`message-bubble ${msg.role}`}>{msg.content}</div>
               </div>
             ))}
-
             {isLoading && (
               <div className="message-row bot">
                 <img
@@ -105,12 +138,10 @@ function Chatbot() {
                 </div>
               </div>
             )}
-
             <div ref={messagesEndRef} />
           </>
         )}
       </div>
-
       <div className="chat-input-area">
         <input
           type="text"
