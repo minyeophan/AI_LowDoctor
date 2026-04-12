@@ -8,9 +8,10 @@ type SidebarType = 'chatbot' | 'notification' | 'search' | null;
 interface RightSidebarProps {
   activeSidebar: SidebarType;
   onClose: () => void;
+  documentId?: string;
 }
 
-function RightSidebar({ activeSidebar, onClose }: RightSidebarProps) {
+function RightSidebar({ activeSidebar, onClose, documentId }: RightSidebarProps) {
   if (!activeSidebar) return null;
 
   return (
@@ -26,7 +27,7 @@ function RightSidebar({ activeSidebar, onClose }: RightSidebarProps) {
         </div>
         
         {activeSidebar === 'chatbot' 
-          ? <Chatbot /> 
+          ? <Chatbot documentId={documentId} />
           : activeSidebar === 'search'
           ? <SearchView />
           : <Notification />

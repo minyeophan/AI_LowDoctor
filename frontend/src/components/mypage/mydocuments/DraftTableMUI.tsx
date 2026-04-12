@@ -1,5 +1,4 @@
-import { useState } from 'react';
-
+import { useState, useEffect } from 'react';
 import {
   Table,
   TableBody,
@@ -20,7 +19,8 @@ import {
   Divider,
 } from '@mui/material';
 import MoreVertIcon from '@mui/icons-material/MoreVert';
-import { mockDrafts, categoryInfo } from '../../../mock/mockDocuments';
+import { categoryInfo } from '../../../mock/mockDocuments';
+import { mypageAPI } from '../../../api/mypage';
 import DeleteIcon from '@mui/icons-material/Delete';
 import CreateRoundedIcon from '@mui/icons-material/CreateRounded';
 import ShareRoundedIcon from '@mui/icons-material/ShareRounded';
@@ -33,14 +33,36 @@ interface DraftTableProps {
 }
 
 export default function DraftTableMUI({ sortOrder, categoryFilter, searchQuery }: DraftTableProps) {
-  const drafts = mockDrafts
-    .filter(d => categoryFilter === 'all' || d.category === categoryFilter)
-    .filter(d => !searchQuery || d.title.toLowerCase().includes(searchQuery.toLowerCase()))
-    .sort((a, b) => {
-      if (sortOrder === 'oldest') return new Date(a.lastEditedAt).getTime() - new Date(b.lastEditedAt).getTime();
-      if (sortOrder === 'name') return a.title.localeCompare(b.title);
-      return new Date(b.lastEditedAt).getTime() - new Date(a.lastEditedAt).getTime(); // 최신순
-    });
+  const [drafts, setDrafts] = useState<DraftDocument[]>([]);
+  const [isLoading, setIsLoading] = useState(false);
+
+  useEffect(() => {
+    const fetchData = async () => {
+      setIsLoading(true);
+      try {
+        const sort = sortOrder === 'recent' ? 'recent' : sortOrder === 'oldest' ? 'old' : 'name';
+        const data = await mypageAPI.getDrafts(sort, categoryFilter === 'all' ? '' : categoryFilter);
+        const mapped = data.list.map((item: any) => ({
+          id: item.documentId,
+          title: item.title,
+          category: 'real_estate',
+          progress: item.progress || 0,
+          statusText: item.statusText || '미분석',
+          lastEditedAt: item.updatedAt,
+        }));
+        const filtered = searchQuery
+          ? mapped.filter((d: DraftDocument) => d.title.toLowerCase().includes(searchQuery.toLowerCase()))
+          : mapped;
+        setDrafts(filtered);
+      } catch (err) {
+        console.error('작성 중 목록 로딩 실패:', err);
+        setDrafts([]);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+    fetchData();
+  }, [sortOrder, categoryFilter, searchQuery]);
 
   return (
     <TableContainer 
@@ -122,10 +144,18 @@ export default function DraftTableMUI({ sortOrder, categoryFilter, searchQuery }
         </TableHead>
 
         <TableBody>
-        {drafts.map((draft) => (
-          <DraftRow key={draft.id} draft={draft} />
-        ))}
-      </TableBody>
+          {isLoading ? (
+            <TableRow>
+              <TableCell colSpan={5} sx={{ textAlign: 'center', padding: '40px', color: '#6B7280' }}>
+                로딩 중...
+              </TableCell>
+            </TableRow>
+          ) : (
+            drafts.map((draft) => (
+              <DraftRow key={draft.id} draft={draft} />
+            ))
+          )}
+        </TableBody>
         
       </Table>
 
@@ -133,19 +163,13 @@ export default function DraftTableMUI({ sortOrder, categoryFilter, searchQuery }
       {drafts.length === 0 && (
         <Box
           sx={{
-            padding: '80px 40px',
+            padding: '50px 40px',
             textAlign: 'center',
-            backgroundColor: '#FAFBFC',
+            backgroundColor: '#fff',
           }}
         >
-          <Typography sx={{ fontSize: '64px', marginBottom: '24px', opacity: 0.5 }}>
-            ✍️
-          </Typography>
-          <Typography sx={{ fontSize: '20px', fontWeight: 600, color: '#111827', marginBottom: '8px' }}>
+          <Typography sx={{ fontSize: '14px', fontWeight: 400, color: '#6B7280', marginBottom: '8px' }}>
             작성 중인 계약서가 없습니다
-          </Typography>
-          <Typography sx={{ fontSize: '15px', color: '#6B7280' }}>
-            템플릿으로 새 계약서를 만들어보세요!
           </Typography>
         </Box>
       )}
@@ -284,7 +308,7 @@ function DraftRow({ draft }: { draft: DraftDocument }){
               textAlign: 'right',
             }}
           >
-            {draft.progress}%
+            {draft.statusText || `${draft.progress}%`}
           </Typography>
         </Box>
       </TableCell>

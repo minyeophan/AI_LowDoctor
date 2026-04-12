@@ -80,7 +80,7 @@ export default function Documents() {
         </div>
 
         {/* 작성하기 버튼 */}
-        <button className="btn-create">
+        <button className="btn-create" >
           +&nbsp; 계약서 작성하기
         </button>
       </div>
