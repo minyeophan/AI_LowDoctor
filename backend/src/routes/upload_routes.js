@@ -29,37 +29,6 @@ const upload = multer({
     limits: { fileSize: 10 * 1024 * 1024 },
 });
 
-/**
- * @swagger
- * /api/upload:
- *   post:
- *     tags: [Document]
- *     summary: 파일 업로드
- *     requestBody:
- *       required: true
- *       content:
- *         multipart/form-data:
- *           schema:
- *             type: object
- *             properties:
- *               file:
- *                 type: string
- *                 format: binary
- *     responses:
- *       200:
- *         description: 업로드 성공
- *         content:
- *           application/json:
- *             schema:
- *               type: object
- *               properties:
- *                 document_id:
- *                   type: string
- *                 status:
- *                   type: string
- *                 content:
- *                   type: string
- */
 router.post('/upload', (req, res, next) => {
     req.setTimeout(30000, () => {
         res.status(408).json({ message: "파일 업로드 시간 초과" });

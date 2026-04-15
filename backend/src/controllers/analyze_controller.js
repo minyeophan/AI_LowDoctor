@@ -29,8 +29,8 @@ export const startAnalysis = async (documentId) => {
       : resultData.summary || "";
 
     const safeRiskItems = Array.isArray(resultData.riskItems)
-  ? resultData.riskItems
-  : [];
+      ? resultData.riskItems
+      : [];
 
     const safeForms = Array.isArray(resultData.forms)
       ? resultData.forms
