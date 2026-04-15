@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
-import { useLocation } from 'react-router-dom';
+import { useLocation, useNavigate } from 'react-router-dom';
 import FloatingButtons from '../components/aidt/layout/FloatingButtons';
 import RightSidebar from '../components/aidt/layout/RightSidebar';
 import TopMenu from '../components/aidt/layout/TopMenu';
@@ -45,6 +45,7 @@ useEffect(() => {
   if (location.state?.autoAnalyze && currentDocument?.documentId) {
     // HomePage에서 넘어온 경우 - 이미 업로드됨, convert만 실행
     const convertExisting = async () => {
+      setIsLoading(false);
       setIsConverting(true);
       try {
         const { html } = await documentsAPI.convertDocument(currentDocument.documentId!);
@@ -60,7 +61,28 @@ useEffect(() => {
     convertExisting();
   }
 }, []);
-  
+
+const navigate = useNavigate();
+
+// 브라우저 뒤로가기 감지 시 초기화
+useEffect(() => {
+  const handlePopState = () => {
+    setCurrentDocument(null);
+    setAnalysisData(null);
+    setEditedHtml('');
+    setSelectedMenu(null);
+    setAnalyzingType(null);
+    setAnalyzedMenus(new Set());
+    setError(null);
+    navigate('/', { replace: true });
+  };
+
+  window.addEventListener('popstate', handlePopState);
+  return () => {
+    window.removeEventListener('popstate', handlePopState);
+  };
+}, []);
+
  // 백엔드 API 사용 여부 확인
 const API_ENABLED = import.meta.env.VITE_API_BASE_URL !== undefined && 
                     import.meta.env.VITE_API_BASE_URL !== '';
@@ -155,6 +177,7 @@ const API_ENABLED = import.meta.env.VITE_API_BASE_URL !== undefined &&
     setCurrentDocument(newDoc as any);
 
     // 3. HTML 변환
+    setIsLoading(false);
     setIsConverting(true);
     try {
       const { html } = await documentsAPI.convertDocument(documentId);
@@ -189,14 +212,12 @@ const handleMenuSelect = (menu: MenuItem) => {
   }
 
   if (menu === 'summary' || menu === 'danger' || menu === 'guide') {
-    // 분석 결과가 이미 있으면 바로 탭 전환
-    if (analysisData) {
-      setSelectedMenu(menu);
-      return;
-    }
-    // 한 번도 분석 안 했으면 분석 요청
-    setPendingAnalysis(menu);
-  } else {
+  if (analysisData) {
+    setSelectedMenu(menu);
+    return;
+  }
+  setPendingAnalysis(menu);
+} else {
     setSelectedMenu(menu);
   }
 };
@@ -206,7 +227,7 @@ const handleAnalysisConfirm = async () => {
   if (!pendingAnalysis) return;
   const currentAnalysis = pendingAnalysis;
   setAnalyzingType(currentAnalysis);
-  setSelectedMenu(currentAnalysis);
+  setSelectedMenu(currentAnalysis as MenuItem);
   setPendingAnalysis(null);
   try {
     if (API_ENABLED) {
@@ -223,6 +244,7 @@ const handleAnalysisConfirm = async () => {
 // 분석 취소
 const handleAnalysisCancel = () => {
   setPendingAnalysis(null);
+  setSelectedMenu('document');
 };
 
   // 사이드바 토글
@@ -297,7 +319,6 @@ const getAnalysisKey = (type: AnalysisType) => {
     return (
       <div className="content-section" style={{ position: 'relative', minHeight: '400px' }}>
         <AnalysisConfirmModal
-          type={pendingAnalysis}
           onConfirm={handleAnalysisConfirm}
           onCancel={handleAnalysisCancel}
         />
@@ -307,19 +328,18 @@ const getAnalysisKey = (type: AnalysisType) => {
 
   // 변환 로딩
   if (isConverting) {
-    return (
-      <div className="content-section" style={{ position: 'relative', minHeight: '400px' }}>
-        <AnalysisLoadingOverlay type="summary" />
-        <p style={{ textAlign: 'center', color: '#666', marginTop: 8 }}>문서를 변환하는 중입니다...</p>
-      </div>
-    );
-  }
+  return (
+    <div className="content-section" style={{ position: 'relative', minHeight: '400px' }}>
+      <LoadingOverlay message="계약서를 업로드하는 중입니다..." />
+    </div>
+  );
+}
 
   // 분석 로딩
   if (analyzingType) {
     return (
       <div className="content-section" style={{ position: 'relative', minHeight: '400px' }}>
-        <AnalysisLoadingOverlay type={analyzingType} />
+        <AnalysisLoadingOverlay />
       </div>
     );
   }
@@ -389,6 +409,7 @@ const getAnalysisKey = (type: AnalysisType) => {
           zoomLevel={zoomLevel}
           onZoomIn={handleZoomIn}
           onZoomOut={handleZoomOut}
+          editedHtml={editedHtml}
         />
       );
         
@@ -420,6 +441,7 @@ const getAnalysisKey = (type: AnalysisType) => {
         <RightSidebar 
           activeSidebar={activeSidebar}
           onClose={() => setActiveSidebar(null)}
+          documentId={currentDocument?.documentId}
         />
 
         <FloatingButtons 

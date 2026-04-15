@@ -55,7 +55,7 @@ margin: 0 auto;
 }
 
 .search-view-btn:hover {
-  background: #2563eb;
+  background: #2e86f5;
 }
 
 /* ===== 탭 ===== */
@@ -75,7 +75,7 @@ margin: 0 auto;
   position: relative;
   display: flex;
   align-items: center;
-  gap: 6px;
+  gap: 10px;
   padding: 7px 0px;
   background: transparent;
   border: none;
@@ -118,16 +118,7 @@ margin: 0 auto;
   font-size: 11px;
   font-weight: 600;
   padding: 1px 7px;
-  border-radius: 99px;
-}
-
-.search-tab-count {
-  background: #f1f5f9;
-  color: #64748b;
-  font-size: 11px;
-  font-weight: 600;
-  padding: 1px 7px;
-  border-radius: 99px;
+  border-radius: 6px;
 }
 
 .search-tab-btn.active .search-tab-count {
@@ -184,6 +175,10 @@ margin: 0 auto;
   color: #1e293b;
   margin: 0;
   line-height: 1.5;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
 }
 
 .search-result-preview {
@@ -211,7 +206,7 @@ margin: 0 auto;
 }
 
 .search-empty p {
-  font-size: 14px;
+  font-size: 13px;
   color: #64748b;
   margin: 0;
 }
@@ -244,7 +239,7 @@ margin: 0 auto;
 .search-suggestions {
   display: flex;
   flex-wrap: wrap;
-  gap: 8px;
+  gap: 10px;
   justify-content: center;
 }
 
