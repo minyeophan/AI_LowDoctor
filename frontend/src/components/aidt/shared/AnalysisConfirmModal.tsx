@@ -1,48 +1,27 @@
 import './AnalysisConfirmModal.css';
-import { MdFactCheck } from "react-icons/md";
-import { PiWarningOctagonFill } from "react-icons/pi";
-import { RiGuideFill } from "react-icons/ri";
-
+import ModalIcon from '../../../assets/img/ModalIcon.svg';
 
 interface AnalysisConfirmModalProps {
-  type: 'summary' | 'danger' | 'guide';
   onConfirm: () => void;
   onCancel: () => void;
 }
 
-function AnalysisConfirmModal({ type, onConfirm, onCancel }: AnalysisConfirmModalProps) {
-  const messages = {
-    summary: {
-      title: '핵심 요약',
-      message: '문서의 내용을 핵심 요약 하시겠습니까?',
-      icon: <MdFactCheck />
-    },
-    danger: {
-      title: '위험 탐지',
-      message: '문서의 위험 요소를 분석하시겠습니까?',
-      icon: <PiWarningOctagonFill/>
-    },
-    guide: {
-      title: '대응 가이드',
-      message: '대응 가이드를 생성하시겠습니까?',
-      icon: <RiGuideFill/>
-    }
-  };
-
-  const { title, message, icon } = messages[type];
-
+function AnalysisConfirmModal({ onConfirm, onCancel }: AnalysisConfirmModalProps) {
   return (
     <div className="analysis-confirm-modal">
       <div className="modal-content">
-        <div className="modal-icon">{icon}</div>
-        <h3 className="modal-title">{title}</h3>
-        <p className="modal-message">{message}</p>
+        <div className="modal-icon"><img src={ModalIcon} width={24} /></div>
+        <h3 className="modal-title">AI 분석 시작</h3>
+        <p className="modal-message">
+          계약서를 AI로 분석합니다.<br />
+          핵심요약, 위험탐지, 대응가이드가 한번에 생성됩니다.
+        </p>
         <div className="modal-buttons">
           <button className="modal-btn cancel-btn" onClick={onCancel}>
             취소
           </button>
           <button className="modal-btn confirm-btn" onClick={onConfirm}>
-            진행하기
+            분석 시작
           </button>
         </div>
       </div>

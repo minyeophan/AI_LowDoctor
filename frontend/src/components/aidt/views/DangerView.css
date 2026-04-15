@@ -212,10 +212,9 @@
 .reason-box.severity-low    { background: #fcf5cf79; border-color: #FFC72F; }
 
 .reason-box .reason {
-  margin: 0 0 8px 0;
   font-size: 0.875em;
   color: #DC2626;
-  line-height: 1.6;
+  line-height: 1.7;
 }
 
 .reason-icon {
@@ -230,3 +229,97 @@
   color: #5a6477;
   line-height: 1.7;
 }
+
+/* ── 표 블록 ── */
+.danger-table-block {
+  margin: 12px 0;
+}
+
+.danger-table-block table {
+  border-collapse: collapse;
+  width: 100%;
+}
+
+.danger-table-block table td,
+.danger-table-block table th {
+  border: 1px solid #ccc;
+  padding: 6px 10px;
+  vertical-align: top;
+  min-width: 40px;
+  line-height: 2;
+  font-size: 0.875em;
+}
+
+.danger-table-block table th {
+  background: #f5f5f5;
+  font-weight: 600;
+}
+
+/* 표 안 하이라이팅 */
+.danger-table-block mark.risk-highlight-high {
+  background-color: #ea1c1c56;
+  padding: 1px 3px;
+}
+
+.danger-table-block mark.risk-highlight-medium {
+  background-color: #ff6c1d68;
+  padding: 1px 3px;
+}
+
+.danger-table-block mark.risk-highlight-low {
+  background-color: #ffc82f7f;
+  padding: 1px 3px;
+}
+
+/* 키워드 매칭 실패 시 표 전체 테두리 */
+.danger-table-block.table-border-high {
+  border: 4px solid #ea1c1c6e;
+}
+
+.danger-table-block.table-border-medium {
+  border: 4px solid #ff6c1d68;
+}
+
+.danger-table-block.table-border-low {
+  border: 2px solid #FFC72F;
+}
+
+/* 표 전체 하이라이팅 */
+.highlight-table-high   { background-color: #ea1c1c20; border: 2px solid #EA1C1C;}
+.highlight-table-medium { background-color: #ff6c1d20; border: 2px solid #FF6C1D;}
+.highlight-table-low    { background-color: #ffc82f20; border: 2px solid #FFC72F;}
+
+.clause-table-box{
+  margin: 8px 0;
+}
+
+.clause-table-box.severity-high   { background: #ea1c1c56;  }
+.clause-table-box.severity-medium { background: #ff6c1d68; }
+.clause-table-box.severity-low    { background: #ffc82f7f;}
+
+
+.clause-text {
+  font-size: 0.875em;
+  color: #333333;
+  line-height: 1.6;
+  margin: 0;
+  padding: 4px 8px;
+  line-height: 2;
+}
+
+.guide-toggle {
+  margin-top: 6px;
+}
+
+.guide-toggle-btn {
+  background: none;
+  border: none;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  padding: 4px 0;
+}
+
+.guide-toggle-btn.severity-high   { color: #EA1C1C; }
+.guide-toggle-btn.severity-medium { color: #FF6C1D; }
+.guide-toggle-btn.severity-low    { color: #FFC72F; }

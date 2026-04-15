@@ -34,7 +34,7 @@ function Notification() {
     setIsLoading(true);
     setTimeout(() => {
       setSchedules(mockAutoSchedules);
-      setSelected(new Set(mockAutoSchedules.map((_, i) => i)));
+      setSelected(new Set());
       setIsLoading(false);
     }, 1000);
   };
@@ -80,7 +80,7 @@ function Notification() {
         </div>
       ) : isComplete ? (
         <div className="notification-complete">
-          <p>✅ 일정이 등록되었습니다!</p>
+          <p>일정이 등록되었습니다!</p>
         </div>
       ) : (
         <>

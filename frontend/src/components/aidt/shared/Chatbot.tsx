@@ -57,7 +57,7 @@ function Chatbot({ documentId }: ChatbotProps) {
         {
           id: Date.now(),
           role: "bot",
-          content: "문서를 먼저 선택해 주세요.",
+          content: "먼저 계약서를 업로드해 주세요",
         },
       ]);
       return;

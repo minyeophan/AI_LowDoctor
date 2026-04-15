@@ -84,13 +84,13 @@
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  gap: 8px;
+  gap: 12px;
   width: 100%;
-  padding: 40px 40px;
   background: #f5f6f8;
   border-radius: 12px;
-  border: 2px dashed transparent;
+  border: 2px dotted #e5e7eb;
   transition: all 0.2s;
+  height: 192px;
 }
 
 .file-info-simple {
@@ -102,12 +102,12 @@
 
 .file-icon-large {
   color: #4099FD;
+  height: 35px;
 }
 
 .file-name-simple {
   font-size: 14px;
-  font-weight: 600;
-  color: #333;
+  color: #1c1023;
   margin: 0;
   text-align: center;
   word-break: break-all;
@@ -115,15 +115,15 @@
 
 .file-size-simple {
   font-size: 13px;
-  color: #999;
+  color: #475569;
   margin: 0;
 }
 
 /* ===== 액션 버튼들 ===== */
 .action-buttons {
   display: flex;
-  gap: 16px;
-  width: 100%;
+  gap: 12px;
+  width: 300px
 }
 
 .reselect-button {
@@ -133,8 +133,8 @@
   border-radius: 10px;
   background: #fff;
   color: #666;
-  font-size: 15px;
-  font-weight: 600;
+  font-size: 14px;
+  font-weight: 500;
   cursor: pointer;
   transition: all 0.2s;
 }
@@ -150,8 +150,8 @@
   border-radius: 10px;
   background: #4099FD;
   color: #fff;
-  font-size: 15px;
-  font-weight: 600;
+  font-size: 14px;
+  font-weight: 500;
   cursor: pointer;
   transition: background 0.2s;
 }

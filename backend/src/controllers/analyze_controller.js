@@ -37,13 +37,14 @@ export const startAnalysis = async (documentId) => {
       : [];
 
     const safeImprovementGuides = Array.isArray(resultData.riskItems)
-      ? resultData.riskItems.map((item, index) => ({
-          id: index + 1,
-          originalClause: item.clauseText || "",
-          checkPoints: Array.isArray(item.checkPoints) ? item.checkPoints : [],
-          improvedClause: item.improvedClause || "",
-        }))
-      : [];
+  ? resultData.riskItems.map((item, index) => ({
+      id: index + 1,
+      originalClause: item.clauseText || "",
+      checkPoints: Array.isArray(item.checkPoints) ? item.checkPoints : [],
+      improvedClause: item.improvedClause || "",
+      riskLevel: item.riskLevel || "low",
+    }))
+  : [];
 
     await Analysis.updateOne(
       { documentId },
@@ -138,14 +139,15 @@ export const requestAnalysis = async (req, res, next) => {
         ? resultData.forms
         : [];
 
-      const safeImprovementGuides = Array.isArray(resultData.riskItems)
-        ? resultData.riskItems.map((item, index) => ({
-            id: index + 1,
-            originalClause: item.clauseText || "",
-            checkPoints: Array.isArray(item.checkPoints) ? item.checkPoints : [],
-            improvedClause: item.improvedClause || "",
-          }))
-        : [];
+     const safeImprovementGuides = Array.isArray(resultData.riskItems)
+      ? resultData.riskItems.map((item, index) => ({
+          id: index + 1,
+          originalClause: item.clauseText || "",
+          checkPoints: Array.isArray(item.checkPoints) ? item.checkPoints : [],
+          improvedClause: item.improvedClause || "",
+          riskLevel: item.riskLevel || "low",
+        }))
+      : [];
 
       await Analysis.findOneAndUpdate(
         { documentId },

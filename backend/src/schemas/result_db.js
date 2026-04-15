@@ -59,6 +59,7 @@ const improvementGuideSchema = new Schema({
   originalClause: { type: String },
   checkPoints: [{ type: String }],
   improvedClause: { type: String },
+  riskLevel: { type: String, enum: ['low', 'medium', 'high'], default: 'low' },
 }, { _id: false });
 
 const contractTipSchema = new Schema({

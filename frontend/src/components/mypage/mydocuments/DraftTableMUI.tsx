@@ -19,7 +19,7 @@ import {
   Divider,
 } from '@mui/material';
 import MoreVertIcon from '@mui/icons-material/MoreVert';
-import { categoryInfo } from '../../../mock/mockDocuments';
+import { categoryInfo, mockDrafts} from '../../../mock/mockDocuments';
 import { mypageAPI } from '../../../api/mypage';
 import DeleteIcon from '@mui/icons-material/Delete';
 import CreateRoundedIcon from '@mui/icons-material/CreateRounded';
@@ -56,7 +56,7 @@ export default function DraftTableMUI({ sortOrder, categoryFilter, searchQuery }
         setDrafts(filtered);
       } catch (err) {
         console.error('작성 중 목록 로딩 실패:', err);
-        setDrafts([]);
+        setDrafts(mockDrafts);
       } finally {
         setIsLoading(false);
       }

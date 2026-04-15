@@ -13,33 +13,17 @@ export const categoryInfo: CategoryMap = {
 };
 
 export const mockDrafts: DraftDocument[] = [
-  // 기존 데이터 유지
   {
     id: 'draft-1',
     title: '부동산 매매 계약서.pdf',
     category: 'real_estate',
-    progress: 50,
-    currentStep: 3,
-    totalSteps: 5,
-    stepName: '목적물 정보',
-    lastEditedAt: '2024-02-22T14:25:00',
-    createdAt: '2024-02-18T10:30:00',
-  },
-  {
-    id: 'draft-2',
-    title: '임대차 계약서 (전세).hwp',
-    category: 'real_estate',
-    progress: 80,
-    currentStep: 4,
-    totalSteps: 5,
-    stepName: '특약 사항',
-    lastEditedAt: '2024-01-26T12:15:00',
-    createdAt: '2024-01-26T09:00:00',
+    progress: 20,
+    statusText: '분석 중',
+    lastEditedAt: '2026-04-11',
   },
 ];
 
 export const mockStorageDocuments: StorageDocument[] = [
-  // 기존 데이터 유지
   {
     id: 'storage-1',
     title: '부동산 매매 계약서.pdf',
