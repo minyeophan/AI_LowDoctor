@@ -12,11 +12,12 @@ function AnalysisLoadingOverlay() {
   ];
 
   useEffect(() => {
-    const interval = setInterval(() => {
-      setCurrentStep(prev => (prev + 1) % steps.length);
-    }, 2000);
-    return () => clearInterval(interval);
-  }, []);
+  const timers = [
+    setTimeout(() => setCurrentStep(1), 5000),
+    setTimeout(() => setCurrentStep(2), 10000),
+  ];
+  return () => timers.forEach(clearTimeout);
+}, []);
 
   return (
     <div className="analysis-loading-overlay">

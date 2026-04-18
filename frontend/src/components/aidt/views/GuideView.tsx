@@ -11,6 +11,17 @@ import { saveAs } from 'file-saver';
 
 import '../views/GuideView.css';
 
+const DEFAULT_CONTRACT_TIP = {
+  docType: '부동산',
+  title: '부동산 계약 시 알아두세요',
+  items: [
+    '계약 전·후 등기부등본을 반드시 확인하고, 근저당·가압류 등 권리관계를 꼼꼼히 살피세요.',
+    '전입신고와 확정일자는 잔금 지급 당일 즉시 받아야 보증금을 법적으로 보호받을 수 있습니다.',
+    '보증금이 클수록 전세보증보험(HUG·SGI) 가입을 적극 검토하고, 가입 가능 여부를 사전에 확인하세요.',
+    '특약사항은 구두 약속이 아닌 계약서에 직접 명시해야 법적 효력이 발생합니다.',
+  ]
+};
+
 interface GuideViewProps {
   currentDocument: {
     content: string;
@@ -46,6 +57,9 @@ function GuideView({
   
   const [isTipOpen, setIsTipOpen] = useState(false);
   const [showPreviewModal, setShowPreviewModal] = useState(false);
+  const displayTip = (contractTip && contractTip.items?.length > 0)
+    ? contractTip
+    : DEFAULT_CONTRACT_TIP;
   const [improvedDocument, setImprovedDocument] = useState('');
 
   // 개선된 문서 생성
@@ -141,7 +155,7 @@ for (const word of words.slice(0, 3)) {
         >
           <div className="tip-title-group">
             <h3 className="tip-title">TIP</h3>
-            <span className="tip-badge">{contractTip.docType}</span>
+            <span className="tip-badge">{displayTip.docType}</span>
           </div>
           <span className={`tip-toggle-icon ${isTipOpen ? 'open' : ''}`}>
             ▼
@@ -149,10 +163,10 @@ for (const word of words.slice(0, 3)) {
         </button>
         
         <div className="tip-content">
-          <p className="tip-main-title">[{contractTip.docType}] 작성 시 알아두세요</p>
+          <p className="tip-main-title">[{displayTip.docType}] 작성 시 알아두세요</p>
           <ul>
-            {contractTip.items.slice(0, 4).map((item, index) => (
-            <li key={index} >{item}</li>
+            {displayTip.items.slice(0, 4).map((item, index) => (
+              <li key={index}>{item}</li>
             ))}
           </ul>
         </div>
