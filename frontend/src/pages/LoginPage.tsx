@@ -1,7 +1,8 @@
 // src/pages/auth/LoginPage.tsx
 import LogoImg from '../assets/img/logo.svg';
 import { useState } from 'react';
-import { useNavigate, Link as RouterLink } from 'react-router-dom';
+import { useNavigate, Link as RouterLink, useLocation} from 'react-router-dom';
+
 import {
   Container,
   Box,
@@ -33,6 +34,8 @@ export default function LoginPage() {
 
   const { login } = useAuth();
   const navigate = useNavigate();
+  const location = useLocation();
+  const from = (location.state as { from?: string })?.from || '/'; 
 
   const validateEmail = (email: string) => {
     if (!email.trim()) {
