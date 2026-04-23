@@ -40,7 +40,6 @@ def analyze_contract(text: str) -> dict:
     아래 계약서 내용을 읽고 조항별로 매우 세세하게 위험을 분석해줘.
     - summary: 핵심 내용을 매우 상세하고 구조적으로 요약하며, 최소 500자 이상으로 작성할 것.
     - riskItems: 핵심 위험 항목 최대 5개만 포함. riskLevel은 HIGH/MEDIUM/LOW 중 하나.
-    - forms: 계약서 유형에 맞는 첨부 양식을 추천할 것.
     {law_context}
     계약서 내용:
     {text}
@@ -54,19 +53,8 @@ def analyze_contract(text: str) -> dict:
                 system_instruction=(
                     "너는 한국 부동산 계약서 분석 전문가야.\n"
                     "반드시 JSON 형식만 출력해.\n"
-                    "최상위 키는 summary(string), riskItems(array), forms(array)이며,\n"
-                    # riskItems 각 항목 필드:
-                    # - clauseText: 위험 조항 원문
-                    # - riskLevel: 위험 등급 (HIGH / MEDIUM / LOW)
-                    # - reason: 위험한 이유
-                    # - checkPoints: 확인해야 할 사항 목록 (문자열 배열)
-                    # - improvedClause: 개선된 조항 제안
-                    "riskItems 각 항목은 clauseText, riskLevel, reason, checkPoints(string array), improvedClause 필드를 포함해야 해.\n"
-                    # forms 각 항목 필드:
-                    # - type: 양식 종류 (예: 내용증명, 보증금 반환 청구서)
-                    # - description: 양식 설명
-                    # - downloadUrl: 양식 다운로드 링크 (추후 구현 예정)
-                    "forms 각 항목은 type, description, downloadUrl 필드를 포함해야 해."
+                    "최상위 키는 summary(string), riskItems(array)이며,\n"
+                    "riskItems 각 항목은 clauseText, riskLevel, reason, checkPoints(string array), improvedClause 필드를 포함해야 해."
                 ),
                 response_mime_type="application/json",  # JSON 외 텍스트 출력 방지
                 temperature=0.0,                        # 동일 계약서 재분석 시 항상 같은 결과 보장

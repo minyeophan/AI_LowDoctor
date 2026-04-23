@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { IoSearch } from 'react-icons/io5';
+import { communityAPI } from '../../../api/community';
 import './SearchView.css';
 
 interface CommunityResult {
@@ -96,11 +97,31 @@ export default function SearchView() {
   const [searched, setSearched] = useState(false);
   const [results, setResults] = useState<SearchResult[]>([]);
 
-  const handleSearch = () => {
-    if (!query.trim()) return;
-    // 백엔드 연동 시:
-    // community: GET /api/posts?keyword=query
-    // case: GET /api/cases?keyword=query
+ const [isSearching, setIsSearching] = useState(false);
+
+const handleSearch = async () => {
+  if (!query.trim()) return;
+  setIsSearching(true);
+  try {
+    const data = await communityAPI.getPosts('latest', '', query);
+    const posts = (data.posts || data.list || data || []).map((post: any) => ({
+      id: post._id || post.id,
+      type: 'community' as const,
+      title: post.title,
+      preview: post.content?.slice(0, 100) || '',
+      date: (post.date || post.createdAt || '').slice(0, 10),
+      views: post.views || 0,
+      comments: post.commentCount || 0,
+    }));
+
+    // 판례는 mock 유지 (백엔드 없음)
+    const caseFiltered = mockCaseResults.filter(
+      r => r.title.includes(query) || r.preview.includes(query)
+    );
+    setResults([...posts, ...caseFiltered]);
+  } catch (err) {
+    console.error('검색 실패:', err);
+    // 실패 시 mock 폴백
     const communityFiltered = mockCommunityResults.filter(
       r => r.title.includes(query) || r.preview.includes(query)
     );
@@ -108,8 +129,11 @@ export default function SearchView() {
       r => r.title.includes(query) || r.preview.includes(query)
     );
     setResults([...communityFiltered, ...caseFiltered]);
+  } finally {
+    setIsSearching(false);
     setSearched(true);
-  };
+  }
+};
 
   const communityResults = results.filter(r => r.type === 'community') as CommunityResult[];
   const caseResults = results.filter(r => r.type === 'case') as CaseResult[];
@@ -127,8 +151,8 @@ export default function SearchView() {
             onChange={e => setQuery(e.target.value)}
             onKeyDown={e => e.key === 'Enter' && handleSearch()}
           />
-          <button className="search-view-btn" onClick={handleSearch}>
-            <IoSearch size={18} />
+          <button className="search-view-btn" onClick={handleSearch} disabled={isSearching}>
+            {isSearching ? <span>...</span> : <IoSearch size={18} />}
           </button>
         </div>
       </div>
@@ -172,7 +196,7 @@ export default function SearchView() {
                   ? <CommunityCard
                       key={result.id}
                       item={result as CommunityResult}
-                      onClick={() => navigate(`/community/${result.id}`)}
+                      onClick={() => window.open(`/community/${result.id}`, '_blank')}
                     />
                   : <CaseCard
                       key={result.id}
@@ -188,7 +212,7 @@ export default function SearchView() {
       {!searched && (
         <div className="search-initial">
           <div className="search-suggestions">
-            {['전세 보증금', '계약 해지', '묵시적 갱신', '하자담보책임', '근저당권'].map(keyword => (
+            {['전세 보증금', '계약 해지', '중개수수료', '특약사항', '확정일자'].map(keyword => (
               <button
                 key={keyword}
                 className="search-suggestion-btn"
@@ -204,9 +228,7 @@ export default function SearchView() {
   );
 }
 
-// ============================
-// 커뮤니티 결과 카드
-// ============================
+// 커뮤니티 게시글 카드
 function CommunityCard({ item, onClick }: { item: CommunityResult; onClick: () => void }) {
   return (
     <div className="search-result-card" onClick={onClick}>
@@ -224,9 +246,7 @@ function CommunityCard({ item, onClick }: { item: CommunityResult; onClick: () =
   );
 }
 
-// ============================
-// 판례 결과 카드
-// ============================
+// 판례 카드
 function CaseCard({ item }: { item: CaseResult }) {
   return (
     <div className="search-result-card">

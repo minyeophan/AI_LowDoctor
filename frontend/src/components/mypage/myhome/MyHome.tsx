@@ -1,12 +1,37 @@
 import { Link } from 'react-router-dom';
-import { mockDashboardStats } from '../../../mock/mockStats';
+import { useState, useEffect } from 'react';
+import { mypageAPI } from '../../../api/mypage';
 import '../myhome/MyHome.css';
 import { FaBoxArchive } from "react-icons/fa6";
 import { FaPen } from "react-icons/fa";
 import { FaCalendarCheck } from "react-icons/fa";
 import { BsPeopleFill } from "react-icons/bs";
 export default function Dashboard() {
-  const stats = mockDashboardStats;
+ const [stats, setStats] = useState({
+    documentCount: 0,
+    draftCount: 0,
+    scheduleCount: 0,
+    activityCount: 0,
+  });
+
+  useEffect(() => {
+    const fetchStats = async () => {
+      try {
+        const [storageRes, draftRes] = await Promise.all([
+          mypageAPI.getStorage(),
+          mypageAPI.getDrafts(),
+        ]);
+        setStats(prev => ({
+          ...prev,
+          documentCount: storageRes.total,
+          draftCount: draftRes.total,
+        }));
+      } catch (err) {
+        console.error('홈 통계 로딩 실패:', err);
+      }
+    };
+    fetchStats();
+  }, []);
 
   return (
     <div className="dashboard">

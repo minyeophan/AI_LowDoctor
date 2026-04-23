@@ -11,6 +11,17 @@ import { saveAs } from 'file-saver';
 
 import '../views/GuideView.css';
 
+const DEFAULT_CONTRACT_TIP = {
+  docType: '부동산',
+  title: '부동산 계약 시 알아두세요',
+  items: [
+    '계약 전·후 등기부등본을 반드시 확인하고, 근저당·가압류 등 권리관계를 꼼꼼히 살피세요.',
+    '전입신고와 확정일자는 잔금 지급 당일 즉시 받아야 보증금을 법적으로 보호받을 수 있습니다.',
+    '보증금이 클수록 전세보증보험(HUG·SGI) 가입을 적극 검토하고, 가입 가능 여부를 사전에 확인하세요.',
+    '특약사항은 구두 약속이 아닌 계약서에 직접 명시해야 법적 효력이 발생합니다.',
+  ]
+};
+
 interface GuideViewProps {
   currentDocument: {
     content: string;
@@ -22,6 +33,7 @@ interface GuideViewProps {
   zoomLevel: number;
   onZoomIn: () => void;
   onZoomOut: () => void;
+  editedHtml?: string;
 }
 
 interface ImprovementGuide {
@@ -30,6 +42,7 @@ interface ImprovementGuide {
   originalClause: string;
   checkPoints: string[];
   improvedClause: string;
+  riskLevel?: 'low' | 'medium' | 'high';
 }
 
 function GuideView({ 
@@ -38,32 +51,53 @@ function GuideView({
   improvementGuides = mockImprovementGuides,
   zoomLevel, 
   onZoomIn, 
-  onZoomOut 
+  onZoomOut,
+  editedHtml = '',
 }: GuideViewProps) {
   
   const [isTipOpen, setIsTipOpen] = useState(false);
   const [showPreviewModal, setShowPreviewModal] = useState(false);
+  const displayTip = (contractTip && contractTip.items?.length > 0)
+    ? contractTip
+    : DEFAULT_CONTRACT_TIP;
   const [improvedDocument, setImprovedDocument] = useState('');
 
   // 개선된 문서 생성
   const generateImprovedDocument = () => {
-  let modifiedContent = currentDocument.content;
-  
+  // editedHtml 기반으로 교체 (서식 유지)
+  let modifiedHtml = editedHtml || `<p>${currentDocument.content}</p>`;
+
   improvementGuides.forEach(guide => {
     const trimmed = guide.originalClause.trim();
-    if (!trimmed) return;
+if (!trimmed) return;
 
-    const lines = modifiedContent.split('\n');
-    const newLines = lines.map(line => {
-      if (line.includes(trimmed)) {
-        return line.replace(trimmed, guide.improvedClause);
-      }
-      return line;
-    });
-    modifiedContent = newLines.join('\n');
+// 앞 공백/특수문자 제거
+const cleanTrimmed = trimmed.replace(/^[\s\-\•\*]+/, '').trim();
+
+// 1순위: 완전 매칭
+if (modifiedHtml.includes(cleanTrimmed)) {
+  modifiedHtml = modifiedHtml.replace(cleanTrimmed, guide.improvedClause);
+  return;
+}
+
+// 2순위: 첫 문장 매칭
+const firstSentence = cleanTrimmed.split(/[,.。]/)[0].trim();
+if (firstSentence.length > 5 && modifiedHtml.includes(firstSentence)) {
+  modifiedHtml = modifiedHtml.replace(firstSentence, guide.improvedClause);
+  return;
+}
+
+// 3순위: 긴 단어 매칭
+const words = cleanTrimmed.split(' ').filter(w => w.length > 4).sort((a, b) => b.length - a.length);
+for (const word of words.slice(0, 3)) {
+  if (modifiedHtml.includes(word)) {
+    modifiedHtml = modifiedHtml.replace(word, guide.improvedClause);
+    break;
+  }
+}
   });
-  
-  return modifiedContent;
+
+  return modifiedHtml;
 };
 
   // 대응 가이드 적용하기 클릭
@@ -73,70 +107,41 @@ function GuideView({
     setShowPreviewModal(true);
   };
 
-  // 저장하기
-const handleSave = async () => {
-  try {
-    // 문서 내용을 줄 단위로 분리
-    const lines = improvedDocument.split('\n');
-    
-    // docx 문서 생성
-    const doc = new Document({
-      sections: [{
-        properties: {},
-        children: lines.map((line, index) => {
-          // 첫 줄은 제목으로
-          if (index === 0 && line.trim()) {
-            return new Paragraph({
-              text: line,
-              heading: HeadingLevel.HEADING_1,
-              alignment: AlignmentType.CENTER,
-              spacing: {
-                after: 400,
-              },
-            });
+  const handleSave = () => {
+  const printWindow = window.open('', '', 'height=800,width=800');
+  if (!printWindow) return;
+  printWindow.document.write(`
+    <html>
+      <head>
+        <meta charset="utf-8">
+        <title>개선된 계약서</title>
+        <style>
+          body { 
+            font-family: 'Noto Sans KR', 'Malgun Gothic', sans-serif; 
+            padding: 40px 60px;
+            line-height: 1.8;
+            font-size: 13px;
+            color: #1a1a1a;
           }
-          
-          // 빈 줄 처리
-          if (!line.trim()) {
-            return new Paragraph({
-              text: '',
-              spacing: {
-                after: 200,
-              },
-            });
+          table { 
+            border-collapse: collapse; 
+            width: 100%; 
+            margin: 12px 0;
           }
-          
-          // 일반 문단
-          return new Paragraph({
-            children: [
-              new TextRun({
-                text: line,
-                font: '맑은 고딕',
-                size: 22, // 11pt (half-points)
-              }),
-            ],
-            alignment: AlignmentType.JUSTIFIED,
-            spacing: {
-              line: 360,
-              after: 120,
-            },
-          });
-        }),
-      }],
-    });
-
-    // Blob 생성 및 다운로드
-    const blob = await Packer.toBlob(doc);
-    const filename = `개선된_계약서_${new Date().toISOString().slice(0, 10)}.docx`;
-    saveAs(blob, filename);
-    
-    setShowPreviewModal(false);
-    alert('문서가 저장되었습니다!');
-    
-  } catch (error) {
-    console.error('저장 실패:', error);
-    alert('저장에 실패했습니다.');
-  }
+          td, th { 
+            border: 1px solid #ccc; 
+            padding: 6px 10px;
+            vertical-align: top;
+          }
+          th { background: #f5f5f5; font-weight: 600; }
+          p { margin: 4px 0; }
+        </style>
+      </head>
+      <body>${improvedDocument}</body>
+    </html>
+  `);
+  printWindow.document.close();
+  printWindow.print();
 };
 
   return (
@@ -150,7 +155,7 @@ const handleSave = async () => {
         >
           <div className="tip-title-group">
             <h3 className="tip-title">TIP</h3>
-            <span className="tip-badge">{contractTip.docType}</span>
+            <span className="tip-badge">{displayTip.docType}</span>
           </div>
           <span className={`tip-toggle-icon ${isTipOpen ? 'open' : ''}`}>
             ▼
@@ -158,10 +163,10 @@ const handleSave = async () => {
         </button>
         
         <div className="tip-content">
-          <p className="tip-main-title">[{contractTip.docType}] 작성 시 알아두세요</p>
+          <p className="tip-main-title">[{displayTip.docType}] 작성 시 알아두세요</p>
           <ul>
-            {contractTip.items.slice(0, 4).map((item, index) => (
-            <li key={index} >{item}</li>
+            {displayTip.items.slice(0, 4).map((item, index) => (
+              <li key={index}>{item}</li>
             ))}
           </ul>
         </div>
@@ -190,22 +195,24 @@ const handleSave = async () => {
 
           {/* 개선 가이드 목록 */}
           <div className="improvement-list">
-            {improvementGuides.map((guide) => (
-              <div key={guide.id} className="improvement-item">
-                {guide.page && (
-                  <div className="clause-page">
+            {improvementGuides.map((guide) => {
+              const level = (guide.riskLevel || 'low').toLowerCase() as 'high' | 'medium' | 'low';
+              const levelLabel = level === 'high' ? '높음' : level === 'medium' ? '중간' : '낮음';
+              return (
+              <div key={guide.id} className={`improvement-item severity-${level}`}>
+                <div className="improvement-item-header">
+                  {guide.page && (
                     <span className="page-badge">문서 {guide.page}p</span>
-                  </div>
-                )}
-
+                  )}
+                </div>
                 <div className="original-clause-section">
                   <div className="section-header">
                     <MdWarning className="warning-icon" />
                     <h3>개선이 필요한 조항</h3>
                   </div>
-                  <div className="clause-box original">
-                    <p>{guide.originalClause}</p>
-                  </div>
+                 <div className={`clause-box original severity-${level}`}>
+                  <p>{guide.originalClause}</p>
+                </div>
                 </div>
 
                 <div className="check-points">
@@ -224,12 +231,13 @@ const handleSave = async () => {
                     <FaHandPointRight className='retouch-icon'/>
                     <h3>이렇게 수정해보세요</h3>
                   </div>
-                  <div className="clause-box improved">
+                  <div className="emend-box improved">
                     <p>{guide.improvedClause}</p>
                   </div>
                 </div>
               </div>
-            ))}
+            );
+            })}
           </div>
         </div>
       </div>
@@ -242,8 +250,8 @@ const handleSave = async () => {
 
       {/* 미리보기 모달 */}
       {showPreviewModal && (
-        <div className="preview-modal-overlay" onClick={() => setShowPreviewModal(false)}>
-          <div className="preview-modal" onClick={(e) => e.stopPropagation()}>
+        <div className="preview-modal-overlay">
+          <div className="preview-modal">
             <div className="preview-modal-header">
               <div className="modal-title-group">
                 <h2>개선된 문서 미리보기</h2>
@@ -251,17 +259,19 @@ const handleSave = async () => {
                   {improvementGuides.length}개의 조항이 개선되었습니다
                 </span>
               </div>
-              <button 
-                className="modal-close-btn"
-                onClick={() => setShowPreviewModal(false)}
-              >
-                <MdClose size={24} />
-              </button>
             </div>
 
+            {/* 문서 느낌 미리보기 */}
             <div className="preview-modal-body">
-              <div className="preview-content">
-                <pre>{improvedDocument}</pre>
+              <div className="preview-document-wrapper">
+                <div className="preview-document-page">
+                  <div className="preview-document-content">
+                    <div
+                        className="preview-doc-html"
+                        dangerouslySetInnerHTML={{ __html: improvedDocument }}
+                      />
+                  </div>
+                </div>
               </div>
             </div>
 
@@ -270,7 +280,7 @@ const handleSave = async () => {
                 className="modal-cancel-btn"
                 onClick={() => setShowPreviewModal(false)}
               >
-                취소
+                닫기
               </button>
               <button 
                 className="modal-save-btn"

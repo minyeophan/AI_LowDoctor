@@ -9,6 +9,7 @@ import CommunityPage from './pages/CommunityPage';
 import PostDetailPage from './pages/PostdetailPage';
 import WritePostPage from './pages/WritepostPage';
 import SchedulePage from './pages/SchedulePage';
+import FormPage from './pages/FormPage';
 import MyPage from './pages/MyPage';
 import { AuthProvider } from './context/AuthContext';
 import { MdAccountCircle } from "react-icons/md";
@@ -68,7 +69,7 @@ function Navbar() {
               to="/form" 
               className={`nav-link ${isActive('/form') ? 'active' : ''}`}
             >
-              양식작성
+              법률서식
             </Link>
             <Link 
               to="/community" 
@@ -109,7 +110,7 @@ function Navbar() {
             className={`nav-link ${isActive('/form') ? 'active' : ''}`}
             onClick={closeMobileMenu}
           >
-            양식작성
+            법률서식
           </Link>
           <Link 
             to="/community" 
@@ -170,6 +171,7 @@ function AppContent() {
           <Route path="/community/:id" element={<PostDetailPage /> }/>
           <Route path="/community/write" element={<WritePostPage />} />
           <Route path="/schedule" element={<SchedulePage />} />
+          <Route path="/form" element={<FormPage />} />
           {/* 나중에 추가할 페이지들 */}
           {/* <Route path="/find-id" element={<FindIdPage />} /> */}
           {/* <Route path="/reset-password" element={<ResetPasswordPage />} /> */}

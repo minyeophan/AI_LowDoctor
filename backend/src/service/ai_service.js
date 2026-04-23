@@ -7,7 +7,7 @@ const AI_SERVER_URL = process.env.AI_SERVER_URL || "http://localhost:8000";
 /**
  * OCR + AI 분석 통합
  * @param {string} filePath 업로드된 파일 경로
- * @returns {Promise<{extractedText: string, summary: any[], riskItems: any[], forms: any[]}>}
+ * @returns {Promise<{extractedText: string, summary: any[], riskItems: any[]}>}
  */
 
 const getAnalysisInstruction = () => `

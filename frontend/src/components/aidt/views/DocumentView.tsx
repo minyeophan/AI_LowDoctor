@@ -1,21 +1,16 @@
 import { useState, useEffect, useRef } from 'react';
 import { BsFillPrinterFill } from "react-icons/bs";
 import { RiEditBoxFill } from "react-icons/ri";
-import { FaBookmark } from "react-icons/fa";
 import DocumentEditor, { DocumentEditorRef } from './DocumentEditor';
 import { FaCaretUp } from "react-icons/fa";
 import { FaCaretDown } from "react-icons/fa";
+import { IoMdSearch } from "react-icons/io";
 import '../views/DocumentView.css';
 
 interface Memo {
   id: string;
   text: string;
   createdAt: string;
-}
-
-interface Bookmark {
-  label: string;
-  scrollTop: number;
 }
 
 interface DocumentViewProps {
@@ -43,15 +38,14 @@ function DocumentView({
   const [matchCount, setMatchCount] = useState(0);
   const [currentSearchIndex, setCurrentSearchIndex] = useState(0);
   const editorBodyRef = useRef<HTMLDivElement>(null);
+  const memoPanelRef = useRef<HTMLDivElement>(null);
+  const dragOffset = useRef({ x: 0, y: 0 });
+  const isDragging = useRef(false);
 
   // 메모 상태
   const [memos, setMemos] = useState<Memo[]>([]);
   const [showMemoPanel, setShowMemoPanel] = useState(false);
   const [memoInput, setMemoInput] = useState('');
-
-  // 북마크 상태
-  const [bookmarks, setBookmarks] = useState<Bookmark[]>([]);
-  const [showBookmarkPanel, setShowBookmarkPanel] = useState(false);
 
   // 검색어 변경 시 하이라이팅 개수 카운트
   useEffect(() => {
@@ -83,6 +77,36 @@ function DocumentView({
     highlights[newIndex].scrollIntoView({ behavior: 'smooth', block: 'center' });
   };
 
+const handleDragStart = (e: React.MouseEvent<HTMLDivElement>) => {
+  if (!memoPanelRef.current) return;
+  isDragging.current = true;
+  const rect = memoPanelRef.current.getBoundingClientRect();
+  dragOffset.current = {
+    x: e.clientX - rect.left,
+    y: e.clientY - rect.top,
+  };
+  e.preventDefault();
+};
+
+const handleDragMove = (e: MouseEvent) => {
+  if (!isDragging.current || !memoPanelRef.current) return;
+  memoPanelRef.current.style.left = `${e.clientX - dragOffset.current.x}px`;
+  memoPanelRef.current.style.top = `${e.clientY - dragOffset.current.y}px`;
+};
+
+const handleDragEnd = () => {
+  isDragging.current = false;
+};
+
+useEffect(() => {
+  window.addEventListener('mousemove', handleDragMove);
+  window.addEventListener('mouseup', handleDragEnd);
+  return () => {
+    window.removeEventListener('mousemove', handleDragMove);
+    window.removeEventListener('mouseup', handleDragEnd);
+  };
+}, []);
+
   // 메모
   const handleAddMemo = () => {
     if (!memoInput.trim()) return;
@@ -99,21 +123,6 @@ function DocumentView({
     setMemos(prev => prev.filter(m => m.id !== id));
   };
 
-  // 북마크
-  const handleAddBookmark = () => {
-    const scrollTop = editorBodyRef.current?.scrollTop || 0;
-    const label = `북마크 ${bookmarks.length + 1}`;
-    setBookmarks(prev => [...prev, { label, scrollTop }]);
-  };
-
-  const handleJumpBookmark = (scrollTop: number) => {
-    editorBodyRef.current?.scrollTo({ top: scrollTop, behavior: 'smooth' });
-    setShowBookmarkPanel(false);
-  };
-
-  const handleDeleteBookmark = (idx: number) => {
-    setBookmarks(prev => prev.filter((_, i) => i !== idx));
-  };
 
   // 인쇄
   const handlePrint = () => {
@@ -139,6 +148,7 @@ function DocumentView({
 
           {/* 검색창 */}
           <div className="search-box-new">
+            <IoMdSearch color='#666'/>
             <input
               type="text"
               placeholder="내용을 검색하세요"
@@ -173,17 +183,10 @@ function DocumentView({
 
             <button
               className={`icon-btn ${showMemoPanel ? 'active' : ''}`}
-              onClick={() => { setShowMemoPanel(!showMemoPanel); setShowBookmarkPanel(false); }}
+              onClick={() => { setShowMemoPanel(!showMemoPanel); }}
               title="메모"
             >
               <RiEditBoxFill size={14} />
-            </button>
-            <button
-              className={`icon-btn ${showBookmarkPanel ? 'active' : ''}`}
-              onClick={() => { setShowBookmarkPanel(!showBookmarkPanel); setShowMemoPanel(false); }}
-              title="북마크"
-            >
-              <FaBookmark size={14} />
             </button>
             <button className="icon-btn" onClick={handlePrint} title="인쇄">
               <BsFillPrinterFill size={14} />
@@ -193,11 +196,14 @@ function DocumentView({
 
         {/* 메모 패널 */}
         {showMemoPanel && (
-          <div className="side-panel">
-            <div className="panel-header">
-              <span>📝 메모</span>
-              <button onClick={() => setShowMemoPanel(false)}>✕</button>
-            </div>
+        <div className="side-panel" ref={memoPanelRef}>
+          <div
+            className="panel-header draggable"
+            onMouseDown={handleDragStart}
+          >
+            <span>메모</span>
+            <button onClick={() => setShowMemoPanel(false)}>✕</button>
+          </div>
             <div className="memo-input-box">
               <textarea
                 value={memoInput}
@@ -224,35 +230,6 @@ function DocumentView({
             </div>
           </div>
         )}
-
-        {/* 북마크 패널 */}
-        {showBookmarkPanel && (
-          <div className="side-panel">
-            <div className="panel-header">
-              <span>🔖 북마크</span>
-              <button onClick={() => setShowBookmarkPanel(false)}>✕</button>
-            </div>
-            <button className="bookmark-toggle-btn add" onClick={handleAddBookmark}>
-              🔖 현재 위치 북마크 추가
-            </button>
-            <div className="bookmark-list">
-              {bookmarks.length === 0 ? (
-                <p className="empty-msg">북마크가 없습니다.</p>
-              ) : (
-                bookmarks.map((bm, idx) => (
-                  <div key={idx} className="bookmark-item">
-                    <div onClick={() => handleJumpBookmark(bm.scrollTop)}>
-                      <FaBookmark size={14} />
-                      <span>{bm.label}</span>
-                    </div>
-                    <button className="memo-delete" onClick={() => handleDeleteBookmark(idx)}>삭제</button>
-                  </div>
-                ))
-              )}
-            </div>
-          </div>
-        )}
-
         {/* 문서 본문 */}
         <div className="document-body" ref={editorBodyRef}>
           <DocumentEditor
