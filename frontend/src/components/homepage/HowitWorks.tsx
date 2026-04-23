@@ -2,7 +2,7 @@ import { useState, useEffect, useRef, useCallback } from 'react';
 import step1Gif from '../../assets/gif/step1.gif';
 import step2Gif from '../../assets/gif/step2.gif';
 import step3Gif from '../../assets/gif/step3.gif';
-import './Howitwork.css';
+import './HowitWork.css';
 
 interface Chip {
   text: string;

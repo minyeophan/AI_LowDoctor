@@ -9,6 +9,28 @@ const AI_SERVER_URL = process.env.AI_SERVER_URL || "http://localhost:8000";
  * @param {string} filePath 업로드된 파일 경로
  * @returns {Promise<{extractedText: string, summary: any[], riskItems: any[]}>}
  */
+
+const getAnalysisInstruction = () => `
+계약서 본문을 분석하여 반드시 다음 JSON 형식으로만 응답하세요. 다른 설명은 생략하십시오.
+
+{
+  "summary": [
+    {"title": "계약 당사자 및 목적물", "content": "내용 요약"},
+    {"title": "보증금 및 월차임", "content": "내용 요약"},
+    {"title": "임대차 기간", "content": "내용 요약"},
+    {"title": "관리비 분담", "content": "내용 요약"},
+    {"title": "상가 원상복구 범위", "content": "내용 요약"},
+    {"title": "주택 원상복구 범위", "content": "내용 요약"},
+    {"title": "전입신고 및 확정일자", "content": "내용 요약"},
+    {"title": "담보권 설정금지 및 특약", "content": "내용 요약"}
+  ],
+  "riskItems": [],
+  "forms": [],
+  "contractTip": "계약 시 주의할 점 한줄 팁",
+  "improvementGuides": []
+}
+`;
+
 export const analyzeDocument = async (filePath) => {
   try {
     const formData = new FormData();
@@ -23,34 +45,46 @@ export const analyzeDocument = async (filePath) => {
     const extractedText = ocrResponse.data.text;
     console.log("OCR 완료");
 
-    console.log("AI 분석 요청 중...");
+    console.log("AI 통합 분석 요청 중 (속도 최적화)...");
     const aiResponse = await axios.post(
       `${AI_SERVER_URL}/api/ai-analyze`,
-      { extracted_text: extractedText },
+      { 
+        extracted_text: `[계약서 본문]\n${extractedText}\n\n[지시사항]\n${getAnalysisInstruction()}` 
+      },
       { headers: { "Content-Type": "application/json" }, timeout: 600000 }
     );
-    const aiData = aiResponse.data;
+
+    let aiData = aiResponse.data;
+    
+    // AI 응답이 문자열로 올 경우를 대비한 파싱
+    if (typeof aiData === "string") {
+      try {
+        aiData = JSON.parse(aiData);
+      } catch (e) {
+        console.error("JSON 파싱 실패, 원본 데이터를 사용합니다.");
+      }
+    }
+
     console.log("AI 분석 완료");
 
     return {
       extractedText,
-      summary: typeof aiData.summary === "string"
-      ? [{ title: "핵심 요약", content: aiData.summary }]
-      : aiData.summary || [],
+      summary: aiData.summary || [],
       riskItems: aiData.riskItems || [],
-      contractTip: aiData.contractTip || null,
+      forms: aiData.forms || [],
+      contractTip: typeof aiData.contractTip === "string"
+        ? { content: aiData.contractTip }
+        : aiData.contractTip || null,
       improvementGuides: aiData.improvementGuides || [],
     };
 
   } catch (error) {
     console.error('OCR/AI 분석 에러:', error);
-    throw new Error(`AI 분석 실패: ${error}`);
+    throw new Error(`AI 분석 실패: ${error.message}`);
   }
 };
 
-// 에디터에서 수정된 HTML 텍스트로 직접 분석 (OCR 단계 스킵)
 export const analyzeDocumentFromText = async (html) => {
-  // HTML 태그 제거하고 테이블 구조를 텍스트로 변환
   const text = html
     .replace(/<tr[^>]*>/gi, '\n')
     .replace(/<\/tr>/gi, '')
@@ -62,22 +96,30 @@ export const analyzeDocumentFromText = async (html) => {
     .replace(/\n{3,}/g, '\n\n')
     .trim();
 
-  console.log("에디터 텍스트로 AI 분석 요청 중...");
+  console.log("에디터 텍스트로 AI 통합 분석 요청 중...");
   const aiResponse = await axios.post(
     `${AI_SERVER_URL}/api/ai-analyze`,
-    { extracted_text: text },
+    { 
+      extracted_text: `[본문]\n${text}\n\n[지시사항]\n${getAnalysisInstruction()}` 
+    },
     { headers: { "Content-Type": "application/json" }, timeout: 120000 }
   );
-  const aiData = aiResponse.data;
+
+  let aiData = aiResponse.data;
+  if (typeof aiData === "string") {
+    try { aiData = JSON.parse(aiData); } catch (e) {}
+  }
+
   console.log("AI 분석 완료");
 
   return {
     extractedText: text,
-    summary: typeof aiData.summary === "string"
-      ? [{ title: "핵심 요약", content: aiData.summary }]
-      : aiData.summary || [],
+    summary: aiData.summary || [],
     riskItems: aiData.riskItems || [],
-    contractTip: aiData.contractTip || null,
+    forms: aiData.forms || [],
+    contractTip: typeof aiData.contractTip === "string"
+        ? { content: aiData.contractTip }
+        : aiData.contractTip || null,
     improvementGuides: aiData.improvementGuides || [],
   };
 };
