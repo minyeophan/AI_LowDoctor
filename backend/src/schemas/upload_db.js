@@ -3,6 +3,11 @@ import mongoose from "mongoose";
 const { Schema } = mongoose;
 
 const uploadSchema = new Schema({
+    userID: {
+        type: String,
+        required: false,
+        index: true
+    },
     documentId: {
         type: String,
         required: true,
@@ -28,6 +33,14 @@ const uploadSchema = new Schema({
     mimetype: {
         type: String,
         required: true
+    },
+    contractType: {
+        type: String,
+        default: "부동산"
+    },
+    isSaved: {
+        type: Boolean,
+        default: false
     }
 }, {
     timestamps: true
