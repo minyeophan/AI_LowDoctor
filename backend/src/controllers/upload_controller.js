@@ -11,14 +11,18 @@ export const afterUpload = async (req, res, next) => {
         }
 
         const documentId = uuidv4();
+        const userID = req.user?.userID || null;  // 로그인한 사용자 ID (선택사항)
 
         const saved = await Upload.create({
+            userID,
             documentId,
             filename: file.filename,
             originalname: Buffer.from(file.originalname, 'latin1').toString('utf8'),
             filePath: file.path,
             fileSize: file.size,
             mimetype: file.mimetype,
+            contractType: "부동산",
+            isSaved: false,
             createdAt: new Date()
         });
         res.status(200).json({
