@@ -1,0 +1,39 @@
+services:
+  ai:
+    image: ghcr.io/${GITHUB_REPOSITORY_OWNER}/lawdoctor-ai:latest
+    restart: unless-stopped
+    env_file:
+      - ./AI/.env
+    networks:
+      - lawdoctor-network
+
+  backend:
+    image: ghcr.io/${GITHUB_REPOSITORY_OWNER}/lawdoctor-backend:latest
+    restart: unless-stopped
+    env_file:
+      - ./backend/.env
+    environment:
+      - AI_SERVER_URL=http://ai:8000
+    volumes:
+      - uploads_data:/app/uploads
+    depends_on:
+      - ai
+    networks:
+      - lawdoctor-network
+
+  frontend:
+    image: ghcr.io/${GITHUB_REPOSITORY_OWNER}/lawdoctor-frontend:latest
+    restart: unless-stopped
+    ports:
+      - "80:80"
+    depends_on:
+      - backend
+    networks:
+      - lawdoctor-network
+
+networks:
+  lawdoctor-network:
+    driver: bridge
+
+volumes:
+  uploads_data:
