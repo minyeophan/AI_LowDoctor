@@ -81,11 +81,11 @@ jobs:
         script: |
           cd /home/ubuntu/AI_LawDoctor
 
-          docker pull ghcr.io/${{ secrets.GITHUB_REPOSITORY_OWNER }}/lawdoctor-ai:latest
-          docker pull ghcr.io/${{ secrets.GITHUB_REPOSITORY_OWNER }}/lawdoctor-backend:latest
-          docker pull ghcr.io/${{ secrets.GITHUB_REPOSITORY_OWNER }}/lawdoctor-frontend:latest
+          docker pull ghcr.io/${{ github.repository_owner }}/lawdoctor-ai:latest
+          docker pull ghcr.io/${{ github.repository_owner }}/lawdoctor-backend:latest
+          docker pull ghcr.io/${{ github.repository_owner }}/lawdoctor-frontend:latest
 
-          export GITHUB_REPOSITORY_OWNER=${{ secrets.GITHUB_REPOSITORY_OWNER }}
+          export GITHUB_REPOSITORY_OWNER=${{ github.repository_owner }}
           docker compose -f docker-compose.prod.yml up -d --force-recreate --remove-orphans
 
           docker image prune -f
