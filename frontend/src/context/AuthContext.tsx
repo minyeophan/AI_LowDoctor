@@ -18,7 +18,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
- const API_BASE = 'http://localhost:3001';
+ const API_BASE = '';
 
 useEffect(() => {
   const restoreUser = async () => {
