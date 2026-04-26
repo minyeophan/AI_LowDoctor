@@ -85,8 +85,8 @@ jobs:
           docker pull ghcr.io/${{ secrets.GITHUB_REPOSITORY_OWNER }}/lawdoctor-backend:latest
           docker pull ghcr.io/${{ secrets.GITHUB_REPOSITORY_OWNER }}/lawdoctor-frontend:latest
 
-          GITHUB_REPOSITORY_OWNER=${{ secrets.GITHUB_REPOSITORY_OWNER }} \
-            docker compose -f docker-compose.prod.yml up -d --remove-orphans
+          export GITHUB_REPOSITORY_OWNER=${{ secrets.GITHUB_REPOSITORY_OWNER }}
+          docker compose -f docker-compose.prod.yml up -d --force-recreate --remove-orphans
 
           docker image prune -f
 
