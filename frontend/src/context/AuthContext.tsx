@@ -18,7 +18,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
- const API_BASE = '';
+ const API_BASE = import.meta.env.VITE_API_URL || '';
 
 useEffect(() => {
   const restoreUser = async () => {
