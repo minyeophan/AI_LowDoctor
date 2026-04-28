@@ -6,6 +6,7 @@ import cors from "cors";
 import dotenv from "dotenv";
 import swaggerUi from "swagger-ui-express";
 import swaggerSpec from "./swagger/swagger.js";
+import passport from "passport";
 
 import { connect } from "./schemas/index.js";
 
@@ -58,6 +59,8 @@ app.use(
     },
   })
 );
+
+app.use(passport.initialize());
 
 app.use("/api-docs", swaggerUi.serve, swaggerUi.setup(swaggerSpec));
 
