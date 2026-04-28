@@ -19,6 +19,7 @@ import postRouter from "./routes/post_routes.js";
 import commentRouter from "./routes/comment_routes.js";
 import mypageRouter from "./routes/mypage_routes.js";
 import chatRouter from "./routes/chat_routes.js";
+import calendarRouter from "./routes/calendar_routes.js";
 
 dotenv.config();
 
@@ -70,12 +71,15 @@ app.use("/api", chatRouter);
 app.use("/api/posts", postRouter);
 app.use("/api", commentRouter);
 app.use("/api/mypage", mypageRouter);
-
+app.use("/api/calendar", calendarRouter);
 app.get("/", (req, res) => {
   res.json({
     msg: "AI Legal Doctor Backend OK",
   });
 });
+
+// 브라우저의 favicon.ico 요청 무시
+app.get('/favicon.ico', (req, res) => res.status(204).end());
 
 app.use((req, res, next) => {
   const error = new Error(`${req.method} ${req.url} 라우터가 없습니다.`);
