@@ -4,6 +4,8 @@ __pycache__/
 *.pyo
 *.pyd
 .env
+.venv/
+venv/
 
 # Node.js
 node_modules/
@@ -23,7 +25,17 @@ dist/
 .claude/
 **/.env
 **/.env.local
+!frontend/.env.production
 
 # 업로드 파일
 backend/uploads/*
 !backend/uploads/.gitkeep
+
+# 개인 실험 (팀 공유 제외)
+AI/experiments/
+AI/분석결과/
+.venv/
+
+# AI 실험/분석 결과
+AI/experiments/
+AI/분석결과/

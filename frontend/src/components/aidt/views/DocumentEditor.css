@@ -1,0 +1,41 @@
+.document-editor-wrapper {
+ width: 100%;
+  padding: 0px 50px;
+  box-sizing: border-box;
+  background: #fff;
+}
+
+.document-editor-content {
+  outline: none;
+}
+
+.document-editor-content .ProseMirror {
+  outline: none;
+  min-height: 400px;
+  font-size: 14px;
+  line-height: 1.6;
+  color: #1a1a1a;
+}
+
+.document-editor-content .ProseMirror table {
+  border-collapse: collapse;
+  width: 100%;
+  margin: 12px 0;
+}
+
+.document-editor-content .ProseMirror table td,
+.document-editor-content .ProseMirror table th {
+  border: 1px solid #ccc;
+  padding: 6px 10px;
+  vertical-align: top;
+  min-width: 40px;
+}
+
+.document-editor-content .ProseMirror table th {
+  background: #f5f5f5;
+  font-weight: 600;
+}
+
+.document-editor-content .ProseMirror p {
+  margin: 6px 0;
+}

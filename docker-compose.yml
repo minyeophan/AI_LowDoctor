@@ -1,0 +1,36 @@
+services:
+    ai:
+      build: ./AI
+      ports:
+        - "8000:8000"
+      env_file:
+        - ./AI/.env
+      networks:
+        - lawdoctor-network
+
+    backend:
+      build: ./backend
+      ports:
+        - "3001:3001"
+      env_file:
+        - ./backend/.env
+      environment:
+        - AI_SERVER_URL=http://ai:8000
+      depends_on:
+        - ai
+      networks:
+        - lawdoctor-network
+
+    frontend:
+      build: ./frontend
+      ports:
+        - "80:80"
+      depends_on:
+        - backend
+      networks:
+        - lawdoctor-network
+
+networks:
+  lawdoctor-network:
+    driver: bridge
+

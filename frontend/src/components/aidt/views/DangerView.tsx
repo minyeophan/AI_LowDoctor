@@ -1,8 +1,16 @@
 import DocumentMeta from '../shared/DocumentMeta';
-import { RiskItem } from '../../../services/api';
-import { mockDocumentContent } from '../../../services/mockData';
+import { RiskItem } from '../../../api/analyze';
+import { mockDocumentContent } from '../../../mock/mockData';
 import { useState, useMemo } from 'react';
+import { MdError } from "react-icons/md";
 import "./DangerView.css"
+
+const normalizeRiskLevel = (level?: string): 'high' | 'medium' | 'low' => {
+  const normalized = (level || '').toLowerCase();
+  if (normalized === 'critical' || normalized === 'high') return 'high';
+  if (normalized === 'medium') return 'medium';
+  return 'low';
+};
 
 interface DangerViewProps {
   currentDocument: {
@@ -14,6 +22,7 @@ interface DangerViewProps {
   zoomLevel: number;
   onZoomIn: () => void;
   onZoomOut: () => void;
+  editedHtml?: string;
 }
 
 function DangerView({ 
@@ -22,199 +31,225 @@ function DangerView({
   zoomLevel, 
   onZoomIn, 
   onZoomOut,
+  editedHtml = '',
 }: DangerViewProps) {
-  
-  const documentContent = currentDocument.content || mockDocumentContent;
-  const lines = documentContent.split('\n');
-  const totalLength = documentContent.length;
 
-  // ✅ 1단계: 각 위험 항목이 처음 나타나는 줄 번호 찾기
+  const blocks = useMemo(() => {
+    const result: { type: 'table' | 'text'; content: string }[] = [];
+    const html = editedHtml || '';
+
+    if (!html) {
+      const content = currentDocument.content || mockDocumentContent;
+      content.split('\n').forEach(line => result.push({ type: 'text', content: line }));
+      return result;
+    }
+
+    const tableRegex = /<table[\s\S]*?<\/table>/gi;
+    let lastIndex = 0;
+    let match;
+
+    while ((match = tableRegex.exec(html)) !== null) {
+      if (match.index > lastIndex) {
+        const div = document.createElement('div');
+        div.innerHTML = html.slice(lastIndex, match.index);
+        const text = div.innerText || div.textContent || '';
+        text.split('\n').forEach(line => result.push({ type: 'text', content: line }));
+      }
+
+      const tableDiv = document.createElement('div');
+      tableDiv.innerHTML = match[0];
+      const tdCount = tableDiv.querySelectorAll('td').length;
+
+      if (tdCount <= 1) {
+        const tdEl = tableDiv.querySelector('td');
+        if (tdEl) {
+          tdEl.querySelectorAll('p, br').forEach(el => {
+            if (el.tagName === 'BR') {
+              el.replaceWith('\n');
+            } else {
+              el.insertAdjacentText('afterend', '\n');
+            }
+          });
+          const text = (tdEl.innerText || tdEl.textContent || '').trim();
+          text.split('\n')
+            .map(line => line.trim())
+            .filter(line => line.length > 0)
+            .forEach(line => result.push({ type: 'text', content: line }));
+        }
+      } else {
+        result.push({ type: 'table', content: match[0] });
+      }
+
+      lastIndex = match.index + match[0].length;
+    }
+
+    if (lastIndex < html.length) {
+      const div = document.createElement('div');
+      div.innerHTML = html.slice(lastIndex);
+      const text = div.innerText || div.textContent || '';
+      text.split('\n').forEach(line => result.push({ type: 'text', content: line }));
+    }
+
+    return result;
+  }, [editedHtml, currentDocument.content]);
+
   const riskFirstAppearance = useMemo(() => {
-    const appearances = new Map<number, number>(); // riskIndex → lineIndex
-    const matchedRisks = new Set<number>();
+    const appearances = new Map<number, number>();
 
-    lines.forEach((line, lineIndex) => {
-      const trimmedLine = line.trim();
-      
-      if (trimmedLine.length < 10) return;
-      
-      const matchedRiskIndex = riskData.findIndex((risk: RiskItem) => {
-        // 이미 매칭된 위험은 스킵
-        if (matchedRisks.has(riskData.indexOf(risk))) return false;
+    riskData.forEach((risk: RiskItem, riskIdx: number) => {
+      const getMatchScore = (text: string, risk: RiskItem): number => {
+        const t = text.trim();
+        if (t.length < 5) return 0;
+        const clauseText = risk.clauseText?.trim() ?? '';
+        if (!clauseText) return 0;
+        if (t.includes(clauseText)) return 90;
+        const firstSentence = clauseText.split(/[,.。]/)[0].trim();
+        if (firstSentence.length > 5 && t.includes(firstSentence)) return 70;
+        if (clauseText.includes(t) && t.length > 10) return 50;
+        const words = clauseText.split(' ').filter(w => w.length > 3);
+        if (words.length === 0) return 0;
+        const matchCount = words.filter(w => t.includes(w)).length;
+        const ratio = matchCount / words.length;
+        return ratio >= 0.5 ? ratio * 40 : 0;
+      };
 
-        if (risk.searchKeyword) {
-          const keyword = risk.searchKeyword.trim();
-          if (trimmedLine.includes(keyword)) {
-            return true;
-          }
+      let bestScore = 0;
+      let bestBlockIndex = -1;
+
+      blocks.forEach((block, blockIndex) => {
+        const text = block.type === 'table'
+          ? (() => {
+              const d = document.createElement('div');
+              d.innerHTML = block.content;
+              return (d.innerText || d.textContent || '').replace(/\n/g, ' ').replace(/\s+/g, ' ').trim();
+            })()
+          : block.content;
+
+        const score = getMatchScore(text, risk);
+        if (score > bestScore) {
+          bestScore = score;
+          bestBlockIndex = blockIndex;
         }
-        
-        const clauseText = risk.clauseText.trim();
-        
-        if (trimmedLine.includes(clauseText)) {
-          return true;
-        }
-        
-        if (clauseText.includes(trimmedLine) && trimmedLine.length > 10) {
-          return true;
-        }
-        
-        const keywords = clauseText.split(' ').filter(w => w.length > 3);
-        return keywords.some(keyword => trimmedLine.includes(keyword));
       });
 
-      if (matchedRiskIndex >= 0 && !matchedRisks.has(matchedRiskIndex)) {
-        appearances.set(matchedRiskIndex, lineIndex);
-        matchedRisks.add(matchedRiskIndex);
+      if (bestBlockIndex >= 0 && bestScore >= 30) {
+        appearances.set(riskIdx, bestBlockIndex);
       }
     });
 
     return appearances;
-  }, [lines, riskData]);
+  }, [blocks, riskData]);
 
-  // ✅ 2단계: 위험 포인트 위치 계산 (실제 줄 번호 기반)
   const riskPositions = useMemo(() => {
     return riskData.map((risk: RiskItem, index: number) => {
-      const lineIndex = riskFirstAppearance.get(index);
-      
-      if (lineIndex !== undefined) {
-        // 실제 문서에서 찾은 경우: 줄 번호 기반 위치
-        const percentage = (lineIndex / lines.length) * 100;
-        console.log(`✅ [${index + 1}] 줄 ${lineIndex}에서 발견 → ${percentage.toFixed(1)}%`);
-        
+      const blockIndex = riskFirstAppearance.get(index);
+      if (blockIndex !== undefined) {
         return {
           ...risk,
-          position: percentage,
-          index: index,
+          position: Math.min((blockIndex / blocks.length) * 100, 97),
+          index,
         };
       }
-
-      // 못 찾은 경우: 문자열 검색으로 fallback
-      let position = -1;
-      
-      if (risk.searchKeyword) {
-        position = documentContent.indexOf(risk.searchKeyword);
-      }
-      
-      if (position < 0) {
-        position = documentContent.indexOf(risk.clauseText);
-      }
-      
-      if (position < 0) {
-        const keywords = risk.clauseText.split(' ').filter(w => w.length > 3);
-        for (const keyword of keywords.slice(0, 3)) {
-          position = documentContent.indexOf(keyword);
-          if (position >= 0) break;
-        }
-      }
-      
-      const percentage = position >= 0 
-        ? (position / totalLength) * 100 
-        : (index / riskData.length) * 100;
-      
-      console.warn(`⚠️ [${index + 1}] "${risk.clauseText}" 문서에서 못 찾음! 위치: ${percentage.toFixed(1)}%`);
-      
       return {
         ...risk,
-        position: percentage,
-        index: index,
+        position: (index / riskData.length) * 100,
+        index,
       };
     });
-  }, [riskData, riskFirstAppearance, documentContent, lines.length, totalLength]);
-  
-  // 점 클릭 시 해당 위치로 스크롤
-  const handleDotClick = (riskIndex: number) => {
-    const element = document.getElementById(`risk-${riskIndex}`);
-    console.log('클릭:', riskIndex, element);
+  }, [riskData, riskFirstAppearance, blocks.length]);
 
-    if (element) {
-      element.scrollIntoView({ behavior: 'smooth', block: 'center' });
-
-      element.classList.add('highlight-active');
-      setTimeout(() => {
-        element.classList.remove('highlight-active');
-      }, 2000);
+  const adjustedPositions = useMemo(() => {
+    const MIN_GAP = 3;
+    const sorted = [...riskPositions].sort((a, b) => a.position - b.position);
+    for (let i = 1; i < sorted.length; i++) {
+      if (sorted[i].position - sorted[i - 1].position < MIN_GAP) {
+        sorted[i] = { ...sorted[i], position: sorted[i - 1].position + MIN_GAP };
+      }
     }
+    return riskPositions.map(r => sorted.find(s => s.index === r.index) || r);
+  }, [riskPositions]);
+
+  const handleDotClick = (riskIndex: number) => {
+    const reasonElement = document.getElementById(`reason-box-${riskIndex}`);
+    const riskElement = document.getElementById(`risk-${riskIndex}`);
+    const target = reasonElement || riskElement;
+    if (!target) return;
+    target.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    target.classList.add('highlight-active');
+    setTimeout(() => target.classList.remove('highlight-active'), 2000);
   };
 
   const [isGuideOpen, setIsGuideOpen] = useState(false);
 
   return (
     <div className="content-section">
-      
-      <div className="dangerous-box"> 
+      <div className="dangerous-box">
         <div className='danger-box-text'>
-          <p>{riskData.length}개의 위험 포인트를 찾았어요</p>
+          <div className="info-icon-wrapper">
+            <span className="info-icon">
+              <MdError 
+                onMouseEnter={() => setIsGuideOpen(true)}
+                onMouseLeave={() => setIsGuideOpen(false)}
+              />
+            </span>
+            <p>{riskData.length}개의 위험 포인트를 찾았어요</p>
+            {isGuideOpen && (
+              <div className="risk-guide-content">
+                <div className="risk-level-guide">
+                  <div className="guide-item high">
+                    <span className="guide-dot"></span>
+                    <div className="guide-text">
+                      <strong>높음 (High)</strong>
+                      <p>계약자에게 심각한 불이익을 줄 수 있는 조항입니다. 반드시 수정하거나 전문가 상담이 필요합니다.</p>
+                    </div>
+                  </div>
+                  <div className="guide-item medium">
+                    <span className="guide-dot"></span>
+                    <div className="guide-text">
+                      <strong>중간 (Medium)</strong>
+                      <p>주의가 필요한 조항입니다. 상황에 따라 불리할 수 있으니 신중히 검토하세요.</p>
+                    </div>
+                  </div>
+                  <div className="guide-item low">
+                    <span className="guide-dot"></span>
+                    <div className="guide-text">
+                      <strong>낮음 (Low)</strong>
+                      <p>경미한 주의사항입니다. 참고용으로 확인하시면 됩니다.</p>
+                    </div>
+                  </div>
+                </div>
+                <div className="guide-tips">
+                  <h4>위험도 보는 팁</h4>
+                  <ul>
+                    <li>위 막대의 점을 클릭하면 해당 위치로 이동합니다</li>
+                    <li>각 조항 아래에 위험 이유와 대응 방법이 표시됩니다</li>
+                    <li>의심스러운 조항은 전문가와 상담하는 것을 권장합니다</li>
+                  </ul>
+                </div>
+              </div>
+            )}
+          </div>
         </div>
 
         <div className="risk-position-bar">
-          {riskPositions.map((risk, index) => (
+          {adjustedPositions.map((risk, index) => (
             <div
               key={index}
-              className={`risk-dot severity-${risk.riskLevel}`}
+              className={`risk-dot severity-${normalizeRiskLevel(risk.riskLevel)}`}
               style={{ left: `${risk.position}%` }}
-              title={risk.clauseText}
               onClick={() => handleDotClick(index)}
             />
           ))}
         </div>
-
-        <button 
-          className="guide-toggle-btn"
-          onClick={() => setIsGuideOpen(!isGuideOpen)}
-        >
-          <span>{isGuideOpen ? '설명 숨기기' : '위험 포인트 설명 보기'}</span>
-          <span className={`toggle-icon ${isGuideOpen ? 'open' : ''}`}>
-            ▼
-          </span>
-        </button>
-
-        {isGuideOpen && (
-          <div className="risk-guide-content">
-            <div className="risk-level-guide">
-              <div className="guide-item high">
-                <span className="guide-dot"></span>
-                <div className="guide-text">
-                  <strong>높음 (High)</strong>
-                  <p>계약자에게 심각한 불이익을 줄 수 있는 조항입니다. 반드시 수정하거나 전문가 상담이 필요합니다.</p>
-                </div>
-              </div>
-
-              <div className="guide-item medium">
-                <span className="guide-dot"></span>
-                <div className="guide-text">
-                  <strong>중간 (Medium)</strong>
-                  <p>주의가 필요한 조항입니다. 상황에 따라 불리할 수 있으니 신중히 검토하세요.</p>
-                </div>
-              </div>
-
-              <div className="guide-item low">
-                <span className="guide-dot"></span>
-                <div className="guide-text">
-                  <strong>낮음 (Low)</strong>
-                  <p>경미한 주의사항입니다. 참고용으로 확인하시면 됩니다.</p>
-                </div>
-              </div>
-            </div>
-
-            <div className="guide-tips">
-              <h4>위험도 보는 팁</h4>
-              <ul>
-                <li>위 막대의 점을 클릭하면 해당 위치로 이동합니다</li>
-                <li>각 조항 아래에 위험 이유와 대응 방법이 표시됩니다</li>
-                <li>의심스러운 조항은 전문가와 상담하는 것을 권장합니다</li>
-              </ul>
-            </div>
-          </div>
-        )}
       </div>
 
-      <div className="content-analysis-box"
+      <div
+        className="content-analysis-box has-header"
         style={{
-          fontSize: `${zoomLevel}%`,
+          fontSize: `${zoomLevel / 100}em`,
           transformOrigin: 'top',
-        }}>
-
+        }}
+      >
         <DocumentMeta 
           filename={currentDocument.filename}
           uploadDate={currentDocument.uploadDate}
@@ -227,84 +262,105 @@ function DangerView({
           <div className="danger-header">
             <h2>위험 탐지</h2>
             <p className="danger-description">
-              AI 분석 결과, 본 계약서에서 잠재적 법적 위험이 확인되었습니다. <br />
-              표시된 조항을 검토하시고, 권고된 대응 가이드를 참고하여 수정 또는 재검토해 주세요.
+              AI 분석 결과 본 계약서에서 잠재적 법적 위험이 확인되었습니다. <br />
+              표시된 조항을 검토하시고 권고된 대응 가이드를 참고하여 수정 또는 재검토하세요.
             </p>
           </div>
+
           {(() => {
             const matchedRiskIndices = new Set<number>();
 
-            return lines.map((line, lineIndex) => {
-              const trimmedLine = line.trim();
-              
-              if (trimmedLine.length < 10) {
-                return (
-                  <p key={lineIndex} className="document-line">
-                    {line || '\u00A0'}
-                  </p>
-                );
-              }
-              
-              const matchedRiskIndex = riskData.findIndex((risk: RiskItem) => {
-                if (risk.searchKeyword) {
-                  const keyword = risk.searchKeyword.trim();
-                  if (trimmedLine.includes(keyword)) {
-                    return true;
+            return blocks.map((block, blockIndex) => {
+              if (block.type === 'table') {
+                const matchedRiskIndicesForBlock: number[] = [];
+                riskFirstAppearance.forEach((appearBlockIndex, riskIdx) => {
+                  if (appearBlockIndex === blockIndex && !matchedRiskIndices.has(riskIdx)) {
+                    matchedRiskIndicesForBlock.push(riskIdx);
                   }
+                });
+
+                if (matchedRiskIndicesForBlock.length > 0) {
+                  const highestLevel = matchedRiskIndicesForBlock.reduce((highest, riskIdx) => {
+                    const level = normalizeRiskLevel(riskData[riskIdx].riskLevel);
+                    if (level === 'high') return 'high';
+                    if (level === 'medium' && highest !== 'high') return 'medium';
+                    return highest;
+                  }, 'low' as 'high' | 'medium' | 'low');
+
+                  matchedRiskIndicesForBlock.forEach(idx => matchedRiskIndices.add(idx));
+
+                  return (
+                    <div key={blockIndex} id={`risk-${matchedRiskIndicesForBlock[0]}`} className={`danger-item severity-${highestLevel}`}>
+                      <div className={`danger-table-block table-border-${highestLevel}`} dangerouslySetInnerHTML={{ __html: block.content }} />
+                      {matchedRiskIndicesForBlock.map(riskIdx => {
+                        const risk = riskData[riskIdx];
+                        const level = normalizeRiskLevel(risk.riskLevel);
+                        return (
+                          <div key={riskIdx}>
+                            <div className={`clause-table-box severity-${level}`}>
+                              <p className="clause-text">{risk.clauseText}</p>
+                            </div>
+                            <div id={`reason-box-${riskIdx}`} className={`reason-box severity-${level}`}>
+                              <p className="reason">⚠️ {risk.reason || risk.description}</p>
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  );
                 }
-                
-                const clauseText = risk.clauseText.trim();
-                
-                if (trimmedLine.includes(clauseText)) {
-                  return true;
-                }
-                
-                if (clauseText.includes(trimmedLine) && trimmedLine.length > 10) {
-                  return true;
-                }
-                
-                const keywords = clauseText.split(' ').filter(w => w.length > 3);
-                return keywords.some(keyword => trimmedLine.includes(keyword));
-              });
-              
-              if (matchedRiskIndex >= 0 && matchedRiskIndices.has(matchedRiskIndex)) {
+
                 return (
-                  <p key={lineIndex} className="document-line">
-                    {line || '\u00A0'}
-                  </p>
+                  <div key={blockIndex} className="danger-table-block" dangerouslySetInnerHTML={{ __html: block.content }} />
                 );
               }
 
-              const matchedRisk = matchedRiskIndex >= 0 ? riskData[matchedRiskIndex] : null;
-              
-              if (!matchedRisk) {
-                return (
-                  <p key={lineIndex} className="document-line">
-                    {line || '\u00A0'}
-                  </p>
-                );
+              const line = block.content;
+              const trimmedLine = line.trim();
+
+              if (trimmedLine.length < 10) {
+                return <p key={blockIndex} className="document-line">{line || '\u00A0'}</p>;
               }
-              
-              matchedRiskIndices.add(matchedRiskIndex);
-              
+
+              const matchedRiskIndicesForBlock: number[] = [];
+              riskFirstAppearance.forEach((appearBlockIndex, riskIdx) => {
+                if (appearBlockIndex === blockIndex && !matchedRiskIndices.has(riskIdx)) {
+                  matchedRiskIndicesForBlock.push(riskIdx);
+                }
+              });
+
+              if (matchedRiskIndicesForBlock.length === 0) {
+                return <p key={blockIndex} className="document-line">{line || '\u00A0'}</p>;
+              }
+
+              const highestLevel = matchedRiskIndicesForBlock.reduce((highest, riskIdx) => {
+                const level = normalizeRiskLevel(riskData[riskIdx].riskLevel);
+                if (level === 'high') return 'high';
+                if (level === 'medium' && highest !== 'high') return 'medium';
+                return highest;
+              }, 'low' as 'high' | 'medium' | 'low');
+
+              matchedRiskIndicesForBlock.forEach(idx => matchedRiskIndices.add(idx));
+
               return (
-                <div 
-                  key={lineIndex}
-                  id={`risk-${matchedRiskIndex}`}
-                  className={`danger-item severity-${matchedRisk.riskLevel}`}
-                >
-                  <p className={`document-line highlight-${matchedRisk.riskLevel}`}>
+                <div key={blockIndex} id={`risk-${matchedRiskIndicesForBlock[0]}`} className={`danger-item severity-${highestLevel}`}>
+                  <p className={`document-line highlight-${highestLevel}`}>
                     {line}
                   </p>
-                  <div className={`reason-box severity-${matchedRisk.riskLevel}`}>
-                    <p className="reason">⚠️ {matchedRisk.reason}</p>
-                    <p className="guide">[참고] {matchedRisk.guide}</p>
-                  </div>
+                  {matchedRiskIndicesForBlock.map(riskIdx => {
+                    const risk = riskData[riskIdx];
+                    const level = normalizeRiskLevel(risk.riskLevel);
+                    return (
+                      <div id={`reason-box-${riskIdx}`} key={riskIdx} className={`reason-box severity-${level}`}>
+                        <p className="reason">⚠️ {risk.reason || risk.description}</p>
+                      </div>
+                    );
+                  })}
                 </div>
               );
             });
           })()}
-        </div>
+        </div> 
       </div>
     </div>
   );

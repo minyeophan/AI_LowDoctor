@@ -1,0 +1,167 @@
+/* src/styles/mypage/Dashboard.css */
+
+.dashboard {
+  width: 100%;
+}
+
+/* 헤더 */
+.dashboard-header {
+  margin-bottom: 30px;
+}
+
+.dashboard-header h1 {
+  font-size: 22px;
+  font-weight: 700;
+  color: #111827;
+  margin: 0;
+}
+
+/* 섹션 타이틀 */
+.my-section-title {
+  font-size: 16px;
+  font-weight: 500;
+  color: #111827;
+  margin: 0 0 12px 0;
+}
+
+
+/* 내 활동 기록 섹션 */
+.activity-section {
+  margin-bottom: 40px;
+}
+
+.activity-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 0px;
+  overflow: hidden;
+  border-radius: 10px;
+}
+
+/* 활동 카드 */
+.activity-card {
+  background: white;
+  border: 1px solid #E5E7EB;
+  padding: 8px 20px;
+  transition: all 0.2s;
+  display: flex;
+  flex-direction:column;
+  border: none;
+  position: relative;
+}
+
+.activity-card:not(:last-child)::after {
+  content: "";
+  position: absolute;
+  right: 0;
+  top: 15%;
+  height: 70%;
+  width: 1px;
+  background-color: #ddd;
+}
+
+/* 카드 아이콘 */
+.card-icon-wrapper {
+  width: 22px;
+  height: 22px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 10px auto 8px auto; 
+}
+
+.card-icon {
+  font-size: 20px;
+  color: #4099FD;
+}
+
+/* 카드 제목 */
+.card-title {
+  font-size: 14px;
+  font-weight: 500;
+  margin: 0 0 8px 0;
+  text-align: center;
+}
+
+/* 카드 숫자 */
+.card-count {
+  font-size: 15px;
+  font-weight: 500;
+  margin: 0 0 5px 0;
+  text-align: center;
+}
+
+
+/* 분석 섹션 */
+.analysis-section {
+  margin-top: 40px;
+}
+
+.analysis-grid {
+  display: grid;
+  grid-template-columns: 3fr 2fr; /* 2열 그리드 */
+  gap: 20px;
+}
+
+.analysis-card {
+  border-radius: 12px;
+  padding: 32px;
+  min-height: 400px;
+  display: flex;
+  flex-direction: column;
+}
+
+/* 회색 카드 */
+.analysis-card.gray {
+  background: #E5E7EB;
+}
+
+
+/* 파란색 카드 */
+.analysis-card.blue {
+  background: #4A9EFF;
+}
+
+/* 반응형 - 태블릿 */
+@media (max-width: 1199px) {
+  .activity-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+/* 반응형 - 모바일 */
+@media (max-width: 767px) {
+  .dashboard-header h1 {
+    font-size: 24px;
+  }
+
+  .section-title {
+    font-size: 18px;
+  }
+
+  .activity-grid {
+    grid-template-columns: 1fr;
+    gap: 16px;
+  }
+
+  .activity-card {
+    padding: 20px;
+  }
+
+  .analysis-card {
+    padding: 24px;
+    min-height: 300px;
+  }
+.activity-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  .activity-card:nth-child(2n)::after {
+    display: none;
+  }
+
+  .analysis-grid {
+    grid-template-columns: 1fr; /* 1열로 변경 */
+  }
+
+}

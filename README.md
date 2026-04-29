@@ -1,83 +1,116 @@
-# AI 법률 닥터_프로젝트 개요
-**AI 기반 부동산 계약서 위험 분석 웹 서비스**  <br/>
-AI 기반으로 부동 계약서의 위험 조항을 자동 탐지하고, <br/>
-법적 근거와 대응 가이드를 제공하는 웹 서비스입니다.<br/>
+# AI 법률 닥터 (AI_LawDoctor)
+**AI 기반 부동산 계약서 위험 분석 웹 서비스**
+
+AI 기반으로 부동산 계약서의 위험 조항을 자동 탐지하고,
+법적 근거와 대응 가이드를 제공하는 웹 서비스입니다.
 
 ## 주요 기능
 - **계약서 분석** (OCR → 위험 조항 탐지 → 위험도 판단 → 대응 가이드 제공)
-- **법령 근거 자동 연결** (국가법령정보센터 API와 연동된 관련 조문 링크 제공)
-- **법률 서식 추천 및 다운로드** (계약 해지 통보서, 내용증명 등 자동 추천 + 미리보기 + 다운로드)
-- **기한 알림 캘린더 연동** (계약 갱신일, 반환일 등 캘린더 연동 → 푸시 알림)
-- **Q&A 커뮤니티 / 사례 공유 (예정)**
+- **계약서 요약** (주요 내용 항목별 정리)
+- **위험 조항 탐지** (위험도 분류 및 이유 제공)
+- **대응 가이드** (위험 조항 개선 방법 제안)
+- **법률 서식 추천 및 다운로드** (계약 해지 통보서, 내용증명 등) *(예정)*
+- **기한 알림 캘린더 연동** *(예정)*
+- **Q&A 커뮤니티 / 사례 공유** *(예정)*
 
 ## 기술 스택
-- **AI/OCR**: Python + Tesseract OCR + OpenAI API(RAG 기반 LangChain 구조 예정)<br/>
-- **Frontend**: React<br/>
-- **Backend**: Node.js + Express<br/>
-- **DB**: MongoDB 또는 Firebase / PostgreSQL<br/>
-- **Infra**: 로컬 기반 + 시연용 서버<br/>
-- **기타**: JWT 인증, Google Calendar API, 국가법령정보센터 연동 등
-
+- **AI/OCR**: Python + pdfplumber / Tesseract OCR + Gemini API (gemini-2.5-flash)
+- **Frontend**: React + Vite (TypeScript)
+- **Backend**: Node.js + Express
+- **DB**: MongoDB Atlas
+- **Infra**: Docker / Docker Compose
+- **기타**: JWT 인증 *(예정)*, 국가법령정보센터 연동 *(예정)*
 
 ## 폴더 구조
 
-AI_LAWDOCTOR/ <br/>
-├── AI/ <br/>
-│   ├── analysis/ <br/>
-│   │   └── ai_example.py     # 계약서 텍스트 ⇒ 위험 조항 분석 예시<br/>
-│   ├── ocr/ <br/>
-│   │   └── ocr_example.py   # 이미지/PDF ⇒ 텍스트 추출 예시 <br/>
-│   └── requirements.txt     # AI/ OCR용 파이썬 패키지 <br/>
-│<br/>
-├── backend/<br/>
-│   ├── src/<br/>
-│   │   ├── controllers/  # 요청 처리 로직 (추후 분리) <br/>
-│   │   ├── routes/      # 라우터 모음 (추후 분리) <br/>
-│   │   └── app.js     # Express 서버 진입점 (프로토타입용) <br/>
-│   └── package.json    # 백엔드 의존성 정보 <br/>
-│<br/>
-├── frontend/    # 프론트엔드 (React 등, 추후 구현) <br/>
+```
+AI_LawDoctor/
+├── AI/
+│   ├── ai_api.py              # FastAPI 서버 진입점 (포트 8000)
+│   ├── analysis/
+│   │   └── ai_example.py      # Gemini API 계약서 분석 모듈
+│   ├── ocr/
+│   │   └── ocr_example.py     # PDF/이미지 텍스트 추출 모듈
+│   ├── requirements.txt       # Python 패키지 목록
+│   └── Dockerfile
 │
-├── docs/ <br/>
-│   ├── meeting_notes/   # 회의록 <br/>
-│   └── api_spec.md      # 공통 API / JSON 규격 정의 <br/>
-│<br/>
-├── samples/<br/>
-│   └── README.txt     # 샘플 계약서/테스트 데이터 안내<br/>
-│<br/>
-└── README.md       # 현재 문서<br/>
+├── backend/
+│   ├── src/
+│   │   ├── controllers/       # 요청 처리 로직
+│   │   ├── routes/            # 라우터 모음
+│   │   ├── schemas/           # Mongoose 스키마
+│   │   ├── service/           # AI 서버 연동 서비스
+│   │   └── app.js             # Express 서버 진입점 (포트 3001)
+│   ├── uploads/               # 업로드된 파일 저장
+│   ├── package.json
+│   └── Dockerfile
+│
+├── frontend/
+│   ├── src/
+│   │   ├── pages/             # 페이지 컴포넌트
+│   │   ├── components/        # 재사용 UI 컴포넌트
+│   │   ├── api/               # API 요청 모듈
+│   │   ├── context/           # React Context
+│   │   ├── mock/              # 목업 데이터
+│   │   └── types/             # TypeScript 타입 정의
+│   ├── .env                   # 환경 변수 (VITE_API_BASE_URL, VITE_API_URL)
+│   ├── nginx.conf
+│   ├── package.json
+│   └── Dockerfile
+│
+├── docs/
+│   ├── api_spec.md            # API 명세
+│   ├── data_spec.md           # 데이터 스펙
+│   └── dev_guide.md           # 개발자 가이드
+│
+├── samples/                   # 테스트용 샘플 계약서
+├── docker-compose.yml
+└── README.md
+```
 
-## 설치 및 실행 방법 (코드 올리면 곧바로 실행 가능)
-### 1. 프로젝트 클론
+## 실행 방법
+
+### Docker로 실행 (권장)
+
+1. `.env` 파일 설정
+   - `AI/.env` → `GEMINI_API_KEY=your_key`
+   - `backend/.env` → `MONGO_URL=your_mongodb_atlas_url`
+   - `frontend/.env` → `VITE_API_BASE_URL=http://localhost:3001/api`, `VITE_API_URL=http://localhost:3001`
+
+2. 빌드 및 실행
+```bash
+docker-compose up --build
 ```
-git clone https://github.com/cloe-23/AI_LawDoctor.git
-cd AI_LawDoctor
-```
-### 2. AI 파트 실행 (Python)
-```
+
+3. 접속
+   - 프론트엔드: http://localhost:80
+   - 백엔드 API: http://localhost:3001
+   - AI 서버: http://localhost:8000
+
+### 개별 실행 (개발용)
+
+**AI 서버 (Python)**
+```bash
 cd AI
 pip install -r requirements.txt
-python analysis/ai_example.py
+uvicorn ai_api:app --host 0.0.0.0 --port 8000
 ```
-### 3. 백엔드 실행 (Node.js)
-```
+
+**백엔드 (Node.js)**
+```bash
 cd backend
 npm install
 npm start
 ```
-### 4. 프론트엔드 실행 (React + Vite)
-```
+
+**프론트엔드 (React + Vite)**
+```bash
 cd frontend
 npm install
 npm run dev
 ```
+브라우저: http://localhost:5173
 
-##  개발자 코드 작성 가이드
-
-이 프로젝트는 여러 파트(프론트엔드, 백엔드, AI 분석 등)의 팀원들이 함께 개발합니다.  
-코드 스타일, 폴더 구조, API 응답 형식 등을 통일하기 위한 가이드라인은 아래 문서를 참고해 주세요.
+## 개발자 코드 작성 가이드
 
 👉 [개발자 코드 작성 가이드라인 보기](docs/dev_guide.md)
-- 폴더별 작성 규칙
-- 코드 스타일 & 확장자
-- API 명세 및 샘플 JSON

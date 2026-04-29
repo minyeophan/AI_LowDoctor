@@ -1,0 +1,280 @@
+/* src/styles/mypage/Documents.css */
+
+.documents-page {
+  width: 100%;
+}
+
+/* 헤더 */
+.documents-header {
+  margin-bottom: 30px;
+}
+
+.documents-header h1 {
+  font-size: 22px;
+  font-weight: 700;
+  color: #111827;
+  margin: 0;
+}
+
+/* 슬라이딩 탭 */
+.sliding-tabs {
+  margin-bottom: 24px;
+}
+
+.tabs-wrapper {
+  display: inline-flex;
+  position: relative;
+  background: #fff;
+  border-radius: 50px;
+  border: 1px solid #e2e8f0;
+}
+
+.tab-btn {
+  position: relative;
+  padding: 10px 32px;
+  background: transparent;
+  border: none;
+  color: #6B7280;
+  font-size: 15px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: color 0.3s;
+  z-index: 2;
+  min-width: 120px;
+
+}
+
+.tab-btn.active {
+  color: white;
+}
+
+/* 슬라이더 */
+.tab-slider {
+  position: absolute;
+  top: 0px;
+  left: 0px;
+  width: 50%;
+  height: 100%;
+  background: #4099FD;
+  border-radius: 50px;
+  transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  z-index: 1;
+}
+
+/* 컨트롤 영역 */
+.controls-area {
+  display: flex;
+  gap: 12px;
+  margin-bottom: 24px;
+  align-items: center;
+}
+
+/* 검색 박스 */
+.search-box {
+  flex: 0 0 240px;
+  display: flex;
+  align-items: center;
+  background: white;
+  border: 1px solid #E5E7EB;
+  border-radius: 8px;
+  padding: 0 12px;
+  transition: all 0.2s;
+}
+
+.search-box:focus-within {
+  border-color: #4099FD;
+}
+
+.search-box input {
+  flex: 1;
+  border: none;
+  outline: none;
+  padding: 10px 8px;
+  font-size: 14px;
+  color: #111827;
+}
+
+.search-box input::placeholder {
+  color: #9CA3AF;
+}
+
+.search-btn {
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  padding: 4px;
+  font-size: 18px;
+  color: #6B7280;
+}
+
+/* 필터 */
+.filters {
+  display: flex;
+  gap: 12px;
+  flex: 1;
+}
+
+.filter-select {
+  padding: 10px 16px;
+  background: white;
+  border: 1px solid #E5E7EB;
+  border-radius: 8px;
+  color: #374151;
+  font-size: 14px;
+  cursor: pointer;
+  transition: all 0.2s;
+  appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg width='12' height='8' viewBox='0 0 12 8' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M1 1.5L6 6.5L11 1.5' stroke='%236B7280' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 12px center;
+  padding-right: 36px;
+  min-width: 140px;
+}
+
+.filter-select:hover {
+  border-color: #D1D5DB;
+}
+
+.filter-select:focus {
+  outline: none;
+  border-color: #4099FD;
+}
+
+/* 작성하기 버튼 */
+.btn-create {
+  padding: 10px 24px;
+  background: #4099FD;
+  color: white;
+  border: none;
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+  white-space: nowrap;
+}
+
+.btn-create:hover {
+  background: #3B82F6;
+}
+
+/* 서브 필터 (보관함 탭) */
+.sub-filters {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 20px;
+}
+
+.filter-btn {
+  padding: 8px 16px;
+  background: white;
+  border: 1px solid #E5E7EB;
+  border-radius: 8px;
+  color: #6B7280;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.filter-btn:hover {
+  border-color: #4099FD;
+  color: #4099FD;
+}
+
+.filter-btn.active {
+  background: #EFF6FF;
+  border-color: #4099FD;
+  color: #4099FD;
+  font-weight: 600;
+}
+
+/* 테이블 컨테이너 */
+.table-container {
+  background: white;
+  border: 1px solid #E5E7EB;
+  border-radius: 12px;
+  overflow: hidden;
+}
+
+.table-placeholder {
+  min-height: 500px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #F3F4F6;
+  color: #9CA3AF;
+  font-size: 18px;
+  font-weight: 500;
+}
+
+/* 반응형 - 태블릿 */
+@media (max-width: 1199px) {
+  .controls-area {
+    flex-wrap: wrap;
+  }
+
+  .search-box {
+    flex: 1 1 auto;
+    min-width: 200px;
+  }
+
+  .filters {
+    flex: 1 1 100%;
+  }
+
+  .btn-create {
+    flex: 0 0 auto;
+  }
+}
+
+/* 반응형 - 모바일 */
+@media (max-width: 767px) {
+  .documents-header h1 {
+    font-size: 24px;
+  }
+
+  .tabs-wrapper {
+    width: 100%;
+    justify-content: center;
+  }
+
+  .tab-btn {
+    flex: 1;
+    padding: 10px 16px;
+    font-size: 14px;
+    min-width: auto;
+  }
+
+  .controls-area {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .search-box {
+    flex: none;
+    width: 100%;
+  }
+
+  .filters {
+    flex-direction: column;
+    width: 100%;
+  }
+
+  .filter-select {
+    width: 100%;
+  }
+
+  .btn-create {
+    width: 100%;
+  }
+
+  .sub-filters {
+    flex-wrap: wrap;
+  }
+
+  .filter-btn {
+    flex: 1;
+    min-width: calc(33.333% - 6px);
+  }
+}

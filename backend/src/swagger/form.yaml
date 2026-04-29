@@ -1,0 +1,87 @@
+components:
+  schemas:
+    Form:
+      type: object
+      description: "양식 데이터 모델"
+      required:
+        - form_name
+        - category
+        - source
+        - fileUrl
+      properties:
+        formId:
+          type: string
+          description: "MongoDB에서 생성된 고유 ID"
+          example: "65f1234567890abcdef12345"
+        form_name:
+          type: string
+          description: "양식의 전체 명칭"
+          example: "법무부 주택임대차 표준계약서(한글)"
+        category:
+          type: string
+          description: "분류 (예: 부동산, 노동, 민사 등)"
+          example: "부동산"
+        source:
+          type: string
+          description: "데이터 출처"
+          example: "대한법률구조공단"
+        fileUrl:
+          type: string
+          description: "외부 서버(공단)의 실제 파일 다운로드 주소"
+          example: "https://support.klac.or.kr/cmm/fms/FileDown_docs.do?..."
+        downloadCount:
+          type: integer
+          description: "누적 다운로드 횟수"
+          default: 0
+          example: 15
+        save_date:
+          type: string
+          format: date
+          description: "데이터 등록 날짜 (yyyy-mm-dd)"
+          example: "2026-03-11"
+
+paths:
+  /api/form:
+    get:
+      summary: "양식 리스트 조회"
+      description: "카테고리나 키워드를 통해 양식 목록을 가져옵니다."
+      parameters:
+        - name: category
+          in: query
+          description: "필터링할 카테고리 (예: 부동산)"
+          schema:
+            type: string
+        - name: keyword
+          in: query
+          description: "검색할 양식 명칭 키워드"
+          schema:
+            type: string
+      responses:
+        '200':
+          description: "조회 성공"
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Form'
+
+  /api/form/download/{id}:
+    get:
+      summary: "양식 파일 다운로드"
+      description: "ID를 통해 공단 서버에서 파일을 가져와 스트림으로 제공합니다."
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: "Form의 고유 ID"
+          schema:
+            type: string
+      responses:
+        '200':
+          description: "파일 다운로드 시작"
+          content:
+            application/octet-stream:
+              schema:
+                type: string
+                format: binary

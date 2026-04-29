@@ -1,9 +1,9 @@
 .right-sidebar {
   position: fixed;
-  top: 70px;
+  top: 10px;
   right: 60px;
   width: 350px;
-  height: calc(100vh - 70px);
+  height: calc(100vh - 20px);
   background-color: white;
   border-left: 1px solid #e5e7eb;
   box-shadow: -2px 0 8px rgba(0, 0, 0, 0.05);
@@ -16,6 +16,7 @@
 
 .right-sidebar.open {
   transform: translateX(0);
+  border-radius: 8px;
 }
 
 .sidebar-content {
@@ -28,14 +29,14 @@
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 20px;
+  padding: 15px;
   border-bottom: 1px solid #e5e7eb;
 }
 
 .sidebar-header h3 {
   font-size: 18px;
   font-weight: 600;
-  color: #1f2937;
+  color: #333333;
   margin: 0;
 }
 

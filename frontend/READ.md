@@ -1,43 +1,55 @@
-# Frontend (React + Vite)
+# Frontend (React + Vite + TypeScript)
 
-본 폴더는 AI_LawDoctor의 프론트엔드 코드를 업로드하는 공간입니다.  
-계약서 업로드 화면, 분석 결과 UI, 마이페이지, 커뮤니티 등이 여기에 개발됩니다.
+계약서 업로드, 분석 결과 시각화 등 사용자 인터페이스를 담당합니다.
 
-## 설치 방법
-1. Node.js 18+ 설치
-2. 패키지 설치
+---
+
+## 폴더 구성
+
 ```
+frontend/src/
+├── pages/          # 페이지 단위 컴포넌트 (AiPage, HomePage 등)
+├── components/     # 재사용 UI 컴포넌트
+├── api/            # API 요청 모듈 (documents.ts, analyze.ts)
+├── context/        # React Context (AuthContext, DocumentContext)
+├── mock/           # 목업 데이터 (백엔드 없이 UI 확인용)
+├── types/          # TypeScript 타입 정의
+└── styles/         # 전역 스타일
+```
+
+---
+
+## 환경 변수 설정
+
+`frontend/.env` 파일:
+```
+VITE_API_BASE_URL=http://localhost:3001/api
+VITE_API_URL=http://localhost:3001
+```
+
+- `VITE_API_BASE_URL`: 이 값이 있을 때만 실제 백엔드 API 호출 (없으면 목업 데이터 사용)
+- `VITE_API_URL`: 실제 API 요청 base URL
+
+---
+
+## 실행 방법
+
+### Docker (권장)
+루트에서 `docker-compose up --build` 실행 시 자동 실행됨 (포트 80)
+
+### 직접 실행 (개발)
+```bash
+cd frontend
 npm install
-
-```
-3. 개발 서버 실행
-```
 npm run dev
 ```
-브라우저에서:
-👉 http://localhost:5173
+브라우저: http://localhost:5173
+
+---
 
 ## 개발 규칙
-### 코드 스타일
+
 - 컴포넌트명: PascalCase
-- 파일명: ComponentName.jsx
-- API 호출은 services/ 또는 api/ 폴더로 분리
-- CSS는 styled-components 또는 기본 CSS 중 팀에서 결정한 방식 사용
-### 폴더 규칙(예정)
-src/ </br>
-├── pages/           # 페이지 단위 컴포넌트 </br>
-├── components/      # 재사용 UI </br>
-├── hooks/           # 커스텀 훅 </br>
-├── api/             # axios 기반 API 요청 </br>
-└── assets/          # 이미지 / 아이콘 </br>
-
-## 역할
-- 사용자 입력(계약서 텍스트 또는 파일)
-- 백엔드 /api/analyze-text 호출
-- 분석 결과를 시각적으로 표현 (조항 하이라이팅, 위험도 표시)
-- 마이페이지, 커뮤니티 등 UI 구현 예정
-
-## 향후 계획
-- Recoil 또는 Zustand로 상태관리 적용
-- 분석 결과 JSON UI 렌더링 컴포넌트 추가
-- 업로드 → 분석 → 결과 페이지 전체 흐름 완성
+- 파일명: ComponentName.tsx
+- API 호출은 `src/api/` 폴더에서 관리
+- CSS는 컴포넌트별 `.css` 파일 사용

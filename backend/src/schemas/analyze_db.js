@@ -1,0 +1,40 @@
+import mongoose from "mongoose";
+
+const { Schema } = mongoose;
+
+const analysisSchema = new Schema(
+  {
+    documentId: {
+      type: String,
+      required: true,
+      unique: true,
+      index: true
+    },
+    status: {
+      type: String,
+      enum: ["processing", "completed", "failed"],
+      default: "processing"
+    },
+    progress: {
+      type: Number,
+      default: 0
+    },
+    extractedText: {
+      type: String
+    },
+    result: {
+      type: Schema.Types.Mixed
+    },
+    errorMessage: {
+      type: String
+    },
+    summary: {
+      type: Schema.Types.Mixed
+    }
+  },
+  {
+    timestamps: true
+  }
+);
+
+export default mongoose.model('Analysis', analysisSchema);

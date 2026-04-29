@@ -1,68 +1,59 @@
-# AI 파트 코드 안내서 (AI_LawDoctor)
+# AI 파트 안내 (AI_LawDoctor)
 
-본 폴더는 계약서 위험 조항 분석과 OCR(이미지 → 텍스트)을 처리하는  
-AI 기능 모듈을 포함하고 있습니다.
+계약서 OCR 및 위험 조항 분석을 처리하는 FastAPI 서버입니다.
 
 ---
 
 ## 폴더 구성
-AI/  </br>
-├── analysis/ # 계약서 텍스트 → 위험 조항 분석 예시</br>
-│ └── ai_example.py</br>
-├── ocr/ # 이미지/문서 → 텍스트 추출 예시</br>
-│ └── ocr_example.py</br>
-├── requirements.txt # Python 패키지 목록</br>
-└── README.md</br>
+
+```
+AI/
+├── ai_api.py              # FastAPI 서버 진입점 (포트 8000)
+├── analysis/
+│   └── ai_example.py      # Gemini API 계약서 분석 모듈
+├── ocr/
+│   └── ocr_example.py     # PDF 텍스트 추출 모듈 (pdfplumber)
+├── requirements.txt       # Python 패키지 목록
+├── Dockerfile
+└── .env                   # GEMINI_API_KEY 설정
+```
 
 ---
 
-## 설치 방법
-
-### Python 환경 구성
-
-1. Python 3.8 이상 설치  
-2. (선택) 가상환경 생성
-```bash
-python -m venv venv
-source venv/bin/activate   # Mac/Linux
-venv\Scripts\activate      # Windows
-```
-3. 패키지 설치
-```
-pip install -r requirements.txt
-```
-
 ## 환경 변수 설정
-OpenAI API를 사용하는 경우 .env 파일을 생성하고 아래처럼 입력:
+
+`AI/.env` 파일 생성:
 ```
-OPENAI_API_KEY=sk-xxxxxxxxxxxxxxxxx
+GEMINI_API_KEY=your_gemini_api_key
 ```
-(※ .env는 .gitignore에 포함되어 있어야 함)
+
+---
 
 ## 실행 방법
-### 1. AI 분석 예시 실행
+
+### Docker (권장)
+루트에서 `docker-compose up --build` 실행 시 자동 실행됨
+
+### 직접 실행
+```bash
+cd AI
+pip install -r requirements.txt
+uvicorn ai_api:app --host 0.0.0.0 --port 8000
 ```
-python analysis/ai_example.py
-```
-### 2. OCR 텍스트 추출 예시 실행
-```
-python ocr/ocr_example.py
-```
-## 주요 함수 형식
-```
-def analyze_contract(text: str) -> dict:
-    """
-    계약서 내용을 받아 위험 요소를 분석한 결과를 반환합니다.
-    """
-```
-※ 이후 백엔드와 연동 시 JSON 구조로 확장될 예정
+
+---
+
+## API 엔드포인트
+
+| 메서드 | 경로 | 설명 |
+|--------|------|------|
+| POST | `/api/ocr` | 파일 경로로 텍스트 추출 |
+| POST | `/api/ai-analyze` | 텍스트 → 위험 조항 분석 |
+
+---
 
 ## 주의사항
-- samples/ 폴더에 테스트 이미지를 넣어야 OCR 실행 가능
-- OpenAI API 호출은 비용이 발생하므로 개발 단계에서는 최소 사용 권장
-- requirements.txt에 패키지 추가 시 반드시 반영
 
-## 향후 계획
-- 분석 결과 JSON 스키마 통합
-- 날짜/금액 정보 추출 로직 추가
-- OCR + 분석 통합 함수 작성
+- PDF 파일만 OCR 지원 (pdfplumber 사용)
+- Gemini API 호출 비용 발생 → 개발 시 최소 사용 권장
+- `requirements.txt`에 패키지 추가 시 반드시 반영

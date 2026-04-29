@@ -2,10 +2,50 @@
 .upload-prompt-content {
   display: flex;
   align-items: center;
+  justify-content: center;
+}
+.file-uploader-wrapper{width: 500px; display: flex; flex-wrap: wrap;
+align-items: center; justify-content: center;
+}
+
+.upload-guide {
+  width: 500px;
+  margin-bottom: 16px;
+}
+
+.upload-guide-title {
+  font-size: 15px;
+  font-weight: 700;
+  color: #1e293b;
+  margin-bottom: 6px;
+}
+
+.upload-guide-list {
+  padding-left: 0;
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.upload-guide-list li {
+  font-size: 14px;
+  color: #475569;
+  padding-left: 12px;
+  position: relative;
+  letter-spacing: -0.4px;
+
+}
+
+.upload-guide-list li::before {
+  content: '·';
+  position: absolute;
+  left: 0;
+  color: #94a3b8;
 }
 
 .analysis-page-layout {
-  height: calc(100vh - 70px);
+  height: calc(100vh);
   overflow-x: hidden;
 }
 
@@ -32,8 +72,8 @@
   padding: 20px;
   transition: margin-right 0.3s ease;
   background-color: #fff;
-  border: 1px solid #D9D9D9;
-  border-radius: 0px 0px 10px 10px;
+  border: 1px solid #e5e7eb;
+  border-radius: 0px 0px 8px 8px;
   overflow-y: auto;
   overflow-x: hidden;
   height: 100%;
@@ -41,7 +81,9 @@
 }
 
 .main-content.sidebar-open {
-  margin-right: 350px;
+  margin-right: 360px;
+  border-radius: 0px 0px 10px 10px;
+  
 }
 
 .main-content.sidebar-closed {
@@ -49,25 +91,43 @@
 }
 
 .content-section {
+  margin: 0 auto;
   max-width: 1200px;
   width: 100%;
-  margin: 0 auto;
-  height: auto;
+  height: 100%;
   display: flex;
   justify-content: center;
   align-items: center;
   flex-wrap: wrap;
   background-color: #fff;
-  padding: 50px 0px;  
-  
-  
+  padding: 24px 0px;  
   
 }
 
-.content-analysis-box{ width: 794px; min-height: 1123px; height: auto;
-  display: flex; justify-content: center; align-items: flex-start; flex-wrap: wrap;
-  border: 1px solid #D9D9D9;
-  padding: 0px 5px; background-color: #ffff;
-  border-radius: 2px; }
+.content-analysis-box { width: 794px; 
+  height: calc(100vh - 130px); 
+  display: flex;  
+  flex-direction: column;
+  border: 1px solid #e5e7eb;
+  padding: 0px; 
+  overflow-y: auto; 
+  border-radius: 4px;  }
 
+.content-analysis-box.has-header {
+  height: calc(100vh - 200px);
+}
 
+.tab-fade-in {
+  animation: fadeIn 0.3s ease;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}

@@ -1,0 +1,26 @@
+/* src/styles/mypage/MypageLayout.css */
+
+.mypage-container {
+  display: grid;
+  grid-template-columns: 240px 1fr;
+  min-height: calc(100vh - 60px);
+  background: #F4F6FA;
+}
+
+.mypage-content {
+  padding: 30px;
+  max-width: 1200px;
+  margin: 0 auto;
+  width: 100%;
+}
+
+/* 반응형 */
+@media (max-width: 768px) {
+  .mypage-container {
+    grid-template-columns: 1fr;
+  }
+
+  .mypage-content {
+    padding: 24px 16px;
+  }
+}
