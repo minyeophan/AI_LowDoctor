@@ -1,5 +1,5 @@
 // src/api/community.ts
-const API_BASE = 'http://localhost:3001';
+const API_BASE = import.meta.env.VITE_API_URL || '';
 
 const getHeaders = () => {
   const token = localStorage.getItem('token');
