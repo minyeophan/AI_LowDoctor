@@ -4,63 +4,79 @@ import User from "../schemas/user_db.js";
 import { randomUUID } from "crypto";
 import { signAccessToken } from "../service/auth_service.js";
 
-passport.use(
-  new GoogleStrategy(
-    {
-      clientID: process.env.GOOGLE_CLIENT_ID,
-      clientSecret: process.env.GOOGLE_CLIENT_SECRET,
-      callbackURL: process.env.GOOGLE_REDIRECT_URI,
-    },
-    async (accessToken, refreshToken, profile, done) => {
-      try {
-        const email = profile.emails?.[0]?.value;
-        let user = await User.findOne({ providerId: profile.id });
+const googleOAuthConfigured =
+  process.env.GOOGLE_CLIENT_ID &&
+  process.env.GOOGLE_CLIENT_SECRET &&
+  process.env.GOOGLE_REDIRECT_URI;
 
-        if (!user && email) {
-          user = await User.findOne({ email });
-        }
+if (googleOAuthConfigured) {
+  passport.use(
+    new GoogleStrategy(
+      {
+        clientID: process.env.GOOGLE_CLIENT_ID,
+        clientSecret: process.env.GOOGLE_CLIENT_SECRET,
+        callbackURL: process.env.GOOGLE_REDIRECT_URI,
+      },
+      async (accessToken, refreshToken, profile, done) => {
+        try {
+          const email = profile.emails?.[0]?.value;
+          let user = await User.findOne({ providerId: profile.id });
 
-        if (!user) {
-          user = await User.create({
-            userID: `user_${randomUUID()}`,
-            name: profile.displayName || profile.username || "Google User",
-            email,
-            password: undefined,
-            provider: "google",
-            providerId: profile.id,
-            googleAccessToken: accessToken,
-            googleRefreshToken: refreshToken || null,
-            googleTokenExpiry: refreshToken ? new Date(Date.now() + 3600000) : null,
-          });
-        } else {
-          user.provider = "google";
-          user.providerId = profile.id;
-          user.googleAccessToken = accessToken;
-          if (refreshToken) {
-            user.googleRefreshToken = refreshToken;
+          if (!user && email) {
+            user = await User.findOne({ email });
           }
-          user.googleTokenExpiry = new Date(Date.now() + 3600000);
-          await user.save();
+
+          if (!user) {
+            user = await User.create({
+              userID: `user_${randomUUID()}`,
+              name: profile.displayName || profile.username || "Google User",
+              email,
+              password: undefined,
+              provider: "google",
+              providerId: profile.id,
+              googleAccessToken: accessToken,
+              googleRefreshToken: refreshToken || null,
+              googleTokenExpiry: refreshToken
+                ? new Date(Date.now() + 3600000)
+                : null,
+            });
+          } else {
+            user.provider = "google";
+            user.providerId = profile.id;
+            user.googleAccessToken = accessToken;
+            if (refreshToken) {
+              user.googleRefreshToken = refreshToken;
+            }
+            user.googleTokenExpiry = new Date(Date.now() + 3600000);
+            await user.save();
+          }
+
+          return done(null, user);
+        } catch (error) {
+          return done(error, null);
         }
-
-        return done(null, user);
-      } catch (error) {
-        return done(error, null);
       }
-    }
-  )
-);
+    )
+  );
+}
 
-export const googleAuth = passport.authenticate("google", {
-  scope: ["profile", "email", "https://www.googleapis.com/auth/calendar"],
-  accessType: "offline",
-  prompt: "consent",
-});
+const requireGoogleOAuthConfig = (req, res) =>
+  res.status(503).json({ message: "Google OAuth env vars are not configured." });
 
-export const googleAuthCallback = passport.authenticate("google", {
-  failureRedirect: "/api/auth/login",
-  session: false,
-});
+export const googleAuth = googleOAuthConfigured
+  ? passport.authenticate("google", {
+      scope: ["profile", "email", "https://www.googleapis.com/auth/calendar"],
+      accessType: "offline",
+      prompt: "consent",
+    })
+  : requireGoogleOAuthConfig;
+
+export const googleAuthCallback = googleOAuthConfigured
+  ? passport.authenticate("google", {
+      failureRedirect: "/api/auth/login",
+      session: false,
+    })
+  : requireGoogleOAuthConfig;
 
 export const googleAuthSuccess = (req, res) => {
   if (!req.user) {
