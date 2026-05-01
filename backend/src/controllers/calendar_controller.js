@@ -99,8 +99,8 @@ export const sendScheduleNotifications = async () => {
   }
 };
 
-const buildGoogleEvent = ({ scheduleName, startDate, endDate, alarm, alarmEnabled }) => ({
-  summary: scheduleName,
+const buildGoogleEvent = ({ title, startDate, endDate, alarm, alarmEnabled }) => ({
+  summary: title,
   start: { dateTime: new Date(startDate).toISOString() },
   end: { dateTime: new Date(endDate).toISOString() },
   reminders: {
@@ -121,10 +121,16 @@ export const getSchedule = async (req, res, next) => {
       .sort({ startDate: 1 })
       .lean();
 
+    // 클라이언트 호환성을 위해 scheduleName으로 매핑
+    const formattedSchedules = schedules.map(schedule => ({
+      ...schedule,
+      scheduleName: schedule.title,
+    }));
+
     return res.status(200).json({
       success: true,
       total: schedules.length,
-      list: schedules,
+      list: formattedSchedules,
     });
   } catch (error) {
     console.error("일정 목록 조회 에러: ", error);
@@ -142,6 +148,13 @@ export const createSchedule = async (req, res) => {
     const currentUserId = req.user.userID;
     const user = await User.findById(req.user._id);
 
+    // 날짜 유효성 검사
+    const start = new Date(startDate);
+    const end = new Date(endDate);
+    if (isNaN(start.getTime()) || isNaN(end.getTime())) {
+      return res.status(400).json({ success: false, message: "유효하지 않은 날짜 형식입니다." });
+    }
+
     let googleEventId = null;
 
     // Google 계정이 연동되어 있으면 Google Calendar에 이벤트 생성
@@ -150,9 +163,9 @@ export const createSchedule = async (req, res) => {
       const calendar = google.calendar({ version: "v3", auth: oauth2Client });
 
       const event = buildGoogleEvent({
-        scheduleName,
-        startDate,
-        endDate,
+        title: scheduleName,
+        startDate: start,
+        endDate: end,
         alarm: alarm ?? 1440,
         alarmEnabled: alarmEnabled !== false,
       });
@@ -165,9 +178,9 @@ export const createSchedule = async (req, res) => {
     }
 
     const newSchedule = new Schedule({
-      scheduleName,
-      startDate,
-      endDate,
+      title: scheduleName,
+      startDate: start,
+      endDate: end,
       alarm: alarm ?? 1440,
       alarmEnabled: alarmEnabled !== false,
       googleEventId,
@@ -208,9 +221,25 @@ export const updateSchedule = async (req, res) => {
       return res.status(404).json({ success: false, message: "일정을 찾을 수 없습니다." });
     }
 
-    schedule.scheduleName = scheduleName ?? schedule.scheduleName;
-    schedule.startDate = startDate ? new Date(startDate) : schedule.startDate;
-    schedule.endDate = endDate ? new Date(endDate) : schedule.endDate;
+    // 날짜 유효성 검사 (제공된 경우)
+    let start = schedule.startDate;
+    let end = schedule.endDate;
+    if (startDate) {
+      start = new Date(startDate);
+      if (isNaN(start.getTime())) {
+        return res.status(400).json({ success: false, message: "유효하지 않은 시작 날짜 형식입니다." });
+      }
+    }
+    if (endDate) {
+      end = new Date(endDate);
+      if (isNaN(end.getTime())) {
+        return res.status(400).json({ success: false, message: "유효하지 않은 종료 날짜 형식입니다." });
+      }
+    }
+
+    schedule.title = scheduleName ?? schedule.title;
+    schedule.startDate = start;
+    schedule.endDate = end;
     schedule.alarm = alarm ?? schedule.alarm;
     schedule.alarmEnabled = alarmEnabled !== undefined ? alarmEnabled : schedule.alarmEnabled;
 
