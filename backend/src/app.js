@@ -7,6 +7,7 @@ import dotenv from "dotenv";
 import swaggerUi from "swagger-ui-express";
 import swaggerSpec from "./swagger/swagger.js";
 import passport from "passport";
+import cron from "node-cron";
 
 import { connect } from "./schemas/index.js";
 
@@ -21,6 +22,7 @@ import commentRouter from "./routes/comment_routes.js";
 import mypageRouter from "./routes/mypage_routes.js";
 import chatRouter from "./routes/chat_routes.js";
 import calendarRouter from "./routes/calendar_routes.js";
+import { sendScheduleNotifications } from "./controllers/calendar_controller.js";
 
 dotenv.config();
 
@@ -61,6 +63,21 @@ app.use(
 );
 
 app.use(passport.initialize());
+app.use(passport.session());
+
+passport.serializeUser((user, done) => {
+  done(null, user._id);
+});
+
+passport.deserializeUser(async (id, done) => {
+  try {
+    const User = (await import("./schemas/user_db.js")).default;
+    const user = await User.findById(id);
+    done(null, user);
+  } catch (error) {
+    done(error, null);
+  }
+});
 
 app.use("/api-docs", swaggerUi.serve, swaggerUi.setup(swaggerSpec));
 
@@ -97,6 +114,11 @@ app.use((err, req, res, next) => {
     message: err.message,
     error: process.env.NODE_ENV !== "production" ? err : {},
   });
+});
+
+// 일정 알림 스케줄러: 매분마다 실행
+cron.schedule("* * * * *", () => {
+  sendScheduleNotifications();
 });
 
 app.listen(app.get("port"), () => {

@@ -1,20 +1,20 @@
 import passport from "passport";
-import { Strategy as GoogleStrategy } from "passport-google-oauth20";
+import { Strategy as KakaoStrategy } from "passport-kakao";
 import User from "../schemas/user_db.js";
 import { randomUUID } from "crypto";
 import { signAccessToken } from "../service/auth_service.js";
 
 passport.use(
-  new GoogleStrategy(
+  new KakaoStrategy(
     {
-      clientID: process.env.GOOGLE_CLIENT_ID,
-      clientSecret: process.env.GOOGLE_CLIENT_SECRET,
-      callbackURL: process.env.GOOGLE_REDIRECT_URI,
+      clientID: process.env.KAKAO_CLIENT_ID,
+      clientSecret: process.env.KAKAO_CLIENT_SECRET,
+      callbackURL: process.env.KAKAO_REDIRECT_URI,
       passReqToCallback: true,
     },
     async (req, accessToken, refreshToken, profile, done) => {
       try {
-        const email = profile.emails?.[0]?.value;
+        const email = profile._json?.kakao_account?.email;
         let user = await User.findOne({ providerId: profile.id });
 
         if (!user && email) {
@@ -24,34 +24,34 @@ passport.use(
         if (!user) {
           // 연동 모드: 로그인된 사용자의 토큰 업데이트
           if (req.user) {
-            req.user.googleAccessToken = accessToken;
+            req.user.kakaoAccessToken = accessToken;
             if (refreshToken) {
-              req.user.googleRefreshToken = refreshToken;
+              req.user.kakaoRefreshToken = refreshToken;
             }
-            req.user.googleTokenExpiry = new Date(Date.now() + 3600000);
+            req.user.kakaoTokenExpiry = new Date(Date.now() + 3600000);
             await req.user.save();
             return done(null, req.user);
           } else {
             // 새 사용자 생성 (로그인 모드)
             user = await User.create({
               userID: `user_${randomUUID()}`,
-              name: profile.displayName || profile.username || "Google User",
+              name: profile.displayName || profile.username || "Kakao User",
               email,
               password: undefined,
-              provider: "google",
+              provider: "kakao",
               providerId: profile.id,
-              googleAccessToken: accessToken,
-              googleRefreshToken: refreshToken || null,
-              googleTokenExpiry: refreshToken ? new Date(Date.now() + 3600000) : null,
+              kakaoAccessToken: accessToken,
+              kakaoRefreshToken: refreshToken || null,
+              kakaoTokenExpiry: refreshToken ? new Date(Date.now() + 3600000) : null,
             });
           }
         } else {
           // 기존 사용자 업데이트
-          user.googleAccessToken = accessToken;
+          user.kakaoAccessToken = accessToken;
           if (refreshToken) {
-            user.googleRefreshToken = refreshToken;
+            user.kakaoRefreshToken = refreshToken;
           }
-          user.googleTokenExpiry = new Date(Date.now() + 3600000);
+          user.kakaoTokenExpiry = new Date(Date.now() + 3600000);
           await user.save();
         }
 
@@ -63,7 +63,7 @@ passport.use(
   )
 );
 
-export const googleAuth = async (req, res, next) => {
+export const kakaoAuth = async (req, res, next) => {
   // link 모드일 때는 JWT 토큰 확인
   if (req.query.link === 'true') {
     const authMiddleware = (await import("../middleware/auth_middle.js")).authMiddleware;
@@ -72,28 +72,24 @@ export const googleAuth = async (req, res, next) => {
         return res.status(401).json({ message: "연동을 위해 로그인이 필요합니다." });
       }
       // JWT 확인 후 passport 인증 진행
-      passport.authenticate("google", {
-        scope: ["profile", "email", "https://www.googleapis.com/auth/calendar"],
-        accessType: "offline",
-        prompt: "consent",
+      passport.authenticate("kakao", {
+        scope: ["profile_nickname", "account_email"],
       })(req, res, next);
     });
   } else {
     // 일반 로그인 모드
-    passport.authenticate("google", {
-      scope: ["profile", "email", "https://www.googleapis.com/auth/calendar"],
-      accessType: "offline",
-      prompt: "consent",
+    passport.authenticate("kakao", {
+      scope: ["profile_nickname", "account_email"],
     })(req, res, next);
   }
 };
 
-export const googleAuthCallback = passport.authenticate("google", {
+export const kakaoAuthCallback = passport.authenticate("kakao", {
   failureRedirect: "/api/auth/login",
   session: false,
 });
 
-export const googleAuthSuccess = (req, res) => {
+export const kakaoAuthSuccess = (req, res) => {
   if (!req.user) {
     return res.redirect("/api/auth/login");
   }
@@ -107,7 +103,7 @@ export const googleAuthSuccess = (req, res) => {
     if (isApiRequest) {
       return res.json({
         success: true,
-        message: "Google 계정 연동 성공",
+        message: "카카오 계정 연동 성공",
         user: {
           id: req.user._id,
           email: req.user.email,
@@ -116,7 +112,7 @@ export const googleAuthSuccess = (req, res) => {
       });
     } else {
       const clientUrl = process.env.CLIENT_URL || "http://localhost:5173";
-      return res.redirect(`${clientUrl}/auth/link/google/success`);
+      return res.redirect(`${clientUrl}/auth/link/kakao/success`);
     }
   } else {
     // 로그인 모드: JWT 토큰 반환
@@ -124,7 +120,7 @@ export const googleAuthSuccess = (req, res) => {
     if (isApiRequest) {
       return res.json({
         success: true,
-        message: "Google 로그인 성공",
+        message: "카카오 로그인 성공",
         token: token,
         user: {
           id: req.user._id,
@@ -134,7 +130,7 @@ export const googleAuthSuccess = (req, res) => {
       });
     } else {
       const clientUrl = process.env.CLIENT_URL || "http://localhost:5173";
-      return res.redirect(`${clientUrl}/auth/google/success?token=${token}`);
+      return res.redirect(`${clientUrl}/auth/kakao/success?token=${token}`);
     }
   }
 };
