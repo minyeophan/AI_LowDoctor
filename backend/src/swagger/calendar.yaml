@@ -51,7 +51,7 @@ paths:
                   example: "2026-06-01T10:00:00Z"
                 alarm:
                   type: integer
-                  default: 30
+                  default: 1440
                   description: "알림 전 시간 (분 단위)"
                 alarmEnabled:
                   type: boolean
@@ -148,7 +148,7 @@ components:
           format: date-time
         alarm:
           type: integer
-          example: 30
+          example: 1440
         alarmEnabled:
           type: boolean
           example: true
