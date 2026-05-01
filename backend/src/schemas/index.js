@@ -8,6 +8,7 @@ import "./post_db.js";
 import "./comment_db.js";
 import "./chat_db.js";
 import "./form_db.js";
+import "./calendar_db.js";
 
 dotenv.config();
 

@@ -66,6 +66,32 @@
       401:
         description: "이메일 또는 비밀번호 불일치"
 
+/api/auth/google:
+  get:
+    summary: "구글 로그인 시작"
+    description: "구글 로그인 페이지로 리다이렉트합니다. 성공 시 캘린더 권한(offline)을 요청합니다."
+    tags:
+      - Auth
+    responses:
+      302:
+        description: "구글 로그인 페이지로 이동"
+
+/api/auth/google/callback:
+  get:
+    summary: "구글 로그인 콜백"
+    description: "구글 인증 후 서버로 돌아오는 엔드포인트입니다."
+    tags:
+      - Auth
+    parameters:
+      - in: query
+        name: code
+        schema:
+          type: string
+        description: "구글에서 전달한 인증 코드"
+    responses:
+      302:
+        description: "인증 성공 후 프론트엔드로 리다이렉트"
+
 /api/auth/me:
   get:
     summary: "내 정보 조회"
@@ -113,7 +139,7 @@ components:
           example: ""
         provider:
           type: string
-          example: "local"
+          example: "google"
 
     AuthResponse:
       type: object
