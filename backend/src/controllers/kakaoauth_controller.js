@@ -73,13 +73,13 @@ export const kakaoAuth = async (req, res, next) => {
       }
       // JWT 확인 후 passport 인증 진행
       passport.authenticate("kakao", {
-        scope: ["profile_nickname", "account_email"],
+        scope: ["profile_nickname", "account_email", "talk_message"],
       })(req, res, next);
     });
   } else {
     // 일반 로그인 모드
     passport.authenticate("kakao", {
-      scope: ["profile_nickname", "account_email"],
+      scope: ["profile_nickname", "account_email", "talk_message"],
     })(req, res, next);
   }
 };

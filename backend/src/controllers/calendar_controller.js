@@ -35,25 +35,33 @@ const createOAuth2Client = (user) => {
   return oauth2Client;
 };
 
-const sendKakaoMessage = async (user, message) => {
+const sendKakaoMessage = async (user, message, scheduleData = {}) => {
   if (!user.kakaoAccessToken) {
     console.log("카카오 액세스 토큰이 없습니다.");
     return;
   }
 
   try {
+    // 템플릿 등록 없이 사용 가능한 기본 text 타입만 사용
+    const templateObject = {
+      object_type: "text",
+      text: message,
+      link: {
+        web_url: `${process.env.CLIENT_URL || "http://localhost:5173"}/schedule/${scheduleData.scheduleId}`,
+        mobile_web_url: `${process.env.CLIENT_URL || "http://localhost:5173"}/schedule/${scheduleData.scheduleId}`,
+      },
+      button_title: "일정 상세 보기"
+    };
+
+    // 직접 form-urlencoded 형식으로 변환
+    const templateJson = JSON.stringify(templateObject);
+    const data = `template_object=${encodeURIComponent(templateJson)}`;
+
+    console.log("전송할 템플릿:", templateJson); // 디버깅용
+
     const response = await axios.post(
       "https://kapi.kakao.com/v2/api/talk/memo/default/send",
-      {
-        template_object: {
-          object_type: "text",
-          text: message,
-          link: {
-            web_url: process.env.CLIENT_URL || "http://localhost:5173",
-            mobile_web_url: process.env.CLIENT_URL || "http://localhost:5173",
-          },
-        },
-      },
+      data,
       {
         headers: {
           Authorization: `Bearer ${user.kakaoAccessToken}`,
@@ -90,7 +98,16 @@ export const sendScheduleNotifications = async () => {
 
         // 카카오톡 메시지 전송
         if (user.kakaoAccessToken) {
-          await sendKakaoMessage(user, message);
+          const scheduleData = {
+            title: schedule.scheduleName || schedule.title,
+            scheduleId: schedule._id.toString(),
+            eventId: schedule.googleEventId,
+            startDate: schedule.startDate,
+            endDate: schedule.endDate,
+            location: schedule.location,
+            category: schedule.category,
+          };
+          await sendKakaoMessage(user, message, scheduleData);
         }
       }
     }
@@ -192,7 +209,12 @@ export const createSchedule = async (req, res) => {
     // 카카오톡 메시지 전송 (카카오 계정이 연동되어 있고 알림이 켜져 있으면)
     if (user && user.kakaoAccessToken && alarmEnabled !== false) {
       const message = `일정 알림: ${scheduleName}\n시작: ${new Date(startDate).toLocaleString()}\n종료: ${new Date(endDate).toLocaleString()}`;
-      await sendKakaoMessage(user, message);
+      const scheduleData = {
+        title: scheduleName,
+        scheduleId: newSchedule._id.toString(),
+        eventId: googleEventId,
+      };
+      await sendKakaoMessage(user, message, scheduleData);
     }
 
     return res.status(201).json({
