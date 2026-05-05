@@ -29,7 +29,9 @@ const userSchema = new Schema(
 
     password: { 
       type: String, 
-      required: true, 
+      required: function() {
+        return this.provider === "local";
+      }, 
       select: false,
     },
       
@@ -40,7 +42,7 @@ const userSchema = new Schema(
 
     provider: {
       type: String,
-      enum: ["local", "kakao", "naver"],
+      enum: ["local", "kakao", "naver", "google"],
       default: "local",
     },
 
@@ -68,7 +70,20 @@ const userSchema = new Schema(
     savedForms: [{
       formId: { type: Schema.Types.ObjectId, ref: 'Form' },
       save_date: { type: Date, default: Date.now }
-    }]
+    }],
+
+    googleAccessToken: {
+      type: String,
+      default: null,
+    },
+    googleRefreshToken: {
+      type: String,
+      default: null,
+    },
+    googleTokenExpiry: {
+      type: Date,
+      default: null,
+    },
   },
   { collection: "users" }
 );

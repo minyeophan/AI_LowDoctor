@@ -6,6 +6,7 @@ import cors from "cors";
 import dotenv from "dotenv";
 import swaggerUi from "swagger-ui-express";
 import swaggerSpec from "./swagger/swagger.js";
+import passport from "passport";
 
 import { connect } from "./schemas/index.js";
 
@@ -19,6 +20,7 @@ import postRouter from "./routes/post_routes.js";
 import commentRouter from "./routes/comment_routes.js";
 import mypageRouter from "./routes/mypage_routes.js";
 import chatRouter from "./routes/chat_routes.js";
+import calendarRouter from "./routes/calendar_routes.js";
 
 dotenv.config();
 
@@ -36,9 +38,13 @@ app.use((req, res, next) => {
   next();
 });
 
+const allowedOrigins = process.env.ALLOWED_ORIGINS
+  ? process.env.ALLOWED_ORIGINS.split(",")
+  : ["http://localhost:5173", "http://localhost"];
+
 app.use(
   cors({
-    origin: ["http://localhost:5173", "http://localhost"],
+    origin: allowedOrigins,
     credentials: true,
   })
 );
@@ -58,6 +64,8 @@ app.use(
   })
 );
 
+app.use(passport.initialize());
+
 app.use("/api-docs", swaggerUi.serve, swaggerUi.setup(swaggerSpec));
 
 app.use("/api/auth", authRouter);
@@ -70,12 +78,15 @@ app.use("/api", chatRouter);
 app.use("/api/posts", postRouter);
 app.use("/api", commentRouter);
 app.use("/api/mypage", mypageRouter);
-
+app.use("/api/calendar", calendarRouter);
 app.get("/", (req, res) => {
   res.json({
     msg: "AI Legal Doctor Backend OK",
   });
 });
+
+// 브라우저의 favicon.ico 요청 무시
+app.get('/favicon.ico', (req, res) => res.status(204).end());
 
 app.use((req, res, next) => {
   const error = new Error(`${req.method} ${req.url} 라우터가 없습니다.`);
