@@ -63,7 +63,6 @@ export interface AnalysisResponse {
   summary: SummaryItem[];
   riskItems: RiskItem[];
   recommendations: string[];
-  forms: FormItem[];
   analyzedAt: string;
   contractTip?: ContractTip;
   improvementGuides?: ImprovementGuide[]; 
@@ -205,7 +204,6 @@ getAnalysisResult: async (documentId: string): Promise<AnalysisResponse> => {
           summary: result.summary || [],
           riskItems: result.riskItems || [],
           recommendations: [],
-          forms: result.forms || [],
           analyzedAt: result.updatedAt || new Date().toISOString(),
         };
       }

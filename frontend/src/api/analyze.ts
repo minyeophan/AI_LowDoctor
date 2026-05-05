@@ -43,8 +43,6 @@ export interface AnalysisResult {
   // 개선 가이드
   improvementGuides?: ImprovementGuide[];  
   
-  // 양식
-  forms?: any[];
 }
 
 // 위험 요소 (Risk)

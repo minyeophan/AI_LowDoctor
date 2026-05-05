@@ -13,7 +13,8 @@ export interface StorageDocument {
   title: string;
   category: CategoryType;
   uploadedAt: string;
-  analysisStatus: 'completed' | 'unanalyzed' | 'analyzing';
+  analysisStatus: 'completed' | 'unanalyzed' | 'analyzing' | 'pending';
   fileSize?: number;
+  fileUrl?: string;  // 추가
 }
 export type AnalysisStatus = 'completed' | 'unanalyzed' | 'analyzing';
