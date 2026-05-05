@@ -39,19 +39,18 @@ const SEVERITY_ORDER: Record<string, number> = {
 
 // 선택된 항목들로 textarea 본문 생성 — 원래 순서 유지, 위험조항+이유만 표시
 const buildContentFromSelected = (items: RiskItem[], selectedIds: string[]): string => {
-  const selected = items.filter(item => selectedIds.includes(item.id));
+  const selected = items.filter((item, idx) => selectedIds.includes(item.id ?? item.clauseText ?? String(idx)));
 
   return selected
     .map((item, idx) => {
       const severity = item.severity ?? item.riskLevel ?? '';
-      const category = item.category ?? '';
-      const description = item.description ?? '';
+      const clauseText = item.clauseText ?? item.description ?? '';
       const reason = item.reason ?? '';
 
       const lines = [
-        `${idx + 1}. [${SEVERITY_LABEL[severity] ?? severity}] ${category}`,
-        description,
-        reason ? `이유: ${reason}` : '',
+        `${idx + 1}. [${SEVERITY_LABEL[severity] ?? severity}]`,
+        clauseText ? `위험 조항: ${clauseText}` : '',
+        reason ? `위험 원인: ${reason}` : '',
       ].filter(Boolean);
       return lines.join('\n');
     })
@@ -73,6 +72,7 @@ function FloatingButtons({ activeSidebar, onToggle, riskItems = [], documentFile
   const [shareTitle, setShareTitle] = useState('');
   const [shareContent, setShareContent] = useState('');
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
+  const [privacyAgreed, setPrivacyAgreed] = useState(false);
 
   const showToast = (msg: string) => {
     setShareToast(msg);
@@ -96,11 +96,11 @@ function FloatingButtons({ activeSidebar, onToggle, riskItems = [], documentFile
       return;
     }
     // 모달 초기화
-    const allIds = riskItems.map(item => item.id);
-    setSelectedIds(allIds);
+    setSelectedIds([]);
     setShareTitle('');
-    setShareContent(buildContentFromSelected(riskItems, allIds));
+    setShareContent('');
     setShareError(null);
+    setPrivacyAgreed(false);
     setShowShareModal(true);
   };
 
@@ -111,7 +111,7 @@ function FloatingButtons({ activeSidebar, onToggle, riskItems = [], documentFile
   };
 
   const handleSelectAll = () => {
-    const allIds = riskItems.map(item => item.id);
+    const allIds = riskItems.map((item, idx) => item.id ?? item.clauseText ?? String(idx));
     if (selectedIds.length === allIds.length) {
       setSelectedIds([]);
     } else {
@@ -163,7 +163,7 @@ function FloatingButtons({ activeSidebar, onToggle, riskItems = [], documentFile
     try {
       await communityAPI.createPost({
         title: shareTitle,
-        category: '계약정보',
+        category: '부동산',
         content: shareContent,
       });
       setShowShareModal(false);
@@ -176,8 +176,12 @@ function FloatingButtons({ activeSidebar, onToggle, riskItems = [], documentFile
     }
   };
 
-  // 원래 순서 유지 (계약서 내 조항 순서)
-  const sortedRiskItems = riskItems;
+  // 위험도 순 정렬 (높음 → 중간 → 낮음)
+  const sortedRiskItems = [...riskItems].sort(
+    (a, b) =>
+      (SEVERITY_ORDER[a.severity ?? a.riskLevel ?? ''] ?? 9) -
+      (SEVERITY_ORDER[b.severity ?? b.riskLevel ?? ''] ?? 9)
+  );
 
   return (
     <>
@@ -307,20 +311,20 @@ function FloatingButtons({ activeSidebar, onToggle, riskItems = [], documentFile
                   </button>
                 </div>
                 <div className="share-item-list">
-                  {sortedRiskItems.map(item => {
+                  {sortedRiskItems.map((item, idx) => {
                     const severity = item.severity ?? item.riskLevel ?? '';
-                    const category = item.category ?? '(카테고리 없음)';
-                    const isSelected = selectedIds.includes(item.id);
+                    const itemId = item.id ?? item.clauseText ?? String(idx);
+                    const isSelected = selectedIds.includes(itemId);
                     return (
                       <div
-                        key={item.id}
+                        key={itemId}
                         className={`share-item-card ${isSelected ? 'selected' : ''} severity-${severity.toLowerCase()}`}
-                        onClick={() => handleToggleItem(item.id)}
+                        onClick={() => handleToggleItem(itemId)}
                       >
                         <input
                           type="checkbox"
                           checked={isSelected}
-                          onChange={() => handleToggleItem(item.id)}
+                          onChange={() => handleToggleItem(itemId)}
                           onClick={e => e.stopPropagation()}
                           className="share-item-checkbox"
                         />
@@ -332,7 +336,8 @@ function FloatingButtons({ activeSidebar, onToggle, riskItems = [], documentFile
                             </span>
                           </div>
                           <p className="share-description">
-                            {(item.description ?? '').slice(0, 60)}{(item.description ?? '').length > 60 ? '...' : ''}
+                            {((item.clauseText ?? item.description ?? '')).slice(0, 60)}
+                            {(item.clauseText ?? item.description ?? '').length > 60 ? '...' : ''}
                           </p>
                         </div>
                       </div>
@@ -366,6 +371,20 @@ function FloatingButtons({ activeSidebar, onToggle, riskItems = [], documentFile
 
             {shareError && <p className="share-error">{shareError}</p>}
 
+             {/* 개인정보 동의 */}
+            
+              <div className='save-modal-buttons-wrap'>
+                <div className="share-privacy-check">
+              <input
+                type="checkbox"
+                id="share-privacy"
+                checked={privacyAgreed}
+                onChange={e => setPrivacyAgreed(e.target.checked)}
+              />
+              <label htmlFor="share-privacy">
+                개인정보(주소·이름·금액 등)가 포함되지 않았음을 확인했습니다.
+              </label>
+            </div>
             <div className="save-modal-buttons">
               <button
                 className="save-cancel-btn"
@@ -377,10 +396,11 @@ function FloatingButtons({ activeSidebar, onToggle, riskItems = [], documentFile
               <button
                 className="save-confirm-btn"
                 onClick={handleShareConfirm}
-                disabled={isSharing || selectedIds.length === 0 || !shareTitle.trim() || !shareContent.trim()}
+                disabled={isSharing || selectedIds.length === 0 || !shareTitle.trim() || !shareContent.trim() || !privacyAgreed}
               >
                 {isSharing ? '공유중...' : `공유하기 (${selectedIds.length}건)`}
               </button>
+            </div>
             </div>
           </div>
         </div>
