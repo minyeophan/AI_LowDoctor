@@ -12,8 +12,18 @@ const options = {
       title: "AI LawDoctor API",
       version: "1.0.0",
     },
+    components: {
+      securitySchemes: {
+        bearerAuth: {
+          type: 'http',
+          scheme: 'bearer',
+          bearerFormat: 'JWT',
+        }
+      }
+    },
+    security: [{ bearerAuth: [] }],
   },
-  apis: [path.join(__dirname, "../routes/*.js")],
+  apis: [path.join(__dirname, "./*.yaml")],
 };
 
 const swaggerSpec = swaggerJsdoc(options);

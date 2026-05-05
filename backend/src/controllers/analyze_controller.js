@@ -29,11 +29,7 @@ export const startAnalysis = async (documentId) => {
       : resultData.summary || "";
 
     const safeRiskItems = Array.isArray(resultData.riskItems)
-  ? resultData.riskItems
-  : [];
-
-    const safeForms = Array.isArray(resultData.forms)
-      ? resultData.forms
+      ? resultData.riskItems
       : [];
 
     const safeImprovementGuides = Array.isArray(resultData.riskItems)
@@ -62,7 +58,6 @@ export const startAnalysis = async (documentId) => {
         documentId,
         summary: safeSummary,
         riskItems: safeRiskItems,
-        forms: safeForms,
         improvementGuides: safeImprovementGuides,
         contractTip: resultData.contractTip || null,
 
@@ -135,10 +130,6 @@ export const requestAnalysis = async (req, res, next) => {
         ? resultData.riskItems
         : [];
 
-      const safeForms = Array.isArray(resultData.forms)
-        ? resultData.forms
-        : [];
-
      const safeImprovementGuides = Array.isArray(resultData.riskItems)
       ? resultData.riskItems.map((item, index) => ({
           id: index + 1,
@@ -164,7 +155,6 @@ export const requestAnalysis = async (req, res, next) => {
           documentId,
           summary: safeSummary,
           riskItems: safeRiskItems,
-          forms: safeForms,
           improvementGuides: safeImprovementGuides,
           contractTip: resultData.contractTip || null,
 

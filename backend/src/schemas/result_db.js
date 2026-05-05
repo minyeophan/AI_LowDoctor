@@ -41,19 +41,6 @@ const riskItemSchema = new Schema({
   },
 }, { _id: false });
 
-const formSchema = new Schema({
-  type: {
-    type: String,
-    required: true,
-  },
-  description: {
-    type: String,
-  },
-  downloadUrl: {
-    type: String,
-  },
-}, { _id: false });
-
 const improvementGuideSchema = new Schema({
   id: { type: Number },
   originalClause: { type: String },
@@ -84,7 +71,6 @@ const resultSchema = new Schema(
       default: "",
     },
     riskItems: [riskItemSchema],
-    forms: [formSchema],
     improvementGuides: [improvementGuideSchema],
     contractTip: contractTipSchema,
 

@@ -9,75 +9,82 @@
 import os
 import sys
 import time
-import uuid
 import requests
 import xml.etree.ElementTree as ET
 from datetime import date
 from dotenv import load_dotenv
 from google import genai
 from google.genai import types
-from qdrant_client.models import PointStruct
+from fastembed import SparseTextEmbedding
+from qdrant_client.models import PointStruct, SparseVector
 
-sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
+sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 load_dotenv()
 
-from rag.db_utils import get_mongo_db, get_qdrant, ensure_qdrant_collection, objectid_to_uuid, LAW_COLLECTION
+from rag.db_utils import (
+    get_mongo_db,
+    get_qdrant,
+    ensure_qdrant_collection,
+    objectid_to_uuid,
+    LAW_COLLECTION,
+)
 
 LAW_OC = os.getenv("LAW_OC")
 GEMINI_API_KEY = os.getenv("GEMINI_API_KEY")
 
 if not LAW_OC or not GEMINI_API_KEY:
-    print("LAW_OC 또는 GEMINI_API_KEY가 설정되지 않았습니다.")
+    print("LAW_OC 또는 GEMINI_API_KEY가 설정되어 있지 않습니다.")
     sys.exit(1)
 
 gemini_client = genai.Client(api_key=GEMINI_API_KEY)
+bm25_model = SparseTextEmbedding(model_name="Qdrant/bm25")
+
 BASE_URL = "https://www.law.go.kr/DRF"
+DENSE_VECTOR_NAME = "dense"
+SPARSE_VECTOR_NAME = "sparse"
 
 # 부동산 계약 관련 법령 (민법은 618~654조만)
 TARGET_LAWS = [
-    {"name": "주택임대차보호법",    "mst": "276291",    "filter_articles": None},
-    {"name": "주택임대차보호법 시행령",    "mst": "280995",     "filter_articles": None},
+    {"name": "주택임대차보호법", "mst": "276291", "filter_articles": None},
+    {"name": "주택임대차보호법 시행령", "mst": "280995", "filter_articles": None},
 
-    {"name": "상가건물 임대차보호법",   "mst": "276285",    "filter_articles": None},
-    {"name": "상가건물 임대차보호법 시행령",    "mst": "280987",    "filter_articles": None},
+    {"name": "상가건물 임대차보호법", "mst": "276285", "filter_articles": None},
+    {"name": "상가건물 임대차보호법 시행령", "mst": "280987", "filter_articles": None},
 
-    {"name": "부동산 거래신고 등에 관한 법률",      "mst": "259641" ,    "filter_articles": None},
-    {"name": "부동산 거래신고 등에 관한 법률 시행령",   "mst": "283653",    "filter_articles": None},
-    {"name": "부동산 거래신고 등에 관한 법률 시행규칙",     "mst": "283339",  "filter_articles": None},
+    {"name": "부동산 거래신고 등에 관한 법률", "mst": "259641", "filter_articles": None},
+    {"name": "부동산 거래신고 등에 관한 법률 시행령", "mst": "283653", "filter_articles": None},
+    {"name": "부동산 거래신고 등에 관한 법률 시행규칙", "mst": "283339", "filter_articles": None},
 
-    {"name": "공인중개사법",    "mst": "273341" ,   "filter_articles": None},
-    {"name": "공인중개사법 시행령",      "mst": "279243" ,    "filter_articles": None},
-    {"name": "공인중개사법 시행규칙",      "mst": "263573" ,    "filter_articles": None},
-    {"name": "공인중개사의 매수신청대리인 등록 등에 관한 규칙",      "mst": "244751" ,    "filter_articles": None},
+    {"name": "공인중개사법", "mst": "273341", "filter_articles": None},
+    {"name": "공인중개사법 시행령", "mst": "279243", "filter_articles": None},
+    {"name": "공인중개사법 시행규칙", "mst": "263573", "filter_articles": None},
+    {"name": "공인중개사의 매수신청대리인 등록 등에 관한 규칙", "mst": "244751", "filter_articles": None},
 
-    {"name": "집합건물의 소유 및 관리에 관한 법률",    "mst": "249285" ,   "filter_articles": None},
-    {"name": "집합건물의 소유 및 관리에 관한 법률 시행령",    "mst": "254889" ,   "filter_articles": None},
+    {"name": "집합건물의 소유 및 관리에 관한 법률", "mst": "249285", "filter_articles": None},
+    {"name": "집합건물의 소유 및 관리에 관한 법률 시행령", "mst": "254889", "filter_articles": None},
 
-    {"name": "전세사기피해자 지원 및 주거안정에 관한 특별법",    "mst": "277021" ,   "filter_articles": None},
-    {"name": "전세사기피해자 지원 및 주거안정에 관한 특별법 시행령",    "mst": "266295" ,   "filter_articles": None},
-    {"name": "전세사기피해자 지원 및 주거안정에 관한 특별법 시행규칙",    "mst": "273851" ,   "filter_articles": None},
+    {"name": "전세사기피해자 지원 및 주거안정에 관한 특별법", "mst": "277021", "filter_articles": None},
+    {"name": "전세사기피해자 지원 및 주거안정에 관한 특별법 시행령", "mst": "266295", "filter_articles": None},
+    {"name": "전세사기피해자 지원 및 주거안정에 관한 특별법 시행규칙", "mst": "273851", "filter_articles": None},
 
-    {"name": "부동산등기규칙",    "mst": "266847" ,   "filter_articles": None},
-    {"name": "부동산등기법",    "mst": "265377" ,   "filter_articles": None},
-    {"name": "축사의 부동산등기에 관한 특례법",    "mst": "210145" ,   "filter_articles": None},
+    {"name": "부동산등기규칙", "mst": "266847", "filter_articles": None},
+    {"name": "부동산등기법", "mst": "265377", "filter_articles": None},
+    {"name": "축사의 부동산등기에 관한 특례법", "mst": "210145", "filter_articles": None},
 
-    {"name": "민간임대주택에 관한 특별법",    "mst": "276995" ,   "filter_articles": None},
-    {"name": "민간임대주택에 관한 특별법 시행령",    "mst": "269343" ,   "filter_articles": None},
-    {"name": "민간임대주택에 관한 특별법 시행규칙",    "mst": "280639" ,   "filter_articles": None},
-    {"name": "부도공공건설임대주택 임차인 보호를 위한 특별법",    "mst": "174491" ,   "filter_articles": None},
-    {"name": "부도공공건설임대주택 임차인 보호를 위한 특별법 시행령",    "mst": "185425" ,   "filter_articles": None},
-    {"name": "장기공공임대주택 입주자 삶의 질 향상 지원법",    "mst": "273421" ,   "filter_articles": None},
-    {"name": "장기공공임대주택 입주자 삶의 질 향상 지원법 시행령",    "mst": "283499" ,   "filter_articles": None},
-    {"name": "장기공공임대주택 입주자 삶의 질 향상 지원법 시행규칙",    "mst": "185553" ,   "filter_articles": None},
-    {"name": "주택법",    "mst": "283191" ,   "filter_articles": None},
-    {"name": "주택법 시행령",    "mst": "281851" ,   "filter_articles": None},
-    {"name": "주택법 시행규칙",    "mst": "284551" ,   "filter_articles": None},
+    {"name": "민간임대주택에 관한 특별법", "mst": "276995", "filter_articles": None},
+    {"name": "민간임대주택에 관한 특별법 시행령", "mst": "269343", "filter_articles": None},
+    {"name": "민간임대주택에 관한 특별법 시행규칙", "mst": "280639", "filter_articles": None},
+    {"name": "부도공공건설임대주택 임차인 보호를 위한 특별법", "mst": "174491", "filter_articles": None},
+    {"name": "부도공공건설임대주택 임차인 보호를 위한 특별법 시행령", "mst": "185425", "filter_articles": None},
+    {"name": "장기공공임대주택 입주자 삶의 질 향상 지원법", "mst": "273421", "filter_articles": None},
+    {"name": "장기공공임대주택 입주자 삶의 질 향상 지원법 시행령", "mst": "283499", "filter_articles": None},
+    {"name": "장기공공임대주택 입주자 삶의 질 향상 지원법 시행규칙", "mst": "185553", "filter_articles": None},
+    {"name": "주택법", "mst": "283191", "filter_articles": None},
+    {"name": "주택법 시행령", "mst": "281851", "filter_articles": None},
+    {"name": "주택법 시행규칙", "mst": "284551", "filter_articles": None},
 
-    {"name": "민법",    "mst": "284415" ,   "filter_articles": set(range(618, 655))},
-
-
+    {"name": "민법", "mst": "284415", "filter_articles": set(range(618, 655))},
 ]
-
 
 
 def parse_article_text(article) -> str:
@@ -113,12 +120,12 @@ def parse_article_text(article) -> str:
 
 
 def fetch_law_articles(mst: str, law_name: str, filter_articles=None) -> list[dict]:
-    """법제처 API: MST -> 조문 목록 파싱 (항/호/목 계층 보존)"""
+    """법제처 API: MST -> 조문 목록 파싱"""
     try:
         resp = requests.get(
             f"{BASE_URL}/lawService.do",
             params={"OC": LAW_OC, "target": "law", "MST": mst, "type": "XML"},
-            timeout=30
+            timeout=30,
         )
         root = ET.fromstring(resp.content)
     except Exception as e:
@@ -144,7 +151,9 @@ def fetch_law_articles(mst: str, law_name: str, filter_articles=None) -> list[di
             continue
 
         articles.append({
+            "type": "law",
             "law_name": law_name,
+            "mst": mst,             # 법령 고유번호 (법제처 API 재수집 시 필요)
             "article_num": num_str,
             "article_title": (article.findtext("조문제목") or "").strip(),
             "content": content,
@@ -156,14 +165,21 @@ def fetch_law_articles(mst: str, law_name: str, filter_articles=None) -> list[di
     return articles
 
 
-def embed_text(text: str) -> list[float]:
-    """Gemini gemini-embedding-2-preview로 임베딩 (저장용)"""
+def embed_dense(text: str) -> list[float]:
     result = gemini_client.models.embed_content(
         model="gemini-embedding-2-preview",
         contents=text,
-        config=types.EmbedContentConfig(task_type="RETRIEVAL_DOCUMENT")
+        config=types.EmbedContentConfig(task_type="RETRIEVAL_DOCUMENT"),
     )
     return result.embeddings[0].values
+
+
+def embed_sparse(text: str) -> SparseVector:
+    emb = next(iter(bm25_model.embed([text])))
+    return SparseVector(
+        indices=list(emb.indices),
+        values=list(emb.values),
+    )
 
 
 def step1_collect_laws(db):
@@ -175,7 +191,7 @@ def step1_collect_laws(db):
         law_name = law_info["name"]
         filter_articles = law_info["filter_articles"]
 
-        existing = col.count_documents({"law_name": law_name})
+        existing = col.count_documents({"law_name": law_name, "type": "law"})
         if existing > 0:
             print(f"  {law_name}: 이미 {existing}개 저장됨, 스킵")
             continue
@@ -194,13 +210,13 @@ def step1_collect_laws(db):
 
 
 def step2_embed_and_store(db, qdrant):
-    """Step 2: PENDING 항목만 임베딩 -> Qdrant 저장 (이어쓰기 지원)"""
+    """Step 2: PENDING law 항목만 임베딩 -> Qdrant 저장"""
     col = db["law_chunks"]
-    pending = list(col.find({"process_status": "PENDING"}))
+    pending = list(col.find({"process_status": "PENDING", "type": "law"}))
     total = len(pending)
 
     if total == 0:
-        print("\n[Step 2] 모든 항목이 이미 임베딩 완료되었습니다.")
+        print("\n[Step 2] 모든 law 항목이 이미 임베딩 완료되었습니다.")
         return
 
     print(f"\n[Step 2] 임베딩 시작: {total}개 항목")
@@ -211,10 +227,13 @@ def step2_embed_and_store(db, qdrant):
         text = f"{doc['law_name']} {doc['content']}"
 
         retries = 0
-        vector = None
+        dense_vector = None
+        sparse_vector = None
+
         while retries < 3:
             try:
-                vector = embed_text(text)
+                dense_vector = embed_dense(text)
+                sparse_vector = embed_sparse(text)
                 break
             except Exception as e:
                 retries += 1
@@ -222,7 +241,7 @@ def step2_embed_and_store(db, qdrant):
                 print(f"  임베딩 실패 ({retries}/3), {wait}초 대기: {e}")
                 time.sleep(wait)
 
-        if vector is None:
+        if dense_vector is None or sparse_vector is None:
             print(f"  최대 재시도 초과, 스킵: {doc['_id']}")
             continue
 
@@ -233,27 +252,31 @@ def step2_embed_and_store(db, qdrant):
             points=[
                 PointStruct(
                     id=qdrant_id,
-                    vector=vector,
+                    vector={
+                        DENSE_VECTOR_NAME: dense_vector,
+                        SPARSE_VECTOR_NAME: sparse_vector,
+                    },
                     payload={
                         "mongo_id": str(doc["_id"]),
+                        "type": "law",
                         "law_name": doc["law_name"],
                         "article_num": doc["article_num"],
                         "article_title": doc["article_title"],
                         "effective_date": doc["effective_date"],
-                    }
+                    },
                 )
-            ]
+            ],
         )
 
         col.update_one(
             {"_id": doc["_id"]},
-            {"$set": {"process_status": "DONE", "qdrant_id": qdrant_id}}
+            {"$set": {"process_status": "DONE", "qdrant_id": qdrant_id}},
         )
 
-        time.sleep(4)
+        time.sleep(1)
 
-    done = col.count_documents({"process_status": "DONE"})
-    total_all = col.count_documents({})
+    done = col.count_documents({"process_status": "DONE", "type": "law"})
+    total_all = col.count_documents({"type": "law"})
     print(f"\n임베딩 완료: {done}개 / {total_all}개")
 
 

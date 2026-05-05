@@ -1,0 +1,152 @@
+/api/auth/signup:
+  post:
+    summary: "일반 회원가입"
+    description: "이메일, 이름, 비밀번호를 입력하여 새로운 계정을 생성합니다."
+    tags:
+      - Auth
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            type: object
+            required: [name, email, password]
+            properties:
+              name:
+                type: string
+                example: "홍길동"
+              email:
+                type: string
+                format: email
+                example: "user@example.com"
+              password:
+                type: string
+                minLength: 6
+                example: "password123"
+    responses:
+      201:
+        description: "회원가입 성공"
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AuthResponse'
+      400:
+        description: "필수 값 누락 또는 비밀번호 길이 미달"
+      409:
+        description: "이미 가입된 이메일"
+
+/api/auth/login:
+  post:
+    summary: "일반 로그인"
+    description: "이메일과 비밀번호를 사용하여 액세스 토큰을 발급받습니다."
+    tags:
+      - Auth
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            type: object
+            required: [email, password]
+            properties:
+              email:
+                type: string
+                format: email
+                example: "user@example.com"
+              password:
+                type: string
+                example: "password123"
+    responses:
+      200:
+        description: "로그인 성공"
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AuthResponse'
+      401:
+        description: "이메일 또는 비밀번호 불일치"
+
+/api/auth/google:
+  get:
+    summary: "구글 로그인 시작"
+    description: "구글 로그인 페이지로 리다이렉트합니다. 성공 시 캘린더 권한(offline)을 요청합니다."
+    tags:
+      - Auth
+    responses:
+      302:
+        description: "구글 로그인 페이지로 이동"
+
+/api/auth/google/callback:
+  get:
+    summary: "구글 로그인 콜백"
+    description: "구글 인증 후 서버로 돌아오는 엔드포인트입니다."
+    tags:
+      - Auth
+    parameters:
+      - in: query
+        name: code
+        schema:
+          type: string
+        description: "구글에서 전달한 인증 코드"
+    responses:
+      302:
+        description: "인증 성공 후 프론트엔드로 리다이렉트"
+
+/api/auth/me:
+  get:
+    summary: "내 정보 조회"
+    description: "현재 로그인된 유저의 정보를 가져옵니다 (Header에 Authorization 토큰 필요)."
+    tags:
+      - Auth
+    security:
+      - bearerAuth: []
+    responses:
+      200:
+        description: "조회 성공"
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/User'
+      401:
+        description: "인증 실패"
+
+/api/auth/logout:
+  post:
+    summary: "로그아웃"
+    description: "로그아웃 처리를 수행합니다."
+    tags:
+      - Auth
+    responses:
+      200:
+        description: "로그아웃 성공"
+
+components:
+  schemas:
+    User:
+      type: object
+      properties:
+        userID:
+          type: string
+          example: "user_550e8400-e29b-41d4-a716-446655440000"
+        name:
+          type: string
+          example: "홍길동"
+        email:
+          type: string
+          example: "user@example.com"
+        avatar:
+          type: string
+          example: ""
+        provider:
+          type: string
+          example: "google"
+
+    AuthResponse:
+      type: object
+      properties:
+        user:
+          $ref: '#/components/schemas/User'
+        token:
+          type: string
+          description: "Access Token (JWT)"
+          example: "eyJhbGciOiJIUzI1NiIsInR..."

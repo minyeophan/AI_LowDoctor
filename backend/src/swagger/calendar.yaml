@@ -1,0 +1,176 @@
+# /api/calendar 경로에 대한 명세
+paths:
+  /api/calendar:
+    get:
+      summary: "내 일정 목록 조회"
+      tags:
+        - Calendar
+      description: "로그인한 사용자의 userID를 기준으로 DB에 저장된 모든 일정을 시작 날짜 순으로 가져옵니다."
+      responses:
+        200:
+          description: "조회 성공"
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  total:
+                    type: integer
+                  list:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/ScheduleResponse'
+        401:
+          description: "로그인이 필요합니다."
+
+    post:
+      summary: "새 일정 작성 및 Google 등록"
+      tags:
+        - Calendar
+      description: "사용자의 Google 토큰을 사용하여 Google Calendar에 이벤트를 삽입하고, 성공 시 DB에 데이터를 저장합니다."
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [scheduleName, startDate, endDate]
+              properties:
+                scheduleName:
+                  type: string
+                  example: "전세 계약 확정일자 신청"
+                startDate:
+                  type: string
+                  format: date-time
+                  example: "2026-06-01T09:00:00Z"
+                endDate:
+                  type: string
+                  format: date-time
+                  example: "2026-06-01T10:00:00Z"
+                alarm:
+                  type: integer
+                  default: 30
+                  description: "알림 전 시간 (분 단위)"
+                alarmEnabled:
+                  type: boolean
+                  default: true
+                  description: "알림 활성화 여부"
+      responses:
+        201:
+          description: "일정 생성 성공"
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  message:
+                    type: string
+                  data:
+                    $ref: '#/components/schemas/ScheduleResponse'
+        403:
+          description: "Google 계정 연동 필요"
+
+  /api/calendar/{id}:
+    parameters:
+      - in: path
+        name: id
+        required: true
+        schema:
+          type: string
+        description: "일정의 MongoDB 고유 ID"
+
+    patch:
+      summary: "일정 수정"
+      tags:
+        - Calendar
+      description: "DB 정보를 업데이트하고, 연동된 경우 Google Calendar 이벤트도 동기화하여 수정합니다."
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ScheduleUpdate'
+      responses:
+        200:
+          description: "수정 성공"
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  data:
+                    $ref: '#/components/schemas/ScheduleResponse'
+        404:
+          description: "일정을 찾을 수 없음"
+
+    delete:
+      summary: "일정 삭제"
+      tags:
+        - Calendar
+      description: "Google Calendar 이벤트를 먼저 삭제한 후, DB에서 해당 일정을 제거합니다."
+      responses:
+        200:
+          description: "삭제 성공"
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  message:
+                    type: string
+
+components:
+  schemas:
+    ScheduleResponse:
+      type: object
+      properties:
+        _id:
+          type: string
+          example: "60d...abc"
+        userId:
+          type: string
+          example: "testUser01"
+        scheduleName:
+          type: string
+        startDate:
+          type: string
+          format: date-time
+        endDate:
+          type: string
+          format: date-time
+        alarm:
+          type: integer
+          example: 30
+        alarmEnabled:
+          type: boolean
+          example: true
+        googleEventId:
+          type: string
+          description: "Google Calendar API에서 발급받은 이벤트 ID"
+        createdAt:
+          type: string
+          format: date-time
+
+    ScheduleUpdate:
+      type: object
+      properties:
+        scheduleName:
+          type: string
+        startDate:
+          type: string
+          format: date-time
+        endDate:
+          type: string
+          format: date-time
+        alarm:
+          type: integer
+        alarmEnabled:
+          type: boolean
