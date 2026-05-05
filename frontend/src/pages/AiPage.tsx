@@ -13,8 +13,9 @@ import SummaryView from '../components/aidt/views/SummaryView';
 import FileUploader from '../components/FileUploader';
 import { useDocument , DocumentData } from '../context/DocumentContext';
 import { documentsAPI, UploadResponse } from '../api/documents';
-import { analyzeAPI, AnalyzeResponse, AnalysisResult } from '../api/analyze';
+import { analyzeAPI, AnalyzeResponse, AnalysisResult , RiskItem } from '../api/analyze';
 import { mockContractTip, mockImprovementGuides, mockRiskItems, mockSummaryData } from '../mock/mockData';
+
 import DocumentView from '../components/aidt/views/DocumentView';
 import { UploadResult } from '../types';
 import './AiPage.css';
@@ -37,9 +38,41 @@ function AnalysisPage() {
   const [analyzingType, setAnalyzingType] = useState<AnalysisType>(null);
   const [analyzedMenus, setAnalyzedMenus] = useState<Set<string>>(new Set());
   const [editedHtml, setEditedHtml] = useState<string>('');
+  const [hasPersonalInfo, setHasPersonalInfo] = useState(false);
+  const [isMasked, setIsMasked] = useState(false);
+  const [maskCounts, setMaskCounts] = useState<Record<string, number>>({});
   const [isConverting, setIsConverting] = useState(false);
   const editorRef = useRef<DocumentEditorRef>(null);
   const location = useLocation();
+
+const maskPersonalInfo = (html: string): { masked: string; detected: boolean; counts: Record<string, number> } => {
+  const patterns = [
+    { regex: /\d{6}-\d{7}/g, replace: '******-*******', label: '주민번호' },
+    { regex: /01[0-9]-\d{3,4}-\d{4}/g, replace: '010-****-****', label: '전화번호' },
+    { regex: /\d{3,4}-\d{3,4}-\d{4,6}/g, replace: '****-****-****', label: '계좌번호' },
+    { regex: /\d{3}-\d{2}-\d{5}/g, replace: '***-**-*****', label: '사업자번호' },
+    { 
+      regex: /(서울|부산|대구|인천|광주|대전|울산|세종|경기도|강원도|충청북도|충청남도|전라북도|전라남도|경상북도|경상남도|제주도|충북|충남|전북|전남|경북|경남|제주)[^\s<]{2,80}(로|길|동|읍|면|리)(\s*\d+(-\d+)?(\s*\S+빌라|\s*\S+아파트|\s*\S+빌딩|\s*\d+호)?)?/g,
+      replace: '***',
+      label: '주소'
+    },
+  ];
+  let result = html;
+  let detected = false;
+  const counts: Record<string, number> = {};
+  patterns.forEach(({ regex, replace, label }) => {
+    const matches = result.match(regex);
+    if (matches && matches.length > 0) {
+      detected = true;
+      counts[label] = matches.length;
+    }
+    regex.lastIndex = 0;
+    result = result.replace(regex, replace);
+  });
+  console.log('🔍 마스킹 감지 결과:', detected, counts);
+  return { masked: result, detected, counts };
+};
+
 
 useEffect(() => {
   if (location.state?.autoAnalyze && currentDocument?.documentId) {
@@ -49,7 +82,6 @@ useEffect(() => {
       setIsConverting(true);
       try {
         const { html } = await documentsAPI.convertDocument(currentDocument.documentId!);
-        setEditedHtml(html);
       } catch (e) {
         console.error('HTML 변환 실패:', e);
         setEditedHtml('<p>문서 변환에 실패했습니다. 텍스트를 직접 입력해주세요.</p>');
@@ -61,6 +93,7 @@ useEffect(() => {
     convertExisting();
   }
 }, []);
+
 
 const navigate = useNavigate();
 
@@ -181,7 +214,11 @@ const API_ENABLED = import.meta.env.VITE_API_BASE_URL !== undefined &&
     setIsConverting(true);
     try {
       const { html } = await documentsAPI.convertDocument(documentId);
-      setEditedHtml(html);
+      const { masked, detected, counts } = maskPersonalInfo(html);
+      setEditedHtml(masked);
+      setHasPersonalInfo(detected);
+      setIsMasked(detected);
+      setMaskCounts(counts);
     } catch (e) {
       console.error('HTML 변환 실패:', e);
       setEditedHtml('<p>문서 변환에 실패했습니다. 텍스트를 직접 입력해주세요.</p>');
@@ -290,7 +327,9 @@ const getAnalysisKey = (type: AnalysisType) => {
                 <ul className="upload-guide-list">
                   <li>현재 부동산 계약서만 업로드 가능합니다.</li>
                   <li>PDF, HWP, DOC, TXT 파일을 업로드할 수 있습니다.</li>
-                  
+                  <li className="upload-guide-privacy">
+                   계약서에 주민번호·계좌번호·연락처 등 개인정보가 포함되지 않도록 확인 후 업로드하세요.
+                  </li>
                 </ul>
               </div>
               <FileUploader onUploadSuccess={handleFileUploadSuccess} />
@@ -355,6 +394,10 @@ const getAnalysisKey = (type: AnalysisType) => {
             editorRef={editorRef}
             onAnalyze={() => setPendingAnalysis('summary')}
             isAnalyzing={isAnalyzing}
+            hasPersonalInfo={hasPersonalInfo}
+            isMasked={isMasked}
+            onDragMask={(maskedHtml) => setEditedHtml(maskedHtml)}
+            maskCounts={maskCounts}
           />
         );
 
@@ -410,6 +453,7 @@ const getAnalysisKey = (type: AnalysisType) => {
           onZoomIn={handleZoomIn}
           onZoomOut={handleZoomOut}
           editedHtml={editedHtml}
+        
         />
       );
         
@@ -447,6 +491,8 @@ const getAnalysisKey = (type: AnalysisType) => {
         <FloatingButtons 
           activeSidebar={activeSidebar}
           onToggle={toggleSidebar}
+          riskItems={analysisData?.riskItems as RiskItem[] ?? []}
+          documentFilename={currentDocument?.filename}
         />
       </div>
      

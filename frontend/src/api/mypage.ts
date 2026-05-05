@@ -26,4 +26,15 @@ export const mypageAPI = {
     if (!res.ok) throw new Error('보관함 목록 조회 실패');
     return res.json();
   },
+    saveDocument: async (documentId: string) => {
+        const res = await fetch(`${BASE}/api/mypage/save`, {
+          method: 'POST',
+          headers: getHeaders(),
+          body: JSON.stringify({ documentId })
+        });
+        if (!res.ok) throw new Error('문서 저장 실패');
+        return res.json();
+      },
+
 };
+

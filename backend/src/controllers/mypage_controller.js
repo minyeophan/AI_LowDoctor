@@ -45,7 +45,8 @@ export const getMyPageList = async (req, res, next) => {
                 const analysis = await Analysis.findOne({ documentId: file.documentId }).lean();
 
                 if (category === "draft") {
-                    if (analysis?.status === "completed") return null;
+                    // 작성 중: isSaved가 false인 것만
+                    if (file.isSaved === true) return null;
 
                     return {
                         documentId: file.documentId,
@@ -56,14 +57,15 @@ export const getMyPageList = async (req, res, next) => {
                         statusText: resolveAnalysisStatus(analysis?.status)
                     };
                 } else {
-                    if (analysis?.status !== "completed") return null;
+                    // 보관함: isSaved가 true인 것만
+                    if (file.isSaved !== true) return null;
 
                     return {
                         documentId: file.documentId,
                         contractType: "부동산",
                         title: file.originalname,
                         UploadDate: formatDate(file.createdAt),
-                        analysisStatus: resolveAnalysisStatus(analysis.status),
+                        analysisStatus: resolveAnalysisStatus(analysis?.status),
                     };
                 }
             })
@@ -82,6 +84,46 @@ export const getMyPageList = async (req, res, next) => {
         });
     } catch (error) {
         console.error("마이페이지 조회 에러: ", error);
+        next(error);
+    }
+};
+
+export const saveDocumentToArchive = async (req, res, next) => {
+    try {
+        if (!req.user) {
+            return res.status(401).json({ message: "로그인이 필요합니다." });
+        }
+
+        const { documentId } = req.body;
+
+        if (!documentId) {
+            return res.status(400).json({ message: "documentId가 필요합니다." });
+        }
+
+        // 문서 존재 확인
+        const upload = await Upload.findOne({ documentId });
+        if (!upload) {
+            return res.status(404).json({ message: "문서를 찾을 수 없습니다." });
+        }
+
+        // Upload 문서에 userID, isSaved 추가 (분석 여부와 무관하게 저장)
+        await Upload.updateOne(
+            { documentId },
+            {
+                userID: req.user.userID,
+                isSaved: true
+            }
+        );
+
+        console.log(`문서 저장 완료 [${documentId}] (사용자: ${req.user.userID})`);
+
+        return res.status(200).json({
+            message: "문서가 보관함에 저장되었습니다.",
+            documentId,
+            saved: true
+        });
+    } catch (error) {
+        console.error("문서 저장 에러:", error);
         next(error);
     }
 };
