@@ -491,7 +491,7 @@ const getAnalysisKey = (type: AnalysisType) => {
         <FloatingButtons 
           activeSidebar={activeSidebar}
           onToggle={toggleSidebar}
-          riskItems={analysisData?.riskItems as RiskItem[] ?? []}
+          riskItems={(analysisData?.riskItems ?? mockRiskItems) as RiskItem[]}
           documentFilename={currentDocument?.filename}
         />
       </div>

@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import './FloatingButtons.css';
 import { GoBellFill } from "react-icons/go";
@@ -23,9 +23,39 @@ interface FloatingButtonsProps {
 }
 
 const SEVERITY_LABEL: Record<string, string> = {
-  high: '⚠️ 높음',
-  medium: '🔶 중간',
-  low: '🔷 낮음',
+  high: '높음',
+  medium: '중간',
+  low: '낮음',
+  HIGH: '높음',
+  MEDIUM: '중간',
+  LOW: '낮음',
+};
+
+const SEVERITY_ORDER: Record<string, number> = {
+  high: 0, HIGH: 0,
+  medium: 1, MEDIUM: 1,
+  low: 2, LOW: 2,
+};
+
+// 선택된 항목들로 textarea 본문 생성 — 원래 순서 유지, 위험조항+이유만 표시
+const buildContentFromSelected = (items: RiskItem[], selectedIds: string[]): string => {
+  const selected = items.filter(item => selectedIds.includes(item.id));
+
+  return selected
+    .map((item, idx) => {
+      const severity = item.severity ?? item.riskLevel ?? '';
+      const category = item.category ?? '';
+      const description = item.description ?? '';
+      const reason = item.reason ?? '';
+
+      const lines = [
+        `${idx + 1}. [${SEVERITY_LABEL[severity] ?? severity}] ${category}`,
+        description,
+        reason ? `이유: ${reason}` : '',
+      ].filter(Boolean);
+      return lines.join('\n');
+    })
+    .join('\n\n');
 };
 
 function FloatingButtons({ activeSidebar, onToggle, riskItems = [], documentFilename }: FloatingButtonsProps) {
@@ -40,11 +70,21 @@ function FloatingButtons({ activeSidebar, onToggle, riskItems = [], documentFile
   const [isSharing, setIsSharing] = useState(false);
   const [shareToast, setShareToast] = useState<string | null>(null);
   const [shareError, setShareError] = useState<string | null>(null);
+  const [shareTitle, setShareTitle] = useState('');
+  const [shareContent, setShareContent] = useState('');
+  const [selectedIds, setSelectedIds] = useState<string[]>([]);
 
   const showToast = (msg: string) => {
     setShareToast(msg);
     setTimeout(() => setShareToast(null), 3000);
   };
+
+  // 선택 항목 변경 시 textarea 자동 업데이트
+  useEffect(() => {
+    if (showShareModal) {
+      setShareContent(buildContentFromSelected(riskItems, selectedIds));
+    }
+  }, [selectedIds, showShareModal]);
 
   const handleShareClick = () => {
     if (!currentDocument) {
@@ -55,7 +95,28 @@ function FloatingButtons({ activeSidebar, onToggle, riskItems = [], documentFile
       showToast('위험 조항 분석 후 공유할 수 있습니다.');
       return;
     }
+    // 모달 초기화
+    const allIds = riskItems.map(item => item.id);
+    setSelectedIds(allIds);
+    setShareTitle('');
+    setShareContent(buildContentFromSelected(riskItems, allIds));
+    setShareError(null);
     setShowShareModal(true);
+  };
+
+  const handleToggleItem = (id: string) => {
+    setSelectedIds(prev =>
+      prev.includes(id) ? prev.filter(i => i !== id) : [...prev, id]
+    );
+  };
+
+  const handleSelectAll = () => {
+    const allIds = riskItems.map(item => item.id);
+    if (selectedIds.length === allIds.length) {
+      setSelectedIds([]);
+    } else {
+      setSelectedIds(allIds);
+    }
   };
 
   const handleExit = () => {
@@ -88,34 +149,22 @@ function FloatingButtons({ activeSidebar, onToggle, riskItems = [], documentFile
     }
   };
 
-  const buildShareContent = () => {
-    if (!riskItems || riskItems.length === 0) return '위험 조항이 없습니다.';
-    return riskItems
-      .map((item) => {
-        const lines = [
-          `[${SEVERITY_LABEL[item.severity] ?? item.severity}] ${item.category}`,
-          item.description,
-          item.reason ? `📌 이유: ${item.reason}` : '',
-          item.guide
-            ? `💡 대응: ${item.guide}`
-            : item.recommendation
-            ? `💡 권장: ${item.recommendation}`
-            : '',
-          item.improvedClause ? `✏️ 개선 조항: ${item.improvedClause}` : '',
-        ].filter(Boolean);
-        return lines.join('\n');
-      })
-      .join('\n\n---\n\n');
-  };
-
   const handleShareConfirm = async () => {
+    if (!shareTitle.trim()) {
+      setShareError('제목을 입력해주세요.');
+      return;
+    }
+    if (!shareContent.trim()) {
+      setShareError('공유할 내용을 선택하거나 입력해주세요.');
+      return;
+    }
     setIsSharing(true);
     setShareError(null);
     try {
       await communityAPI.createPost({
-        title: `[계약서 분석] ${documentFilename ?? '계약서'} 위험조항 공유`,
+        title: shareTitle,
         category: '계약정보',
-        content: buildShareContent(),
+        content: shareContent,
       });
       setShowShareModal(false);
       showToast('커뮤니티에 공유되었습니다 ✓');
@@ -126,6 +175,9 @@ function FloatingButtons({ activeSidebar, onToggle, riskItems = [], documentFile
       setIsSharing(false);
     }
   };
+
+  // 원래 순서 유지 (계약서 내 조항 순서)
+  const sortedRiskItems = riskItems;
 
   return (
     <>
@@ -238,30 +290,82 @@ function FloatingButtons({ activeSidebar, onToggle, riskItems = [], documentFile
       {showShareModal && (
         <div className="save-modal-overlay">
           <div className="share-modal">
-            <div className="modal-icon modal-icon-share">
-              <IoMdShare size={28} color="#4099FD" />
+
+            {/* 헤더 */}
+            <div className="share-modal-header">
+              <IoMdShare size={20} color="#4099FD" />
+              <p className="save-modal-text" style={{ margin: 0 }}>커뮤니티에 공유</p>
             </div>
-            <p className="save-modal-text">커뮤니티에 공유</p>
-            <p className="save-modal-sub">
-              위험 조항 {riskItems.length}건을 커뮤니티에 공유합니다.
-            </p>
-            <div className="share-preview">
-              {riskItems.map((item) => (
-                <div key={item.id} className={`share-preview-item severity-${item.severity}`}>
-                  <span className="share-severity-badge">
-                    {SEVERITY_LABEL[item.severity] ?? item.severity}
-                  </span>
-                  <span className="share-category">{item.category}</span>
-                  <p className="share-description">{item.description}</p>
-                  {(item.guide || item.recommendation) && (
-                    <p className="share-guide">
-                      💡 {item.guide || item.recommendation}
-                    </p>
-                  )}
+
+            <div className="share-modal-body">
+              {/* 왼쪽: 조항 선택 */}
+              <div className="share-left">
+                <div className="share-section-label">
+                  <span>공유할 위험 조항 선택</span>
+                  <button className="share-select-all" onClick={handleSelectAll}>
+                    {selectedIds.length === riskItems.length ? '전체 해제' : '전체 선택'}
+                  </button>
                 </div>
-              ))}
+                <div className="share-item-list">
+                  {sortedRiskItems.map(item => {
+                    const severity = item.severity ?? item.riskLevel ?? '';
+                    const category = item.category ?? '(카테고리 없음)';
+                    const isSelected = selectedIds.includes(item.id);
+                    return (
+                      <div
+                        key={item.id}
+                        className={`share-item-card ${isSelected ? 'selected' : ''} severity-${severity.toLowerCase()}`}
+                        onClick={() => handleToggleItem(item.id)}
+                      >
+                        <input
+                          type="checkbox"
+                          checked={isSelected}
+                          onChange={() => handleToggleItem(item.id)}
+                          onClick={e => e.stopPropagation()}
+                          className="share-item-checkbox"
+                        />
+                        <div className="share-item-info">
+                          <div className="share-severity-row">
+                            <span className={`share-dot share-dot-${severity.toLowerCase()}`} />
+                            <span className="share-severity-badge">
+                              {SEVERITY_LABEL[severity] ?? severity}
+                            </span>
+                          </div>
+                          <p className="share-description">
+                            {(item.description ?? '').slice(0, 60)}{(item.description ?? '').length > 60 ? '...' : ''}
+                          </p>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+
+              {/* 오른쪽: 제목 + 본문 편집 */}
+              <div className="share-right">
+                <div className="share-section-label">
+                  <span>게시글 편집</span>
+                  <span className="share-edit-hint">내용을 자유롭게 수정할 수 있습니다</span>
+                </div>
+                <input
+                  className="share-title-input"
+                  value={shareTitle}
+                  onChange={e => setShareTitle(e.target.value)}
+                  placeholder="제목을 입력하세요"
+                  maxLength={100}
+                />
+                <textarea
+                  className="share-content-textarea"
+                  value={shareContent}
+                  onChange={e => setShareContent(e.target.value)}
+                  placeholder="공유할 내용이 여기에 표시됩니다"
+                  rows={14}
+                />
+              </div>
             </div>
+
             {shareError && <p className="share-error">{shareError}</p>}
+
             <div className="save-modal-buttons">
               <button
                 className="save-cancel-btn"
@@ -273,16 +377,16 @@ function FloatingButtons({ activeSidebar, onToggle, riskItems = [], documentFile
               <button
                 className="save-confirm-btn"
                 onClick={handleShareConfirm}
-                disabled={isSharing}
+                disabled={isSharing || selectedIds.length === 0 || !shareTitle.trim() || !shareContent.trim()}
               >
-                {isSharing ? '공유중...' : '공유하기'}
+                {isSharing ? '공유중...' : `공유하기 (${selectedIds.length}건)`}
               </button>
             </div>
           </div>
         </div>
       )}
 
-      {/* 토스트 — 안내 메시지 및 공유 완료 공용 */}
+      {/* 토스트 */}
       {shareToast && (
         <div className="share-toast">
           <IoMdCheckmark size={16} color="#fff" />
