@@ -160,7 +160,7 @@ const handleCommentDislike = (commentId: string) => {
             <span>·</span>
             <span>댓글 {comments.length}</span>
           </div>
-          <p className="post-detail-body">{post.content}</p>
+          <p className="post-detail-body" style={{ whiteSpace: 'pre-wrap' }}>{post.content}</p>
           <div className="post-detail-actions">
             <button className={`like-btn ${liked ? 'liked' : ''}`} onClick={handleLike}>
               ❤ {likes}

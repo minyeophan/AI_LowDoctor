@@ -7,6 +7,7 @@ import { IoClose } from 'react-icons/io5';
 import { BiSolidBell, BiSolidBellOff } from "react-icons/bi";
 import { MdError } from "react-icons/md";
 import { useLocation } from 'react-router-dom';
+import { calendarAPI, ScheduleResponse } from '../api/calendar';
 
 export interface Schedule {
   id: string;
@@ -17,30 +18,20 @@ export interface Schedule {
   eventType: '계약체결' | '잔금납부' | '입주' | '계약만료' | '전입신고' | '확정일자' | '기타';
   memo?: string;
   notification: boolean;
+  alarm?: number;
 }
 
-export const mockSchedules: Schedule[] = [
-  {
-    id: '1',
-    title: '전세 계약 만료',
-    startDate: '2026-03-25',
-    endDate: '2026-05-28',
-    type: '부동산',
-    eventType: '계약만료',
-    memo: '보증금 반환 확인 필요',
-    notification: true,
-  },
-  {
-    id: '2',
-    title: '잔금 납부',
-    startDate: '2026-04-30',
-    endDate: '2026-04-30',
-    type: '부동산',
-    eventType: '잔금납부',
-    memo: '잔금 3,000만원',
-    notification: true,
-  },
-];
+// 백엔드 응답 → 프론트 Schedule 타입 변환
+const toSchedule = (item: ScheduleResponse): Schedule => ({
+  id: item._id,
+  title: item.scheduleName,
+  startDate: item.startDate.slice(0, 10),
+  endDate: item.endDate.slice(0, 10),
+  type: '부동산',
+  eventType: '기타',
+  notification: item.alarmEnabled,
+  alarm: item.alarm,
+});
 
 export const calcDday = (date: string): string => {
   const today = new Date();
@@ -85,9 +76,6 @@ const ddayColor = (dday: string): string => {
   return 'dday-past';
 };
 
-// ============================
-// 메인 컴포넌트
-// ============================
 export default function SchedulePage() {
   const [selectedDate, setSelectedDate] = useState<string | null>(null);
   const [currentMonth, setCurrentMonth] = useState<Date>(new Date());
@@ -97,18 +85,46 @@ export default function SchedulePage() {
   const [selectedType, setSelectedType] = useState('전체');
   const [showModal, setShowModal] = useState(false);
   const [editSchedule, setEditSchedule] = useState<Schedule | null>(null);
-  const [schedules, setSchedules] = useState<Schedule[]>(mockSchedules);
-const [detailSchedule, setDetailSchedule] = useState<Schedule | null>(null);
-const [isDdayGuideOpen, setIsDdayGuideOpen] = useState(false);
+  const [schedules, setSchedules] = useState<Schedule[]>([]);
+  const [detailSchedule, setDetailSchedule] = useState<Schedule | null>(null);
+  const [isDdayGuideOpen, setIsDdayGuideOpen] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
 
- const getSchedulesForDate = (dateStr: string) =>
-  schedules.filter(s => {
-    if (s.eventType === '계약체결') {
-      // 시작일과 종료일만 표시
-      return s.startDate === dateStr || s.endDate === dateStr;
+  const location = useLocation();
+
+  // 일정 목록 조회
+  const fetchSchedules = async () => {
+    setIsLoading(true);
+    try {
+      const res = await calendarAPI.getSchedules();
+      const mapped = (res.list || []).map(toSchedule);
+      setSchedules(mapped);
+    } catch (err) {
+      console.error('일정 조회 실패:', err);
+    } finally {
+      setIsLoading(false);
     }
-    return s.endDate === dateStr;
-  });
+  };
+
+  useEffect(() => {
+    fetchSchedules();
+  }, []);
+
+  // AiPage에서 자동 생성된 일정 처리
+  useEffect(() => {
+    if (location.state?.autoSchedules) {
+      const newSchedules = location.state.autoSchedules as Schedule[];
+      setSchedules(prev => [...prev, ...newSchedules]);
+    }
+  }, []);
+
+  const getSchedulesForDate = (dateStr: string) =>
+    schedules.filter(s => {
+      if (s.eventType === '계약체결') {
+        return s.startDate === dateStr || s.endDate === dateStr;
+      }
+      return s.endDate === dateStr;
+    });
 
   const monthSchedules = schedules
     .filter(s => {
@@ -123,52 +139,64 @@ const [isDdayGuideOpen, setIsDdayGuideOpen] = useState(false);
     })
     .sort((a, b) => new Date(a.startDate).getTime() - new Date(b.startDate).getTime());
 
-const filtered = schedules
-  .filter(s => getStatus(s.endDate) === activeTab)
-  .filter(s => selectedType === '전체' || s.type === selectedType)
-  .filter(s => s.title.includes(searchQuery) || (s.memo ?? '').includes(searchQuery))
-  .sort((a, b) => {
-    if (sortOrder === 'dday') {
-      // D-day 순 (가까운 날짜 먼저)
-      return new Date(a.endDate).getTime() - new Date(b.endDate).getTime();
-    }
-    // 최신 등록 순
-    return new Date(b.startDate).getTime() - new Date(a.startDate).getTime();
-  });
+  const filtered = schedules
+    .filter(s => getStatus(s.endDate) === activeTab)
+    .filter(s => selectedType === '전체' || s.type === selectedType)
+    .filter(s => s.title.includes(searchQuery) || (s.memo ?? '').includes(searchQuery))
+    .sort((a, b) => {
+      if (sortOrder === 'dday') {
+        return new Date(a.endDate).getTime() - new Date(b.endDate).getTime();
+      }
+      return new Date(b.startDate).getTime() - new Date(a.startDate).getTime();
+    });
 
-  const handleSave = (form: Omit<Schedule, 'id'>) => {
-    if (editSchedule) {
-      // 백엔드 연동 시: PATCH /api/schedule/:id
-      setSchedules(prev => prev.map(s => s.id === editSchedule.id ? { ...s, ...form } : s));
-    } else {
-      // 백엔드 연동 시: POST /api/schedule
-      setSchedules(prev => [...prev, { ...form, id: Date.now().toString() }]);
+  const handleSave = async (form: Omit<Schedule, 'id'>) => {
+    try {
+      if (editSchedule) {
+        // 수정
+        await calendarAPI.updateSchedule(editSchedule.id, {
+          scheduleName: form.title,
+          startDate: new Date(form.startDate).toISOString(),
+          endDate: new Date(form.endDate).toISOString(),
+          alarmEnabled: form.notification,
+          alarm: form.alarm ?? 30,
+        });
+      } else {
+        // 등록
+        await calendarAPI.createSchedule({
+          scheduleName: form.title,
+          startDate: new Date(form.startDate).toISOString(),
+          endDate: new Date(form.endDate).toISOString(),
+          alarmEnabled: form.notification,
+          alarm: form.alarm ?? 30,
+        });
+      }
+      await fetchSchedules();
+    } catch (err) {
+      console.error('일정 저장 실패:', err);
+      alert('일정 저장에 실패했습니다.');
     }
     setShowModal(false);
     setEditSchedule(null);
   };
 
-  const handleDelete = (id: string) => {
+  const handleDelete = async (id: string) => {
     if (!window.confirm('일정을 삭제하시겠습니까?')) return;
-    // 백엔드 연동 시: DELETE /api/schedule/:id
-    setSchedules(prev => prev.filter(s => s.id !== id));
+    try {
+      await calendarAPI.deleteSchedule(id);
+      await fetchSchedules();
+    } catch (err) {
+      console.error('일정 삭제 실패:', err);
+      alert('일정 삭제에 실패했습니다.');
+    }
   };
-
-  const location = useLocation();
-
-useEffect(() => {
-  if (location.state?.autoSchedules) {
-    const newSchedules = location.state.autoSchedules as Schedule[];
-    setSchedules(prev => [...prev, ...newSchedules]);
-  }
-}, []);
 
   return (
     <div className="schedule-page">
       <div className="schedule-container">
         <div className="schedule-layout">
 
-          {/* ===== 왼쪽: 캘린더 ===== */}
+          {/* 왼쪽: 캘린더 */}
           <div className="schedule-left">
             <div className="calendar-wrapper">
               <Calendar
@@ -237,7 +265,7 @@ useEffect(() => {
             </div>
           </div>
 
-          {/* ===== 오른쪽: 전체 일정 목록 ===== */}
+          {/* 오른쪽: 전체 일정 목록 */}
           <div className="schedule-right">
             <h1 className="schedule-page-title">일정 관리</h1>
 
@@ -303,12 +331,12 @@ useEffect(() => {
 
             {/* D-day 색상 안내 */}
             <div className="schedule-info-wrapper">
-             <div className="schedule-info-icon-wrap"
-                
-              >
+              <div className="schedule-info-icon-wrap">
                 <span className="schedule-info-icon">
-                  <MdError onMouseEnter={() => setIsDdayGuideOpen(true)}
-                onMouseLeave={() => setIsDdayGuideOpen(false)}/>
+                  <MdError
+                    onMouseEnter={() => setIsDdayGuideOpen(true)}
+                    onMouseLeave={() => setIsDdayGuideOpen(false)}
+                  />
                 </span>
                 <p>D-day 색상 안내</p>
                 {isDdayGuideOpen && (
@@ -350,13 +378,20 @@ useEffect(() => {
 
             {/* 일정 목록 */}
             <div className="schedule-list">
-              {filtered.length === 0 ? (
+              {isLoading ? (
+                <div className="schedule-empty">불러오는 중...</div>
+              ) : filtered.length === 0 ? (
                 <div className="schedule-empty">일정이 없습니다.</div>
               ) : (
                 filtered.map(schedule => {
                   const dday = calcDday(schedule.endDate);
                   return (
-                    <div key={schedule.id} className="schedule-card" onClick={() => setDetailSchedule(schedule)} style={{ cursor: 'pointer' }}>
+                    <div
+                      key={schedule.id}
+                      className="schedule-card"
+                      onClick={() => setDetailSchedule(schedule)}
+                      style={{ cursor: 'pointer' }}
+                    >
                       <span className={`schedule-dot ${ddayColor(dday)}`} />
                       <span className={`schedule-dday-text ${ddayColor(dday)}`}>{dday}</span>
                       <div className="schedule-card-divider" />
@@ -391,7 +426,7 @@ useEffect(() => {
         />
       )}
 
-            {detailSchedule && (
+      {detailSchedule && (
         <ScheduleDetailModal
           schedule={detailSchedule}
           onClose={() => setDetailSchedule(null)}
@@ -409,7 +444,6 @@ useEffect(() => {
     </div>
   );
 }
-
 
 // ============================
 // 일정 등록/수정 모달
@@ -432,7 +466,7 @@ function ScheduleModal({ schedule, onSave, onClose }: ModalProps) {
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (!title.trim() || !endDate) return;
-    onSave({ title, startDate, endDate, type, eventType, memo, notification });
+    onSave({ title, startDate, endDate, type, eventType, memo, notification, alarm: 30 });
   };
 
   return (
@@ -446,7 +480,6 @@ function ScheduleModal({ schedule, onSave, onClose }: ModalProps) {
         </div>
 
         <form onSubmit={handleSubmit} className="modal-form">
-          {/* 제목 */}
           <div className="modal-field">
             <label className="modal-label">제목 *</label>
             <input
@@ -459,7 +492,6 @@ function ScheduleModal({ schedule, onSave, onClose }: ModalProps) {
             />
           </div>
 
-          {/* 카테고리 */}
           <div className="modal-field">
             <label className="modal-label">계약 유형 *</label>
             <select
@@ -471,7 +503,6 @@ function ScheduleModal({ schedule, onSave, onClose }: ModalProps) {
             </select>
           </div>
 
-          {/* 일정 유형 */}
           <div className="modal-field">
             <label className="modal-label">일정 유형 *</label>
             <select
@@ -489,7 +520,6 @@ function ScheduleModal({ schedule, onSave, onClose }: ModalProps) {
             </select>
           </div>
 
-          {/* 기간 */}
           <div className="modal-field">
             <label className="modal-label">
               {eventType === '계약체결' ? '계약 기간 *' : 'D-day 날짜 *'}
@@ -527,7 +557,6 @@ function ScheduleModal({ schedule, onSave, onClose }: ModalProps) {
             )}
           </div>
 
-          {/* 메모 */}
           <div className="modal-field">
             <label className="modal-label">메모</label>
             <textarea
@@ -539,7 +568,6 @@ function ScheduleModal({ schedule, onSave, onClose }: ModalProps) {
             />
           </div>
 
-          {/* 알림 */}
           <div className="modal-field">
             <label className="modal-checkbox-label">
               <input
@@ -549,9 +577,8 @@ function ScheduleModal({ schedule, onSave, onClose }: ModalProps) {
                 className="modal-checkbox"
               />
               <span className='modal-bell-set'>
-                <BiSolidBell color="#F7CB46"/> 알림 설정
+                <BiSolidBell color="#F7CB46" /> 알림 설정
               </span>
-              
             </label>
             <p className="modal-hint">알림을 설정하면 일정 하루 전에 알려드려요</p>
           </div>
@@ -569,10 +596,7 @@ function ScheduleModal({ schedule, onSave, onClose }: ModalProps) {
 }
 
 function ScheduleDetailModal({
-  schedule,
-  onClose,
-  onEdit,
-  onDelete,
+  schedule, onClose, onEdit, onDelete,
 }: {
   schedule: Schedule;
   onClose: () => void;
@@ -592,12 +616,9 @@ function ScheduleDetailModal({
         </div>
 
         <div className="detail-modal-body">
-          {/* D-day */}
           <div className="detail-dday-wrap">
             <span className={`detail-dday ${ddayColor(dday)}`}>{dday}</span>
           </div>
-
-          {/* 정보 목록 */}
           <div className="detail-info-list">
             <div className="detail-info-row">
               <span className="detail-info-label">제목</span>
@@ -618,21 +639,19 @@ function ScheduleDetailModal({
               <span className="detail-info-value">
                 {schedule.startDate === schedule.endDate
                   ? schedule.endDate
-                  : `${schedule.startDate} ~ ${schedule.endDate}`
-                }
+                  : `${schedule.startDate} ~ ${schedule.endDate}`}
               </span>
             </div>
             <div className="detail-info-row">
               <span className="detail-info-label">알림</span>
               <span className="detail-info-value">
-                {schedule.notification ? <span style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
-                  <BiSolidBell size={18} color="#F7CB46" />
-                  <span>설정됨</span>
-                </span> :  
-                <span style={{ display: 'flex', alignItems: 'center', gap: '4px' }}> 
-                <BiSolidBellOff size={18} color="#a2a2a2" /> <span>미설정</span>
-                </span>
-                
+                {schedule.notification
+                  ? <span style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+                      <BiSolidBell size={18} color="#F7CB46" /><span>설정됨</span>
+                    </span>
+                  : <span style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+                      <BiSolidBellOff size={18} color="#a2a2a2" /><span>미설정</span>
+                    </span>
                 }
               </span>
             </div>
@@ -646,7 +665,11 @@ function ScheduleDetailModal({
         </div>
 
         <div className="modal-actions">
-          <button className="modal-cancel-btn" onClick={onDelete} style={{ color: '#DC2626', borderColor: '#fecaca' }}>
+          <button
+            className="modal-cancel-btn"
+            onClick={onDelete}
+            style={{ color: '#DC2626', borderColor: '#fecaca' }}
+          >
             삭제
           </button>
           <button className="modal-save-btn" onClick={onEdit}>

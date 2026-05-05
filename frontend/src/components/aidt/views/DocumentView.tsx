@@ -28,11 +28,17 @@ interface DocumentViewProps {
   editorRef: React.RefObject<DocumentEditorRef>;
   onAnalyze: () => void;
   isAnalyzing: boolean;
+  hasPersonalInfo?: boolean;
+  isMasked?: boolean;
+  onDragMask?: (maskedHtml: string) => void;
+  maskCounts?: Record<string, number>;
 }
 
 function DocumentView({
   currentDocument, zoomLevel, onZoomIn, onZoomOut,
-  editedHtml, editorRef, onAnalyze, isAnalyzing
+  editedHtml, editorRef, onAnalyze, isAnalyzing,
+  hasPersonalInfo, isMasked, onDragMask, maskCounts
+
 }: DocumentViewProps) {
   const [searchTerm, setSearchTerm] = useState('');
   const [matchCount, setMatchCount] = useState(0);
@@ -41,6 +47,9 @@ function DocumentView({
   const memoPanelRef = useRef<HTMLDivElement>(null);
   const dragOffset = useRef({ x: 0, y: 0 });
   const isDragging = useRef(false);
+  const [dragMaskMode, setDragMaskMode] = useState(false);
+  const [htmlHistory, setHtmlHistory] = useState<string[]>([]);
+  const [showBanner, setShowBanner] = useState(true);
 
   // 메모 상태
   const [memos, setMemos] = useState<Memo[]>([]);
@@ -98,6 +107,20 @@ const handleDragEnd = () => {
   isDragging.current = false;
 };
 
+const applyMask = (maskedHtml: string) => {
+  const current = editorRef.current?.getHTML() || '';
+  setHtmlHistory(prev => [...prev, current]);
+  onDragMask?.(maskedHtml);
+  setSearchTerm('');
+};
+
+const handleUndo = () => {
+  if (htmlHistory.length === 0) return;
+  const prev = htmlHistory[htmlHistory.length - 1];
+  setHtmlHistory(h => h.slice(0, -1));
+  onDragMask?.(prev);
+};
+
 useEffect(() => {
   window.addEventListener('mousemove', handleDragMove);
   window.addEventListener('mouseup', handleDragEnd);
@@ -141,8 +164,36 @@ useEffect(() => {
 
   return (
     <div className="content-section">
+        {/* 개인정보 마스킹 배너 */}
+{false && hasPersonalInfo && showBanner && (
+  <div className="privacy-banner-wrapper">
+    <div className={`privacy-banner ${isMasked ? 'banner-masked' : 'banner-detected'}`}>
+      <span>
+        {isMasked ? (
+          <>
+            ✅{' '}
+            {Object.keys(maskCounts || {}).length > 0
+              ? Object.entries(maskCounts || {})
+                  .map(([label, count]) => `${label} ${count}건`)
+                  .join(', ') + '이 자동 마스킹되었습니다. '
+              : '개인정보가 자동 마스킹되었습니다. '}
+            이름·주소는 검색창에 키워드 입력 후 🔒 마스킹을 클릭하세요.
+          </>
+        ) : (
+          '⚠️ 개인정보가 감지되었습니다.'
+        )}
+      </span>
+      <button
+        className="banner-close-btn"
+        onClick={() => setShowBanner(false)}
+      >
+        ✕
+      </button>
+    </div>
+  </div>
+)}
       <div className="content-analysis-box">
-
+    
         {/* 툴바 */}
         <div className="document-toolbar-new">
 
@@ -163,6 +214,50 @@ useEffect(() => {
                   <button onClick={handleSearchPrev} disabled={matchCount === 0}><FaCaretUp size={16}/></button>
                   <button onClick={handleSearchNext} disabled={matchCount === 0}><FaCaretDown size={16}/></button>
                 </div>
+              
+                {/* 마스킹 버튼 — 기존 mask-btn-group 교체 */}
+                {matchCount > 0 && (
+                  <div className="mask-btn-group">
+                    <button
+                      className="search-mask-btn"
+                      onClick={() => {
+                        const currentHtml = editorRef.current?.getHTML() || '';
+                        const masked = currentHtml.replace(searchTerm, '***');
+                        applyMask(masked);
+                      }}
+                      title="검색어만 마스킹"
+                    >
+                      단어 마스킹
+                    </button>
+                    <button
+                      className="search-mask-btn search-mask-line-btn"
+                      onClick={() => {
+                        const currentHtml = editorRef.current?.getHTML() || '';
+                        const maskedHtml = currentHtml.replace(
+                          new RegExp(`<p([^>]*)>[^<]*${searchTerm}[^<]*<\\/p>`, 'g'),
+                          '<p$1>***</p>'
+                        );
+                        applyMask(
+                          maskedHtml.includes(searchTerm)
+                            ? maskedHtml.split(searchTerm).join('***')
+                            : maskedHtml
+                        );
+                      }}
+                      title="줄 전체 마스킹"
+                    >
+                      줄 마스킹
+                    </button>
+                    {htmlHistory.length > 0 && (
+                      <button
+                        className="search-mask-btn search-mask-undo-btn"
+                        onClick={handleUndo}
+                        title="마스킹 되돌리기"
+                      >
+                        ↩ 취소
+                      </button>
+                    )}
+                  </div>
+                )}
               </div>
             )}
           </div>
@@ -231,7 +326,22 @@ useEffect(() => {
           </div>
         )}
         {/* 문서 본문 */}
-        <div className="document-body" ref={editorBodyRef}>
+        <div
+          className="document-body"
+          ref={editorBodyRef}
+          style={{ cursor: dragMaskMode ? 'crosshair' : 'default' }}
+          onMouseUp={() => {
+            if (!dragMaskMode) return;
+            const selection = window.getSelection();
+            if (!selection || selection.isCollapsed) return;
+            const selectedText = selection.toString();
+            if (!selectedText.trim()) return;
+            const currentHtml = editorRef.current?.getHTML() || '';
+            const maskedHtml = currentHtml.split(selectedText).join('***');
+            onDragMask?.(maskedHtml);
+            selection.removeAllRanges();
+          }}
+        >
           <DocumentEditor
             ref={editorRef}
             initialContent={editedHtml}

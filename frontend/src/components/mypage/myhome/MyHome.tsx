@@ -15,23 +15,27 @@ export default function Dashboard() {
   });
 
   useEffect(() => {
-    const fetchStats = async () => {
-      try {
-        const [storageRes, draftRes] = await Promise.all([
-          mypageAPI.getStorage(),
-          mypageAPI.getDrafts(),
-        ]);
-        setStats(prev => ({
-          ...prev,
-          documentCount: storageRes.total,
-          draftCount: draftRes.total,
-        }));
-      } catch (err) {
-        console.error('홈 통계 로딩 실패:', err);
-      }
-    };
-    fetchStats();
-  }, []);
+  const fetchStats = async () => {
+    try {
+      const [storageRes, draftRes, postsRes, commentsRes, likedRes] = await Promise.all([
+        mypageAPI.getStorage(),
+        mypageAPI.getDrafts(),
+        mypageAPI.getCommunityArchive('posts'),
+        mypageAPI.getCommunityArchive('comments'),
+        mypageAPI.getCommunityArchive('liked'),
+      ]);
+      setStats(prev => ({
+        ...prev,
+        documentCount: storageRes.total,
+        draftCount: draftRes.total,
+        activityCount: (postsRes.total ?? 0) + (commentsRes.total ?? 0) + (likedRes.total ?? 0),
+      }));
+    } catch (err) {
+      console.error('홈 통계 로딩 실패:', err);
+    }
+  };
+  fetchStats();
+}, []);
 
   return (
     <div className="dashboard">

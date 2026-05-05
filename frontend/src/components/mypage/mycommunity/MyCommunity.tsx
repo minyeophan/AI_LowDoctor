@@ -1,5 +1,6 @@
-import { useState } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { mypageAPI } from '../../../api/mypage';
 import './MyCommunity.css';
 
 // ============================
@@ -8,57 +9,68 @@ import './MyCommunity.css';
 interface MyPost {
   id: string;
   title: string;
-  comments: number;
-  date: string;
+  commentCount?: number;
+  comments?: number;
+  createdAt?: string;
+  date?: string;
   views: number;
 }
 
 interface MyComment {
   id: string;
-  body: string;
-  date: string;
-  postTitle: string;
   postId: string;
+  content?: string;
+  body?: string;
+  createdAt?: string;
+  date?: string;
+  title: string;
 }
 
-// ============================
-// mock 데이터 (백엔드 연동 시 API 호출로 교체)
-// GET /api/posts/me
-// GET /api/comments/me
-// GET /api/posts/liked
-// ============================
-const mockMyPosts: MyPost[] = [
-  { id: '1', title: '전세 계약 앞두고 걱정이 너무 많아요...', comments: 15, date: '2026-03-18', views: 320 },
-  { id: '2', title: '월세 계약 특약사항 이게 정상인가요?', comments: 8, date: '2026-03-17', views: 210 },
-  { id: '3', title: '매매 계약 후 하자 발견했을 때 어떻게 해야 하나요?', comments: 23, date: '2026-03-16', views: 450 },
-];
-
-const mockMyComments: MyComment[] = [
-  { id: '1', body: '전세보증보험 꼭 가입하세요! HUG나 SGI서울보증 통해서 가입할 수 있어요.', date: '2026-03-18', postTitle: '전세 계약 앞두고 걱정이 너무 많아요...', postId: '1' },
-  { id: '2', body: '특약사항은 반드시 법무사나 변호사에게 검토받으시는 게 좋아요.', date: '2026-03-17', postTitle: '월세 계약 특약사항 이게 정상인가요?', postId: '2' },
-];
-
-const mockLikedPosts: MyPost[] = [
-  { id: '3', title: '매매 계약 후 하자 발견했을 때 어떻게 해야 하나요?', comments: 23, date: '2026-03-16', views: 450 },
-  { id: '4', title: '전세보증보험 가입 거절당했어요', comments: 6, date: '2026-03-15', views: 180 },
-];
-
 type TabType = 'posts' | 'comments' | 'liked';
+
+const tabs = [
+  { key: 'posts' as TabType, label: '작성글' },
+  { key: 'comments' as TabType, label: '작성 댓글' },
+  { key: 'liked' as TabType, label: '좋아요한 글' },
+];
+
+const EMPTY_MESSAGES: Record<TabType, string> = {
+  posts: '작성한 게시글이 없습니다.',
+  comments: '작성한 댓글이 없습니다.',
+  liked: '좋아요한 게시글이 없습니다.',
+};
 
 export default function MyCommunity() {
   const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState<TabType>('posts');
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
+  const [data, setData] = useState<(MyPost | MyComment)[]>([]);
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
-  const currentData = activeTab === 'posts'
-    ? mockMyPosts
-    : activeTab === 'comments'
-    ? mockMyComments
-    : mockLikedPosts;
+  const fetchData = useCallback(async (tab: TabType) => {
+    setIsLoading(true);
+    setError(null);
+    try {
+      const res = await mypageAPI.getCommunityArchive(tab);
+      setData(res.list || []);
+    } catch (e) {
+      console.error('커뮤니티 보관함 조회 실패:', e);
+      setError('데이터를 불러오지 못했습니다.');
+      setData([]);
+    } finally {
+      setIsLoading(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    fetchData(activeTab);
+    setSelectedIds([]);
+  }, [activeTab, fetchData]);
 
   const handleSelectAll = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.checked) {
-      setSelectedIds(currentData.map(item => item.id));
+      setSelectedIds(data.map(item => item.id));
     } else {
       setSelectedIds([]);
     }
@@ -70,26 +82,24 @@ export default function MyCommunity() {
     );
   };
 
-  const handleDelete = () => {
+  const handleDelete = async () => {
     if (selectedIds.length === 0) return;
     if (!window.confirm(`${selectedIds.length}개를 삭제하시겠습니까?`)) return;
-    // 백엔드 연동 시:
-    // selectedIds.forEach(id => communityAPI.deletePost(id) or deleteComment(id))
-    alert('삭제됐습니다.');
-    setSelectedIds([]);
+    try {
+      await mypageAPI.deleteCommunityArchive(activeTab, selectedIds);
+      setSelectedIds([]);
+      fetchData(activeTab);
+    } catch (e) {
+      console.error('삭제 실패:', e);
+      alert('삭제에 실패했습니다.');
+    }
   };
 
-  const tabs = [
-    { key: 'posts' as TabType, label: '작성글' },
-    { key: 'comments' as TabType, label: '작성 댓글' },
-    { key: 'liked' as TabType, label: '좋아요한 글' },
-  ];
-
   const tabIndex = tabs.findIndex(t => t.key === activeTab);
+  const emptyMessage = isLoading ? '불러오는 중...' : error ?? EMPTY_MESSAGES[activeTab];
 
   return (
     <div className="mycommunity-page">
-      {/* 헤더 */}
       <header className="mycommunity-header">
         <h1>커뮤니티 활동</h1>
       </header>
@@ -97,7 +107,7 @@ export default function MyCommunity() {
       {/* 탭 */}
       <div className="mycommunity-tabs-wrap">
         <div className="mycommunity-tabs">
-          {tabs.map((tab, i) => (
+          {tabs.map((tab) => (
             <button
               key={tab.key}
               className={`mycommunity-tab-btn ${activeTab === tab.key ? 'active' : ''}`}
@@ -113,10 +123,10 @@ export default function MyCommunity() {
         </div>
       </div>
 
-      {/* 컨트롤 영역 */}
+      {/* 컨트롤 */}
       <div className="mycommunity-controls">
         <span className="mycommunity-count">
-          총 <b>{currentData.length}</b>개
+          총 <b>{data.length}</b>개
         </span>
         <button
           className="mycommunity-delete-btn"
@@ -131,19 +141,21 @@ export default function MyCommunity() {
       <div className="mycommunity-table-wrap">
         {activeTab === 'posts' || activeTab === 'liked' ? (
           <PostTable
-            posts={activeTab === 'posts' ? mockMyPosts : mockLikedPosts}
+            posts={isLoading || error ? [] : data as MyPost[]}
             selectedIds={selectedIds}
             onSelectAll={handleSelectAll}
             onSelect={handleSelect}
             onNavigate={(id) => navigate(`/community/${id}`)}
+            emptyMessage={emptyMessage}
           />
         ) : (
           <CommentTable
-            comments={mockMyComments}
+            comments={isLoading || error ? [] : data as MyComment[]}
             selectedIds={selectedIds}
             onSelectAll={handleSelectAll}
             onSelect={handleSelect}
             onNavigate={(postId) => navigate(`/community/${postId}`)}
+            emptyMessage={emptyMessage}
           />
         )}
       </div>
@@ -154,12 +166,13 @@ export default function MyCommunity() {
 // ============================
 // 게시글 테이블
 // ============================
-function PostTable({ posts, selectedIds, onSelectAll, onSelect, onNavigate }: {
+function PostTable({ posts, selectedIds, onSelectAll, onSelect, onNavigate, emptyMessage }: {
   posts: MyPost[];
   selectedIds: string[];
   onSelectAll: (e: React.ChangeEvent<HTMLInputElement>) => void;
   onSelect: (id: string) => void;
   onNavigate: (id: string) => void;
+  emptyMessage: string;
 }) {
   return (
     <table className="mycommunity-table">
@@ -179,7 +192,11 @@ function PostTable({ posts, selectedIds, onSelectAll, onSelect, onNavigate }: {
       </thead>
       <tbody>
         {posts.length === 0 ? (
-          <tr><td colSpan={4} className="mycommunity-empty">작성한 게시글이 없습니다.</td></tr>
+          <tr>
+            <td colSpan={4} className="mycommunity-empty-cell">
+              {emptyMessage}
+            </td>
+          </tr>
         ) : (
           posts.map(post => (
             <tr key={post.id} className={selectedIds.includes(post.id) ? 'selected' : ''}>
@@ -192,11 +209,13 @@ function PostTable({ posts, selectedIds, onSelectAll, onSelect, onNavigate }: {
               </td>
               <td className="col-title">
                 <span className="mycommunity-title" onClick={() => onNavigate(post.id)}>
-                  {post.title}
-                  <span className="mycommunity-comment-count">[{post.comments}]</span>
+                  <span className="mycommunity-title-text">{post.title}</span>
+                  <span className="mycommunity-comment-count">
+                    [{post.commentCount ?? post.comments ?? 0}]
+                  </span>
                 </span>
               </td>
-              <td className="col-date">{post.date}</td>
+              <td className="col-date">{post.createdAt ?? post.date ?? '-'}</td>
               <td className="col-views">{post.views}</td>
             </tr>
           ))
@@ -209,12 +228,13 @@ function PostTable({ posts, selectedIds, onSelectAll, onSelect, onNavigate }: {
 // ============================
 // 댓글 테이블
 // ============================
-function CommentTable({ comments, selectedIds, onSelectAll, onSelect, onNavigate }: {
+function CommentTable({ comments, selectedIds, onSelectAll, onSelect, onNavigate, emptyMessage }: {
   comments: MyComment[];
   selectedIds: string[];
   onSelectAll: (e: React.ChangeEvent<HTMLInputElement>) => void;
   onSelect: (id: string) => void;
   onNavigate: (postId: string) => void;
+  emptyMessage: string;
 }) {
   return (
     <table className="mycommunity-table">
@@ -234,7 +254,11 @@ function CommentTable({ comments, selectedIds, onSelectAll, onSelect, onNavigate
       </thead>
       <tbody>
         {comments.length === 0 ? (
-          <tr><td colSpan={4} className="mycommunity-empty">작성한 댓글이 없습니다.</td></tr>
+          <tr>
+            <td colSpan={4} className="mycommunity-empty-cell">
+              {emptyMessage}
+            </td>
+          </tr>
         ) : (
           comments.map(comment => (
             <tr key={comment.id} className={selectedIds.includes(comment.id) ? 'selected' : ''}>
@@ -246,12 +270,14 @@ function CommentTable({ comments, selectedIds, onSelectAll, onSelect, onNavigate
                 />
               </td>
               <td className="col-body">
-                <span className="mycommunity-body">{comment.body}</span>
+                <span className="mycommunity-body-text">
+                  {comment.content ?? comment.body}
+                </span>
               </td>
-              <td className="col-date">{comment.date}</td>
+              <td className="col-date">{comment.createdAt ?? comment.date ?? '-'}</td>
               <td className="col-post">
                 <span className="mycommunity-post-title" onClick={() => onNavigate(comment.postId)}>
-                  {comment.postTitle}
+                  {comment.title}
                 </span>
               </td>
             </tr>
