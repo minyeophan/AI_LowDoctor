@@ -39,7 +39,7 @@ def analyze_contract(text: str) -> dict:
     prompt = f"""
     아래 계약서 내용을 읽고 조항별로 매우 세세하게 위험을 분석해줘.
     - summary: 핵심 내용을 매우 상세하고 구조적으로 요약하며, 최소 500자 이상으로 작성할 것.
-    - riskItems: 핵심 위험 항목을 7개만 포함. riskLevel은 HIGH/MEDIUM/LOW 중 하나.
+    - riskItems: 핵심 위험 항목 최대 7개만 포함. riskLevel은 HIGH/MEDIUM/LOW 중 하나.
     {law_context}
     계약서 내용:
     {text}
