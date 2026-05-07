@@ -382,7 +382,7 @@ function FloatingButtons({ activeSidebar, onToggle, riskItems = [], documentFile
                 onChange={e => setPrivacyAgreed(e.target.checked)}
               />
               <label htmlFor="share-privacy">
-                개인정보(주소·이름·금액 등)가 포함되지 않았음을 확인했습니다.
+                개인정보(이름·주소·주민번호 등)가 포함되지 않았음을 확인했습니다.
               </label>
             </div>
             <div className="save-modal-buttons">
