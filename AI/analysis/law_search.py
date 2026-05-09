@@ -24,6 +24,7 @@ bm25_model = SparseTextEmbedding(model_name="Qdrant/bm25")
 
 DENSE_VECTOR_NAME = "dense"
 SPARSE_VECTOR_NAME = "sparse"
+DOC_CONTENT_MAX_CHARS = 90
 
 
 def _embed_dense(text: str) -> list[float]:
@@ -40,6 +41,13 @@ def _embed_sparse(text: str) -> models.SparseVector:
     return models.SparseVector(indices=list(emb.indices), values=list(emb.values))
 
 
+def _safe_trim(text: str, max_chars: int) -> str:
+    value = (text or "").strip()
+    if len(value) <= max_chars:
+        return value
+    return value[:max_chars].strip() + "..."
+
+
 def _normalize_payload(hit_payload: dict, mongo_doc: dict | None, score: float) -> dict:
     payload = hit_payload or {}
     doc = mongo_doc or {}
@@ -51,14 +59,45 @@ def _normalize_payload(hit_payload: dict, mongo_doc: dict | None, score: float) 
         "law_name": payload.get("law_name") or doc.get("law_name", ""),
         "article": payload.get("article") or doc.get("article") or payload.get("article_num") or doc.get("article_num", ""),
         "summary": payload.get("summary") or doc.get("summary", ""),
-        "content": payload.get("content") or doc.get("content", ""),
+        "content": _safe_trim(
+            payload.get("content")
+            or doc.get("content")
+            or payload.get("summary")
+            or doc.get("summary", ""),
+            DOC_CONTENT_MAX_CHARS,
+        ),
         "source": payload.get("source") or doc.get("source", ""),
         "effective_date": payload.get("effective_date") or doc.get("effective_date", ""),
         "mongo_id": payload.get("mongo_id") or (str(doc.get("_id")) if doc.get("_id") else ""),
     }
 
 
-def search_legal_sources(query: str, top_k: int = 8) -> Dict[str, List[Dict]]:
+def _sort_and_trim_docs(
+    docs: List[Dict],
+    rerank_top_n: int,
+    min_score: float,
+    top_k: int,
+) -> List[Dict]:
+    if not docs:
+        return []
+
+    ranked = sorted(docs, key=lambda x: x.get("score", 0), reverse=True)
+    ranked = ranked[:rerank_top_n]
+
+    filtered = [doc for doc in ranked if doc.get("score", 0) >= min_score]
+    if filtered:
+        return filtered[:top_k]
+
+    return ranked[:top_k]
+
+
+def search_legal_sources(
+    query: str,
+    top_k: int = 1,
+    prefetch_limit: int = 4,
+    rerank_top_n: int = 2,
+    min_score: float = 0.25,
+) -> Dict[str, List[Dict]]:
     dense_vector = _embed_dense(query)
     sparse_vector = _embed_sparse(query)
 
@@ -66,15 +105,17 @@ def search_legal_sources(query: str, top_k: int = 8) -> Dict[str, List[Dict]]:
     db = get_mongo_db()
     col = db["law_chunks"]
 
+    prefetch_count = max(prefetch_limit, top_k)
+
     results = qdrant.query_points(
         collection_name=LAW_COLLECTION,
         prefetch=[
-            models.Prefetch(query=dense_vector, using=DENSE_VECTOR_NAME, limit=max(top_k * 3, 20)),
-            models.Prefetch(query=sparse_vector, using=SPARSE_VECTOR_NAME, limit=max(top_k * 3, 20)),
+            models.Prefetch(query=dense_vector, using=DENSE_VECTOR_NAME, limit=prefetch_count),
+            models.Prefetch(query=sparse_vector, using=SPARSE_VECTOR_NAME, limit=prefetch_count),
         ],
         query=models.FusionQuery(fusion=models.Fusion.RRF),
         with_payload=True,
-        limit=top_k,
+        limit=prefetch_count,
     )
 
     grouped = {
@@ -122,37 +163,35 @@ def search_legal_sources(query: str, top_k: int = 8) -> Dict[str, List[Dict]]:
         else:
             grouped["others"].append(doc)
 
+    for key in grouped:
+        grouped[key] = _sort_and_trim_docs(
+            grouped[key],
+            rerank_top_n=rerank_top_n,
+            min_score=min_score,
+            top_k=top_k,
+        )
+
     return grouped
 
 
 def build_context_text(grouped: Dict[str, List[Dict]]) -> str:
-    def format_docs(title: str, docs: List[Dict]) -> str:
-        if not docs:
-            return f"[{title}]\n없음\n"
+    parts = []
 
-        lines = [f"[{title}]"]
-        for i, doc in enumerate(docs, start=1):
-            lines.append(
-                f"""({i})
-제목: {doc.get('title', '')}
-법령명: {doc.get('law_name', '')}
-조문: {doc.get('article', '')}
-요약: {doc.get('summary', '')}
-내용: {doc.get('content', '')}
-출처: {doc.get('source', '')}
-유사도점수: {doc.get('score', 0)}"""
-            )
-        lines.append("")
-        return "\n".join(lines)
+    for section in [
+        "terms",
+        "knowledge",
+        "laws",
+        "interpretations",
+        "cases",
+        "others",
+    ]:
+        docs = grouped.get(section, [])
+        for doc in docs[:1]:
+            content = doc.get("content", "").strip()
+            if content:
+                parts.append(content)
 
-    return "\n".join([
-        format_docs("법령용어", grouped["terms"]),
-        format_docs("지식베이스", grouped["knowledge"]),
-        format_docs("현행법령", grouped["laws"]),
-        format_docs("법령해석", grouped["interpretations"]),
-        format_docs("판례", grouped["cases"]),
-        format_docs("기타", grouped["others"]),
-    ])
+    return "\n".join(parts)
 
 
 def search_laws(query: str, top_k: int = 5) -> list[dict]:

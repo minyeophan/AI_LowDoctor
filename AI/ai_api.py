@@ -26,6 +26,7 @@ from analysis.contract_analyzer import analyze_contract
 from analysis.chatbot_analyzer import answer_chat
 
 load_dotenv()
+
 _gemini_client = genai.Client(api_key=os.getenv("GEMINI_API_KEY"))
 
 app = FastAPI()
@@ -53,58 +54,71 @@ def _process_hwp_images(html: str, output_dir: str) -> str:
     def replace_img(match):
         attrs = match.group(1)
         src_match = re.search(r'src=["\']([^"\']+)["\']', attrs, re.IGNORECASE)
+
         if not src_match:
             print(f"[HWP 이미지] src 속성 없는 img 태그 스킵: {match.group(0)[:80]}")
             return match.group(0)
 
         src = src_match.group(1)
         img_path = os.path.join(output_dir, src)
+
         print(f"[HWP 이미지] 처리 시도: src={src}, 경로={img_path}, 존재={os.path.exists(img_path)}")
 
         if not os.path.exists(img_path):
             print(f"[HWP 이미지] ❌ 파일 없음: {img_path}")
             return match.group(0)
 
-        with open(img_path, 'rb') as f:
+        with open(img_path, "rb") as f:
             img_bytes = f.read()
+
         print(f"[HWP 이미지] ✅ 파일 읽기 성공: {len(img_bytes)} bytes")
 
-        ext = os.path.splitext(src)[1].lower().lstrip('.')
-        mime = {'png': 'image/png', 'jpg': 'image/jpeg', 'jpeg': 'image/jpeg',
-                'gif': 'image/gif', 'bmp': 'image/bmp'}.get(ext, 'image/png')
+        ext = os.path.splitext(src)[1].lower().lstrip(".")
+        mime = {
+            "png": "image/png",
+            "jpg": "image/jpeg",
+            "jpeg": "image/jpeg",
+            "gif": "image/gif",
+            "bmp": "image/bmp",
+        }.get(ext, "image/png")
+
         b64 = base64.b64encode(img_bytes).decode()
+
         print(f"[HWP 이미지] base64 변환 완료: mime={mime}, b64 길이={len(b64)}")
 
-        # 1. pytesseract OCR 시도
-        alt_text = ''
+        alt_text = ""
+
         try:
             pil_img = Image.open(io.BytesIO(img_bytes))
-            ocr_result = pytesseract.image_to_string(pil_img, lang='kor+eng').strip()
+            ocr_result = pytesseract.image_to_string(pil_img, lang="kor+eng").strip()
+
             if ocr_result:
                 alt_text = ocr_result
                 print(f"[HWP 이미지] pytesseract 성공: {alt_text[:50]}")
             else:
-                print(f"[HWP 이미지] pytesseract 결과 없음 → Gemini Vision 시도")
+                print("[HWP 이미지] pytesseract 결과 없음 → Gemini Vision 시도")
         except Exception as e:
             print(f"[HWP 이미지] pytesseract 예외: {e} → Gemini Vision 시도")
 
-        # 2. pytesseract 실패 시 Gemini Vision 폴백
         if not alt_text:
             try:
                 response = _gemini_client.models.generate_content(
                     model="gemini-2.0-flash",
                     contents=[
                         genai_types.Part.from_bytes(data=img_bytes, mime_type=mime),
-                        _HWP_IMG_PROMPT
-                    ]
+                        _HWP_IMG_PROMPT,
+                    ],
                 )
+
                 alt_text = response.text.strip()
                 print(f"[HWP 이미지] Gemini Vision 성공: {alt_text[:50]}")
             except Exception as e:
                 print(f"[HWP 이미지] Gemini Vision 예외: {e} → alt 빈값 처리")
 
-        alt_text = alt_text.replace('"', '&quot;').replace('\n', ' ')
+        alt_text = alt_text.replace('"', "&quot;").replace("\n", " ")
+
         print(f"[HWP 이미지] ✅ 최종 처리 완료: alt={alt_text[:30]}")
+
         return f'<img src="data:{mime};base64,{b64}" alt="{alt_text}">'
 
     return img_pattern.sub(replace_img, html)
@@ -116,6 +130,8 @@ class AnalyzeRequest(BaseModel):
 
 class ChatRequest(BaseModel):
     question: str
+    currentPath: str | None = None
+    documentText: str | None = None
 
 
 @app.get("/")
@@ -125,7 +141,7 @@ async def root():
 
 @app.post("/api/ocr")
 async def ocr_pdf_file(file: UploadFile = File(...)):
-    if not file.filename.lower().endswith(('.pdf', '.jpg', '.jpeg', '.png', '.txt')):
+    if not file.filename.lower().endswith((".pdf", ".jpg", ".jpeg", ".png", ".txt")):
         raise HTTPException(status_code=400, detail="지원하지 않는 파일 형식입니다.")
 
     temp_dir = "temp_files"
@@ -137,6 +153,7 @@ async def ocr_pdf_file(file: UploadFile = File(...)):
             shutil.copyfileobj(file.file, buffer)
 
         extracted_text = extract_text_from_pdf(file_location)
+
         return JSONResponse(content={"text": extracted_text})
 
     except Exception as e:
@@ -150,7 +167,7 @@ async def ocr_pdf_file(file: UploadFile = File(...)):
 
 @app.post("/api/convert-hwp")
 async def convert_hwp(file: UploadFile = File(...)):
-    if not file.filename.lower().endswith(('.hwp', '.hwpx')):
+    if not file.filename.lower().endswith((".hwp", ".hwpx")):
         raise HTTPException(status_code=400, detail="HWP/HWPX 파일만 지원합니다.")
 
     ext = os.path.splitext(file.filename.lower())[1]
@@ -166,14 +183,27 @@ async def convert_hwp(file: UploadFile = File(...)):
         try:
             result = subprocess.run(
                 ["hwp5html", "--output", output_dir, input_path],
-                capture_output=True, text=True, timeout=30
+                capture_output=True,
+                text=True,
+                timeout=30,
             )
-            if result.returncode != 0:
-                raise HTTPException(status_code=500, detail=f"HWP 변환 실패: {result.stderr}")
 
-            html_files = [f for f in os.listdir(output_dir) if f.endswith(('.html', '.xhtml', '.htm'))]
+            if result.returncode != 0:
+                raise HTTPException(
+                    status_code=500,
+                    detail=f"HWP 변환 실패: {result.stderr}",
+                )
+
+            html_files = [
+                f for f in os.listdir(output_dir)
+                if f.endswith((".html", ".xhtml", ".htm"))
+            ]
+
             if not html_files:
-                raise HTTPException(status_code=500, detail=f"HTML 파일 생성 실패. 생성된 파일: {os.listdir(output_dir)}")
+                raise HTTPException(
+                    status_code=500,
+                    detail=f"HTML 파일 생성 실패. 생성된 파일: {os.listdir(output_dir)}",
+                )
 
             with open(os.path.join(output_dir, html_files[0]), "r", encoding="utf-8") as f:
                 html = f.read()
@@ -184,19 +214,22 @@ async def convert_hwp(file: UploadFile = File(...)):
 
         except subprocess.TimeoutExpired:
             raise HTTPException(status_code=500, detail="HWP 변환 시간 초과")
+
         except HTTPException:
             raise
+
         except Exception as e:
             raise HTTPException(status_code=500, detail=f"변환 오류: {str(e)}")
 
 
 @app.post("/api/convert-pdf")
 async def convert_pdf(file: UploadFile = File(...)):
-    if not file.filename.lower().endswith('.pdf'):
+    if not file.filename.lower().endswith(".pdf"):
         raise HTTPException(status_code=400, detail="PDF 파일만 지원합니다.")
 
     with tempfile.TemporaryDirectory() as tmpdir:
         input_path = os.path.join(tmpdir, "input.pdf")
+
         with open(input_path, "wb") as f:
             shutil.copyfileobj(file.file, f)
 
@@ -206,26 +239,31 @@ async def convert_pdf(file: UploadFile = File(...)):
             with pdfplumber.open(input_path) as pdf:
                 for page in pdf.pages:
                     pil_image = page.to_image(resolution=150).original
+
                     buffer = io.BytesIO()
-                    pil_image.save(buffer, format='PNG')
+                    pil_image.save(buffer, format="PNG")
                     img_bytes = buffer.getvalue()
 
                     response = _gemini_client.models.generate_content(
                         model="gemini-2.0-flash",
                         contents=[
-                            genai_types.Part.from_bytes(data=img_bytes, mime_type="image/png"),
-                            _PDF_TO_HTML_PROMPT
-                        ]
+                            genai_types.Part.from_bytes(
+                                data=img_bytes,
+                                mime_type="image/png",
+                            ),
+                            _PDF_TO_HTML_PROMPT,
+                        ],
                     )
 
                     page_html = response.text.strip()
                     match = re.search(r"```(?:html)?\s*(.*?)```", page_html, re.DOTALL)
+
                     if match:
                         page_html = match.group(1).strip()
 
                     html_parts.append(page_html)
 
-            return JSONResponse(content={"html": '\n'.join(html_parts)})
+            return JSONResponse(content={"html": "\n".join(html_parts)})
 
         except Exception as e:
             raise HTTPException(status_code=500, detail=f"PDF 변환 오류: {str(e)}")
@@ -235,7 +273,9 @@ async def convert_pdf(file: UploadFile = File(...)):
 async def analyze_text(request: AnalyzeRequest):
     try:
         ai_result = analyze_contract(request.extracted_text)
+
         return JSONResponse(content=ai_result)
+
     except Exception as e:
         print(f"❌ AI 분석 중 에러 발생: {e}")
         raise HTTPException(status_code=500, detail=f"AI 분석 서버 오류: {str(e)}")
@@ -244,10 +284,39 @@ async def analyze_text(request: AnalyzeRequest):
 @app.post("/api/chat")
 async def chat_api(request: ChatRequest):
     try:
-        answer = answer_chat(request.question)
+        answer = answer_chat(
+            question=request.question,
+            current_path=request.currentPath,
+            document_text=request.documentText,
+        )
+
         return JSONResponse(content={"answer": answer})
+
     except Exception as e:
-        print(f"❌ 챗봇 응답 중 에러 발생: {e}")
-        raise HTTPException(status_code=500, detail=f"챗봇 서버 오류: {str(e)}")
+        error_text = str(e)
+
+        print(f"❌ 챗봇 응답 중 에러 발생: {error_text}")
+
+        if "429" in error_text or "RESOURCE_EXHAUSTED" in error_text:
+            raise HTTPException(
+                status_code=429,
+                detail="AI 무료 요청 한도를 초과했습니다. 잠시 후 다시 시도해 주세요.",
+            )
+
+        if (
+            "503" in error_text
+            or "UNAVAILABLE" in error_text
+            or "high demand" in error_text.lower()
+        ):
+            raise HTTPException(
+                status_code=503,
+                detail="현재 AI 요청이 많아요. 잠시 후 다시 시도해 주세요.",
+            )
+
+        raise HTTPException(
+            status_code=500,
+            detail=f"챗봇 서버 오류: {error_text}",
+        )
+
 
 # uvicorn ai_api:app --host 0.0.0.0 --port 8000
