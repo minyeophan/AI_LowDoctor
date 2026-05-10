@@ -1,8 +1,13 @@
 import { useState, useRef, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 import ChatbotIcon from "../../../assets/img/ChatbotIcon.svg";
 import ChatbotAvatar from "../../../assets/img/ChatboAvatar.svg";
 import { RiSendPlane2Fill } from "react-icons/ri";
-import { getChatHistory, sendChatMessage } from "../../../api/chat";
+import {
+  GENERAL_CHAT_ID,
+  getChatHistory,
+  sendChatMessage,
+} from "../../../api/chat";
 import "./Chatbot.css";
 
 interface Message {
@@ -15,77 +20,145 @@ interface ChatbotProps {
   documentId?: string;
 }
 
+const MESSAGE_VISIBLE_LIMIT = 30;
+
 function Chatbot({ documentId }: ChatbotProps) {
   const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState("");
   const [isLoading, setIsLoading] = useState(false);
-  const messagesEndRef = useRef<HTMLDivElement>(null);
+  const [showAllMessages, setShowAllMessages] = useState(false);
 
-  // 문서 변경 시 채팅 기록 불러오기
+  const messagesEndRef = useRef<HTMLDivElement>(null);
+  const navigate = useNavigate();
+
+  const activeChatId = GENERAL_CHAT_ID;
+
   useEffect(() => {
-    if (!documentId) return;
     const loadHistory = async () => {
       try {
-        const history = await getChatHistory(documentId);
+        const history = await getChatHistory();
+
         if (history.messages?.length > 0) {
           const loaded = history.messages.map((m, i) => ({
-            id: i,
+            id: i + 1,
             role: (m.role === "user" ? "user" : "bot") as "user" | "bot",
             content: m.content,
           }));
+
           setMessages(loaded);
+        } else {
+          setMessages([
+            {
+              id: 1,
+              role: "bot",
+              content:
+                "궁금한 법률 질문이나 사이트 사용법을 물어보세요. 업로드 문서를 기준으로 질문하려면 먼저 문서 분석을 완료해 주세요.",
+            },
+          ]);
         }
-      } catch {
-        // 기록 없으면 빈 상태로 시작
+      } catch (error) {
+        console.error("채팅 기록 불러오기 실패:", error);
+
+        setMessages([
+          {
+            id: 1,
+            role: "bot",
+            content:
+              "궁금한 법률 질문이나 사이트 사용법을 물어보세요. 업로드 문서를 기준으로 질문하려면 먼저 문서 분석을 완료해 주세요.",
+          },
+        ]);
       }
     };
-    loadHistory();
-  }, [documentId]);
 
-  // 메시지 추가 시 스크롤 하단 이동
+    setShowAllMessages(false);
+    loadHistory();
+  }, [activeChatId]);
+
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
-  }, [messages, isLoading]);
+  }, [messages, isLoading, showAllMessages]);
+
+  const hiddenMessageCount = Math.max(
+    messages.length - MESSAGE_VISIBLE_LIMIT,
+    0
+  );
+
+  const visibleMessages =
+    showAllMessages || messages.length <= MESSAGE_VISIBLE_LIMIT
+      ? messages
+      : messages.slice(-MESSAGE_VISIBLE_LIMIT);
+
+  const parseSiteGuide = (content: string) => {
+    if (!content.includes("[사이트안내]")) return null;
+
+    const pageNameMatch = content.match(/페이지명:\s*(.*)/);
+    const descriptionMatch = content.match(/설명:\s*(.*)/);
+    const pathMatch = content.match(/경로:\s*(.*)/);
+    const buttonTextMatch = content.match(/버튼텍스트:\s*(.*)/);
+
+    return {
+      pageName: pageNameMatch?.[1]?.trim() || "",
+      description: descriptionMatch?.[1]?.trim() || "",
+      path: pathMatch?.[1]?.trim() || "",
+      buttonText: buttonTextMatch?.[1]?.trim() || "이동하기",
+    };
+  };
 
   const handleSend = async () => {
     const text = input.trim();
-    if (!text || isLoading) return;
 
-    if (!documentId) {
-      setMessages((prev) => [
-        ...prev,
-        {
-          id: Date.now(),
-          role: "bot",
-          content: "먼저 계약서를 업로드해 주세요",
-        },
-      ]);
-      return;
-    }
+    if (!text || isLoading) return;
 
     const userMsg: Message = {
       id: Date.now(),
       role: "user",
       content: text,
     };
+
     setMessages((prev) => [...prev, userMsg]);
     setInput("");
     setIsLoading(true);
+    setShowAllMessages(false);
 
     try {
-      const result = await sendChatMessage(documentId, text);
+      const result = await sendChatMessage(
+        documentId,
+        text,
+        window.location.pathname
+      );
+
       const botMsg: Message = {
         id: Date.now() + 1,
         role: "bot",
         content: result.answer || "응답이 없습니다.",
       };
+
       setMessages((prev) => [...prev, botMsg]);
     } catch (error: any) {
+      console.error("챗봇 요청 실패:", error);
+
+      const status = error?.status || error?.response?.status;
+
+      let message =
+        error?.message ||
+        error?.response?.data?.detail ||
+        error?.response?.data?.message ||
+        "챗봇 요청 실패";
+
+      if (status === 401) {
+        message = "로그인이 필요합니다.";
+      } else if (status === 429) {
+        message = "AI 무료 요청 한도를 초과했어요. 잠시 후 다시 시도해 주세요.";
+      } else if (status === 503) {
+        message = "현재 AI 요청이 많아요. 잠시 후 다시 시도해 주세요.";
+      }
+
       const errorMsg: Message = {
         id: Date.now() + 1,
         role: "bot",
-        content: `오류: ${error?.message || "챗봇 요청 실패"}`,
+        content: `오류: ${message}`,
       };
+
       setMessages((prev) => [...prev, errorMsg]);
     } finally {
       setIsLoading(false);
@@ -93,11 +166,18 @@ function Chatbot({ documentId }: ChatbotProps) {
   };
 
   const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
-    if (e.key === "Enter") handleSend();
+    if (e.key === "Enter" && !isLoading) {
+      e.preventDefault();
+      handleSend();
+    }
   };
 
   return (
     <div className="chatbot-container">
+      <div className="chat-guide-text">
+        궁금한 법률 질문이나 사이트 사용법을 물어보세요.
+      </div>
+
       <div className={`chat-messages ${messages.length === 0 ? "empty" : ""}`}>
         {messages.length === 0 ? (
           <div className="empty-state">
@@ -108,20 +188,73 @@ function Chatbot({ documentId }: ChatbotProps) {
           </div>
         ) : (
           <>
-            {messages.map((msg) => (
-              <div key={msg.id} className={`message-row ${msg.role}`}>
-                {msg.role === "bot" && (
-                  <img
-                    src={ChatbotAvatar}
-                    alt="챗봇"
-                    className="bot-avatar"
-                    width={36}
-                    height={36}
-                  />
-                )}
-                <div className={`message-bubble ${msg.role}`}>{msg.content}</div>
+            {hiddenMessageCount > 0 && !showAllMessages && (
+              <div className="chat-more-wrapper">
+                <button
+                  type="button"
+                  className="chat-more-button"
+                  onClick={() => setShowAllMessages(true)}
+                >
+                  이전 대화 {hiddenMessageCount}개 더보기
+                </button>
               </div>
-            ))}
+            )}
+
+            {showAllMessages && hiddenMessageCount > 0 && (
+              <div className="chat-more-wrapper">
+                <button
+                  type="button"
+                  className="chat-more-button"
+                  onClick={() => setShowAllMessages(false)}
+                >
+                  최근 대화만 보기
+                </button>
+              </div>
+            )}
+
+            {visibleMessages.map((msg) => {
+              const siteGuide =
+                msg.role === "bot" ? parseSiteGuide(msg.content) : null;
+
+              return (
+                <div key={msg.id} className={`message-row ${msg.role}`}>
+                  {msg.role === "bot" && (
+                    <img
+                      src={ChatbotAvatar}
+                      alt="챗봇"
+                      className="bot-avatar"
+                      width={36}
+                      height={36}
+                    />
+                  )}
+
+                  <div className={`message-bubble ${msg.role}`}>
+                    {siteGuide && siteGuide.path ? (
+                      <div className="site-guide-card">
+                        <div className="site-guide-title">
+                          {siteGuide.pageName}
+                        </div>
+
+                        <div className="site-guide-desc">
+                          {siteGuide.description}
+                        </div>
+
+                        <button
+                          type="button"
+                          className="site-guide-button"
+                          onClick={() => navigate(siteGuide.path)}
+                        >
+                          {siteGuide.buttonText}
+                        </button>
+                      </div>
+                    ) : (
+                      <span>{msg.content}</span>
+                    )}
+                  </div>
+                </div>
+              );
+            })}
+
             {isLoading && (
               <div className="message-row bot">
                 <img
@@ -138,21 +271,25 @@ function Chatbot({ documentId }: ChatbotProps) {
                 </div>
               </div>
             )}
+
             <div ref={messagesEndRef} />
           </>
         )}
       </div>
+
       <div className="chat-input-area">
         <input
           type="text"
-          placeholder="계약서 관련 질문을 입력해 주세요"
+          placeholder="법률 질문이나 사이트 사용법을 입력해 주세요"
           className="chat-input"
           value={input}
           onChange={(e) => setInput(e.target.value)}
           onKeyDown={handleKeyDown}
           disabled={isLoading}
         />
+
         <button
+          type="button"
           className="send-btn"
           onClick={handleSend}
           disabled={!input.trim() || isLoading}

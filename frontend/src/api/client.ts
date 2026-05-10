@@ -18,12 +18,10 @@ export async function apiClient<T>(
     url += `?${searchParams.toString()}`;
   }
 
-  // ✅ 수정: Record<string, string>으로 변경
   const headers: Record<string, string> = {
     'Content-Type': 'application/json',
   };
 
-  // 기존 헤더 복사
   if (options.headers) {
     const existingHeaders = new Headers(options.headers);
     existingHeaders.forEach((value, key) => {
@@ -31,8 +29,11 @@ export async function apiClient<T>(
     });
   }
 
-  // 토큰 추가
-  const token = localStorage.getItem('token');
+  const token =
+    localStorage.getItem('token') ||
+    localStorage.getItem('accessToken') ||
+    localStorage.getItem('authToken');
+
   if (token) {
     headers['Authorization'] = `Bearer ${token}`;
   }
@@ -44,7 +45,25 @@ export async function apiClient<T>(
     });
 
     if (!response.ok) {
-      throw new Error(`API Error: ${response.statusText}`);
+      let errorMessage = `API Error: ${response.statusText}`;
+
+      try {
+        const errorData = await response.json();
+        errorMessage =
+          errorData.message ||
+          errorData.detail ||
+          errorMessage;
+      } catch {
+        // JSON 응답이 아니면 기본 메시지 사용
+      }
+
+      const error = new Error(errorMessage) as Error & { status?: number };
+      error.status = response.status;
+      throw error;
+    }
+
+    if (response.status === 204) {
+      return null as T;
     }
 
     return await response.json();
