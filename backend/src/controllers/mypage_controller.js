@@ -83,6 +83,7 @@ export const getMyPageList = async (req, res, next) => {
             title: file.originalname,
             uploadDate: formatDate(file.createdAt),
             analysisStatus: resolveAnalysisStatus(analysis?.status),
+            riskItems: analysis?.result?.riskItems || [],
           };
         }
       })
