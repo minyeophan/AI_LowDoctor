@@ -5,6 +5,9 @@ import DocumentEditor, { DocumentEditorRef } from './DocumentEditor';
 import { FaCaretUp } from "react-icons/fa";
 import { FaCaretDown } from "react-icons/fa";
 import { IoMdSearch } from "react-icons/io";
+import { TbShieldLockFilled } from "react-icons/tb";
+import { MdWarning} from "react-icons/md";
+import { FaCheckCircle } from "react-icons/fa";
 import '../views/DocumentView.css';
 
 interface Memo {
@@ -38,7 +41,6 @@ function DocumentView({
   currentDocument, zoomLevel, onZoomIn, onZoomOut,
   editedHtml, editorRef, onAnalyze, isAnalyzing,
   hasPersonalInfo, isMasked, onDragMask, maskCounts
-
 }: DocumentViewProps) {
   const [searchTerm, setSearchTerm] = useState('');
   const [matchCount, setMatchCount] = useState(0);
@@ -49,14 +51,27 @@ function DocumentView({
   const isDragging = useRef(false);
   const [dragMaskMode, setDragMaskMode] = useState(false);
   const [htmlHistory, setHtmlHistory] = useState<string[]>([]);
-  const [showBanner, setShowBanner] = useState(true);
+  const [showMaskIcon, setShowMaskIcon] = useState(false);
+  const TOAST_DURATION = 4000;
 
-  // 메모 상태
   const [memos, setMemos] = useState<Memo[]>([]);
   const [showMemoPanel, setShowMemoPanel] = useState(false);
   const [memoInput, setMemoInput] = useState('');
 
-  // 검색어 변경 시 하이라이팅 개수 카운트
+  // maskCounts 세팅되면 토스트 duration 후 아이콘 표시
+  useEffect(() => {
+  if (maskCounts === undefined) return;
+  setShowMaskIcon(true);
+}, [maskCounts]);
+
+  // 자동 마스킹 요약 텍스트
+  const maskedSummary =
+    maskCounts && Object.keys(maskCounts).length > 0
+      ? Object.entries(maskCounts)
+          .map(([label, count]) => `${label} ${count}건`)
+          .join(', ') + '이 자동 마스킹되었습니다.'
+      : null;
+
   useEffect(() => {
     if (!searchTerm.trim()) {
       setMatchCount(0);
@@ -86,59 +101,55 @@ function DocumentView({
     highlights[newIndex].scrollIntoView({ behavior: 'smooth', block: 'center' });
   };
 
-const handleDragStart = (e: React.MouseEvent<HTMLDivElement>) => {
-  if (!memoPanelRef.current) return;
-  isDragging.current = true;
-  const rect = memoPanelRef.current.getBoundingClientRect();
-  dragOffset.current = {
-    x: e.clientX - rect.left,
-    y: e.clientY - rect.top,
+  const handleDragStart = (e: React.MouseEvent<HTMLDivElement>) => {
+    if (!memoPanelRef.current) return;
+    isDragging.current = true;
+    const rect = memoPanelRef.current.getBoundingClientRect();
+    dragOffset.current = { x: e.clientX - rect.left, y: e.clientY - rect.top };
+    e.preventDefault();
   };
-  e.preventDefault();
-};
 
-const handleDragMove = (e: MouseEvent) => {
-  if (!isDragging.current || !memoPanelRef.current) return;
-  memoPanelRef.current.style.left = `${e.clientX - dragOffset.current.x}px`;
-  memoPanelRef.current.style.top = `${e.clientY - dragOffset.current.y}px`;
-};
-
-const handleDragEnd = () => {
-  isDragging.current = false;
-};
-
-const applyMask = (maskedHtml: string) => {
-  const current = editorRef.current?.getHTML() || '';
-  setHtmlHistory(prev => [...prev, current]);
-  onDragMask?.(maskedHtml);
-  setSearchTerm('');
-};
-
-const handleUndo = () => {
-  if (htmlHistory.length === 0) return;
-  const prev = htmlHistory[htmlHistory.length - 1];
-  setHtmlHistory(h => h.slice(0, -1));
-  onDragMask?.(prev);
-};
-
-useEffect(() => {
-  window.addEventListener('mousemove', handleDragMove);
-  window.addEventListener('mouseup', handleDragEnd);
-  return () => {
-    window.removeEventListener('mousemove', handleDragMove);
-    window.removeEventListener('mouseup', handleDragEnd);
+  const handleDragMove = (e: MouseEvent) => {
+    if (!isDragging.current || !memoPanelRef.current) return;
+    const panel = memoPanelRef.current;
+    const newLeft = Math.min(Math.max(0, e.clientX - dragOffset.current.x), window.innerWidth - panel.offsetWidth);
+    const newTop = Math.min(Math.max(0, e.clientY - dragOffset.current.y), window.innerHeight - panel.offsetHeight);
+    panel.style.left = `${newLeft}px`;
+    panel.style.top = `${newTop}px`;
   };
-}, []);
 
-  // 메모
+  const handleDragEnd = () => { isDragging.current = false; };
+
+  const applyMask = (maskedHtml: string) => {
+    const current = editorRef.current?.getHTML() || '';
+    setHtmlHistory(prev => [...prev, current]);
+    onDragMask?.(maskedHtml);
+    setSearchTerm('');
+  };
+
+  const handleUndo = () => {
+    if (htmlHistory.length === 0) return;
+    const prev = htmlHistory[htmlHistory.length - 1];
+    setHtmlHistory(h => h.slice(0, -1));
+    onDragMask?.(prev);
+  };
+
+  useEffect(() => {
+    window.addEventListener('mousemove', handleDragMove);
+    window.addEventListener('mouseup', handleDragEnd);
+    return () => {
+      window.removeEventListener('mousemove', handleDragMove);
+      window.removeEventListener('mouseup', handleDragEnd);
+    };
+  }, []);
+
   const handleAddMemo = () => {
     if (!memoInput.trim()) return;
-    const newMemo: Memo = {
+    setMemos(prev => [...prev, {
       id: Date.now().toString(),
       text: memoInput,
       createdAt: new Date().toLocaleString('ko-KR'),
-    };
-    setMemos(prev => [...prev, newMemo]);
+    }]);
     setMemoInput('');
   };
 
@@ -146,212 +157,191 @@ useEffect(() => {
     setMemos(prev => prev.filter(m => m.id !== id));
   };
 
-
-  // 인쇄
   const handlePrint = () => {
-    const printWindow = window.open('', '', 'height=600,width=800');
-    if (printWindow) {
-      printWindow.document.write('<html><head><title>인쇄</title>');
-      printWindow.document.write('<style>body { font-family: "Noto Sans KR", sans-serif; line-height: 1.8; padding: 20px; }</style>');
-      printWindow.document.write('</head><body>');
-      printWindow.document.write(`<h2>${currentDocument.filename}</h2>`);
-      printWindow.document.write(editedHtml);
-      printWindow.document.write('</body></html>');
-      printWindow.document.close();
-      printWindow.print();
-    }
+    const originalBody = document.body.innerHTML;
+    document.body.innerHTML = `
+      <html>
+        <head><style>body { font-family: "Noto Sans KR", sans-serif; line-height: 1.8; padding: 20px; }</style></head>
+        <body><h2>${currentDocument.filename}</h2>${editedHtml}</body>
+      </html>
+    `;
+    window.print();
+    document.body.innerHTML = originalBody;
+    window.location.reload();
   };
 
   return (
-    <div className="content-section">
-        {/* 개인정보 마스킹 배너 */}
-{false && hasPersonalInfo && showBanner && (
-  <div className="privacy-banner-wrapper">
-    <div className={`privacy-banner ${isMasked ? 'banner-masked' : 'banner-detected'}`}>
-      <span>
-        {isMasked ? (
-          <>
-            ✅{' '}
-            {Object.keys(maskCounts || {}).length > 0
-              ? Object.entries(maskCounts || {})
-                  .map(([label, count]) => `${label} ${count}건`)
-                  .join(', ') + '이 자동 마스킹되었습니다. '
-              : '개인정보가 자동 마스킹되었습니다. '}
-            이름·주소는 검색창에 키워드 입력 후 🔒 마스킹을 클릭하세요.
-          </>
-        ) : (
-          '⚠️ 개인정보가 감지되었습니다.'
-        )}
-      </span>
-      <button
-        className="banner-close-btn"
-        onClick={() => setShowBanner(false)}
-      >
-        ✕
-      </button>
-    </div>
-  </div>
-)}
-      <div className="content-analysis-box">
-    
-        {/* 툴바 */}
-        <div className="document-toolbar-new">
-
-          {/* 검색창 */}
-          <div className="search-box-new">
-            <IoMdSearch color='#666'/>
-            <input
-              type="text"
-              placeholder="내용을 검색하세요"
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              className="search-input-new"
-            />
-            {searchTerm && (
-              <div className="search-results">
-                <span className="search-count">{matchCount}개</span>
-                <div className='search-btn-wrap'>
-                  <button onClick={handleSearchPrev} disabled={matchCount === 0}><FaCaretUp size={16}/></button>
-                  <button onClick={handleSearchNext} disabled={matchCount === 0}><FaCaretDown size={16}/></button>
-                </div>
-              
-                {/* 마스킹 버튼 — 기존 mask-btn-group 교체 */}
-                {matchCount > 0 && (
-                  <div className="mask-btn-group">
-                    <button
-                      className="search-mask-btn"
-                      onClick={() => {
-                        const currentHtml = editorRef.current?.getHTML() || '';
-                        const masked = currentHtml.replace(searchTerm, '***');
-                        applyMask(masked);
-                      }}
-                      title="검색어만 마스킹"
-                    >
-                      단어 마스킹
-                    </button>
-                    <button
-                      className="search-mask-btn search-mask-line-btn"
-                      onClick={() => {
-                        const currentHtml = editorRef.current?.getHTML() || '';
-                        const maskedHtml = currentHtml.replace(
-                          new RegExp(`<p([^>]*)>[^<]*${searchTerm}[^<]*<\\/p>`, 'g'),
-                          '<p$1>***</p>'
-                        );
-                        applyMask(
-                          maskedHtml.includes(searchTerm)
-                            ? maskedHtml.split(searchTerm).join('***')
-                            : maskedHtml
-                        );
-                      }}
-                      title="줄 전체 마스킹"
-                    >
-                      줄 마스킹
-                    </button>
-                    {htmlHistory.length > 0 && (
-                      <button
-                        className="search-mask-btn search-mask-undo-btn"
-                        onClick={handleUndo}
-                        title="마스킹 되돌리기"
-                      >
-                        ↩ 취소
-                      </button>
-                    )}
-                  </div>
-                )}
-              </div>
-            )}
-          </div>
-
-          {/* 우측 아이콘들 */}
-          <div className="toolbar-actions">
-             {/* 맨위로/맨아래로 */}
-            <button
-              className="scroll-btn"
-              onClick={() => editorBodyRef.current?.scrollTo({ top: 0, behavior: 'smooth' })}
-              title="맨 위로"
-            ><FaCaretUp size={22}/></button>
-            <button
-              className="scroll-btn"
-              onClick={() => editorBodyRef.current?.scrollTo({ top: 99999, behavior: 'smooth' })}
-              title="맨 아래로"
-            ><FaCaretDown size={22}/></button>
-
-            <button
-              className={`icon-btn ${showMemoPanel ? 'active' : ''}`}
-              onClick={() => { setShowMemoPanel(!showMemoPanel); }}
-              title="메모"
-            >
-              <RiEditBoxFill size={14} />
-            </button>
-            <button className="icon-btn" onClick={handlePrint} title="인쇄">
-              <BsFillPrinterFill size={14} />
-            </button>
-          </div>
-        </div>
-
-        {/* 메모 패널 */}
-        {showMemoPanel && (
+    <>
+      {/* 메모 패널 */}
+      {showMemoPanel && (
         <div className="side-panel" ref={memoPanelRef}>
-          <div
-            className="panel-header draggable"
-            onMouseDown={handleDragStart}
-          >
+          <div className="panel-header draggable" onMouseDown={handleDragStart}>
             <span>메모</span>
             <button onClick={() => setShowMemoPanel(false)}>✕</button>
           </div>
-            <div className="memo-input-box">
-              <textarea
-                value={memoInput}
-                onChange={(e) => setMemoInput(e.target.value)}
-                placeholder="메모를 입력하세요..."
-                rows={3}
-              />
-              <button className="memo-add-btn" onClick={handleAddMemo}>추가</button>
-            </div>
-            <div className="memo-list">
-              {memos.length === 0 ? (
-                <p className="empty-msg">메모가 없습니다.</p>
-              ) : (
-                memos.map(memo => (
-                  <div key={memo.id} className="memo-item">
-                    <div className="memo-meta">
-                      <span className="memo-date">{memo.createdAt}</span>
-                    </div>
-                    <p className="memo-text">{memo.text}</p>
-                    <button className="memo-delete" onClick={() => handleDeleteMemo(memo.id)}>삭제</button>
+          <div className="memo-input-box">
+            <textarea
+              value={memoInput}
+              onChange={(e) => setMemoInput(e.target.value)}
+              placeholder="메모를 입력하세요..."
+              rows={3}
+            />
+            <button className="memo-add-btn" onClick={handleAddMemo}>추가</button>
+          </div>
+          <div className="memo-list">
+            {memos.length === 0 ? (
+              <p className="empty-msg">메모가 없습니다.</p>
+            ) : (
+              memos.map(memo => (
+                <div key={memo.id} className="memo-item">
+                  <div className="memo-meta">
+                    <span className="memo-date">{memo.createdAt}</span>
                   </div>
-                ))
+                  <p className="memo-text">{memo.text}</p>
+                  <button className="memo-delete" onClick={() => handleDeleteMemo(memo.id)}>삭제</button>
+                </div>
+              ))
+            )}
+          </div>
+        </div>
+      )}
+
+      <div className="content-section">
+        <div className="content-analysis-box">
+
+          {/* 툴바 */}
+          <div className="document-toolbar-new">
+            {showMaskIcon && (
+              <div className="mask-info-icon" aria-label="개인정보 마스킹 안내">
+                <TbShieldLockFilled color='#686868' />
+                <div className="mask-info-tooltip">
+                  <p className="mask-info-tooltip__warning">
+                    <MdWarning/> 일부 개인정보(이름, 주소 등)는 자동 마스킹이 누락될 수 있으니 직접 확인 후 마스킹해 주세요.
+                  </p>
+                  <div className="mask-info-tooltip__divider" />
+                  <p className="mask-info-tooltip__guide">
+                    <FaCheckCircle /> 마스킹 방법 <br/>
+                    검색창에 단어 입력 → 단어/줄 마스킹 클릭
+                  </p>
+                </div>
+              </div>
+            )} 
+          
+
+            {/* 검색창 */}
+            <div className="search-box-new">
+              <IoMdSearch color='#666' />
+              <input
+                type="text"
+                placeholder="내용을 검색하세요"
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                className="search-input-new"
+              />
+              {searchTerm && (
+                <div className="search-results">
+                  <span className="search-count">{matchCount}개</span>
+                  <div className='search-btn-wrap'>
+                    <button onClick={handleSearchPrev} disabled={matchCount === 0}><FaCaretUp size={16} /></button>
+                    <button onClick={handleSearchNext} disabled={matchCount === 0}><FaCaretDown size={16} /></button>
+                  </div>
+                  {matchCount > 0 && (
+                    <div className="mask-btn-group">
+                      <button
+                        className="search-mask-btn"
+                        onClick={() => {
+                          const currentHtml = editorRef.current?.getHTML() || '';
+                          applyMask(currentHtml.replace(searchTerm, '***'));
+                        }}
+                        title="검색어만 마스킹"
+                      >
+                        단어 마스킹
+                      </button>
+                      <button
+                        className="search-mask-btn search-mask-line-btn"
+                        onClick={() => {
+                          const currentHtml = editorRef.current?.getHTML() || '';
+                          const maskedHtml = currentHtml.replace(
+                            new RegExp(`<p([^>]*)>[^<]*${searchTerm}[^<]*<\\/p>`, 'g'),
+                            '<p$1>***</p>'
+                          );
+                          applyMask(
+                            maskedHtml.includes(searchTerm)
+                              ? maskedHtml.split(searchTerm).join('***')
+                              : maskedHtml
+                          );
+                        }}
+                        title="줄 전체 마스킹"
+                      >
+                        줄 마스킹
+                      </button>
+                      {htmlHistory.length > 0 && (
+                        <button
+                          className="search-mask-btn search-mask-undo-btn"
+                          onClick={handleUndo}
+                          title="마스킹 되돌리기"
+                        >
+                          ↩ 취소
+                        </button>
+                      )}
+                    </div>
+                  )}
+                </div>
               )}
             </div>
-          </div>
-        )}
-        {/* 문서 본문 */}
-        <div
-          className="document-body"
-          ref={editorBodyRef}
-          style={{ cursor: dragMaskMode ? 'crosshair' : 'default' }}
-          onMouseUp={() => {
-            if (!dragMaskMode) return;
-            const selection = window.getSelection();
-            if (!selection || selection.isCollapsed) return;
-            const selectedText = selection.toString();
-            if (!selectedText.trim()) return;
-            const currentHtml = editorRef.current?.getHTML() || '';
-            const maskedHtml = currentHtml.split(selectedText).join('***');
-            onDragMask?.(maskedHtml);
-            selection.removeAllRanges();
-          }}
-        >
-          <DocumentEditor
-            ref={editorRef}
-            initialContent={editedHtml}
-            searchTerm={searchTerm}
-            zoomLevel={zoomLevel}
-          />
-        </div>
 
+            {/* 우측 아이콘들 */}
+            <div className="toolbar-actions">
+              <button
+                className="scroll-btn"
+                onClick={() => editorBodyRef.current?.scrollTo({ top: 0, behavior: 'smooth' })}
+                title="맨 위로"
+              ><FaCaretUp size={22} /></button>
+              <button
+                className="scroll-btn"
+                onClick={() => editorBodyRef.current?.scrollTo({ top: 99999, behavior: 'smooth' })}
+                title="맨 아래로"
+              ><FaCaretDown size={22} /></button>
+              <button
+                className={`icon-btn ${showMemoPanel ? 'active' : ''}`}
+                onClick={() => setShowMemoPanel(!showMemoPanel)}
+                title="메모"
+              >
+                <RiEditBoxFill size={14} />
+              </button>
+              <button className="icon-btn" onClick={handlePrint} title="인쇄">
+                <BsFillPrinterFill size={14} />
+              </button>
+            </div>
+          </div>
+
+          {/* 문서 본문 */}
+          <div
+            className="document-body"
+            ref={editorBodyRef}
+            style={{ cursor: dragMaskMode ? 'crosshair' : 'default' }}
+            onMouseUp={() => {
+              if (!dragMaskMode) return;
+              const selection = window.getSelection();
+              if (!selection || selection.isCollapsed) return;
+              const selectedText = selection.toString();
+              if (!selectedText.trim()) return;
+              const currentHtml = editorRef.current?.getHTML() || '';
+              const maskedHtml = currentHtml.split(selectedText).join('***');
+              onDragMask?.(maskedHtml);
+              selection.removeAllRanges();
+            }}
+          >
+            <DocumentEditor
+              ref={editorRef}
+              initialContent={editedHtml}
+              searchTerm={searchTerm}
+              zoomLevel={zoomLevel}
+            />
+          </div>
+        </div>
       </div>
-    </div>
+    </>
   );
 }
 

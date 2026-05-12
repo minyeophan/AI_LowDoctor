@@ -34,15 +34,19 @@ const maskJibunWithHyphen = (_, main, sub, suffix) =>
 const maskJibunPlain = (_, number, suffix) =>
   `${'*'.repeat(number.length)}${suffix}`;
 
+// ── 도로명/지번 주소 ──────────────────────────────────────────────────────────
+const ADDRESS_PATTERN = /(서울|부산|대구|인천|광주|대전|울산|세종|경기|강원|충북|충남|전북|전남|경북|경남|제주|서울특별시|부산광역시|대구광역시|인천광역시|광주광역시|대전광역시|울산광역시|세종특별자치시|경기도|강원도|충청북도|충청남도|전라북도|전라남도|경상북도|경상남도|제주특별자치도)[^<]{2,100}?(로|길|번길|대로|동|읍|면|리)(\s*\d+[-\d]*)?(\s*\S{1,20}(빌라|아파트|빌딩|오피스텔|타운|파크|마을|단지))?/g;
+const ADDRESS_MASK = '***';
 
 // ── 메인 함수 ─────────────────────────────────────────────────────────────────
 // SSN → 전화 → 계좌 → 주소 순서로 실행 (순서 변경 시 패턴 충돌 가능)
 export function maskPII(html) {
   return html
-    .replace(SSN_PATTERN,                SSN_MASK)
-    .replace(PHONE_PATTERN,              maskPhoneNumber)
-    .replace(ACCOUNT_PATTERN,            maskAccountNumber)
-    .replace(BUILDING_UNIT_PATTERN,      maskBuildingUnit)
-    .replace(JIBUN_WITH_HYPHEN_PATTERN,  maskJibunWithHyphen)
-    .replace(JIBUN_PLAIN_PATTERN,        maskJibunPlain);
+    .replace(SSN_PATTERN,               SSN_MASK)
+    .replace(PHONE_PATTERN,             maskPhoneNumber)
+    .replace(ACCOUNT_PATTERN,           maskAccountNumber)
+    .replace(ADDRESS_PATTERN,           ADDRESS_MASK)  // ← 추가
+    .replace(BUILDING_UNIT_PATTERN,     maskBuildingUnit)
+    .replace(JIBUN_WITH_HYPHEN_PATTERN, maskJibunWithHyphen)
+    .replace(JIBUN_PLAIN_PATTERN,       maskJibunPlain);
 }

@@ -1,6 +1,7 @@
 import Schedule from "../schemas/calendar_db.js";
 import User from "../schemas/user_db.js";
 import { google } from "googleapis";
+import axios from "axios";
 
 const createOAuth2Client = (user) => {
   const oauth2Client = new google.auth.OAuth2(
@@ -34,13 +35,94 @@ const createOAuth2Client = (user) => {
   return oauth2Client;
 };
 
-const buildGoogleEvent = ({ scheduleName, startDate, endDate, alarm, alarmEnabled }) => ({
-  summary: scheduleName,
+const sendKakaoMessage = async (user, message, scheduleData = {}) => {
+  if (!user.kakaoAccessToken) {
+    console.log("카카오 액세스 토큰이 없습니다.");
+    return;
+  }
+
+  try {
+    // 템플릿 등록 없이 사용 가능한 기본 text 타입만 사용
+    const templateObject = {
+      object_type: "text",
+      text: message,
+      link: {
+        web_url: `${process.env.CLIENT_URL || "http://localhost:5173"}/schedule/${scheduleData.scheduleId}`,
+        mobile_web_url: `${process.env.CLIENT_URL || "http://localhost:5173"}/schedule/${scheduleData.scheduleId}`,
+      },
+      button_title: "일정 상세 보기"
+    };
+
+    // 직접 form-urlencoded 형식으로 변환
+    const templateJson = JSON.stringify(templateObject);
+    const data = `template_object=${encodeURIComponent(templateJson)}`;
+
+    console.log("전송할 템플릿:", templateJson); // 디버깅용
+
+    const response = await axios.post(
+      "https://kapi.kakao.com/v2/api/talk/memo/default/send",
+      data,
+      {
+        headers: {
+          Authorization: `Bearer ${user.kakaoAccessToken}`,
+          "Content-Type": "application/x-www-form-urlencoded",
+        },
+      }
+    );
+    console.log("카카오톡 메시지 전송 성공:", response.data);
+  } catch (error) {
+    console.error("카카오톡 메시지 전송 실패:", error.response?.data || error.message);
+  }
+};
+
+export const sendScheduleNotifications = async () => {
+  try {
+    const now = new Date();
+    const schedules = await Schedule.find({
+      alarmEnabled: true,
+      startDate: { $gte: now },
+    });
+
+    for (const schedule of schedules) {
+      const user = await User.findOne({ userID: schedule.userId });
+      if (!user) continue;
+
+      const alarmTime = new Date(schedule.startDate.getTime() - schedule.alarm * 60000); // 분을 밀리초로 변환
+      if (alarmTime <= now && alarmTime > new Date(now.getTime() - 60000)) { // 1분 내에 알림
+        const message = `일정 알림: ${schedule.scheduleName}\n시작: ${schedule.startDate.toLocaleString()}`;
+
+        // Google 메일 알림은 Google Calendar에서 처리
+        if (user.googleAccessToken) {
+          // 이미 Google Calendar에 설정됨
+        }
+
+        // 카카오톡 메시지 전송
+        if (user.kakaoAccessToken) {
+          const scheduleData = {
+            title: schedule.scheduleName || schedule.title,
+            scheduleId: schedule._id.toString(),
+            eventId: schedule.googleEventId,
+            startDate: schedule.startDate,
+            endDate: schedule.endDate,
+            location: schedule.location,
+            category: schedule.category,
+          };
+          await sendKakaoMessage(user, message, scheduleData);
+        }
+      }
+    }
+  } catch (error) {
+    console.error("알림 전송 에러:", error);
+  }
+};
+
+const buildGoogleEvent = ({ title, startDate, endDate, alarm, alarmEnabled }) => ({
+  summary: title,
   start: { dateTime: new Date(startDate).toISOString() },
   end: { dateTime: new Date(endDate).toISOString() },
   reminders: {
     useDefault: false,
-    overrides: alarmEnabled ? [{ method: "email", minutes: Number(alarm || 30) }] : [],
+    overrides: alarmEnabled ? [{ method: "email", minutes: Number(alarm || 1440) }] : [],
   },
 });
 
@@ -56,10 +138,16 @@ export const getSchedule = async (req, res, next) => {
       .sort({ startDate: 1 })
       .lean();
 
+    // 클라이언트 호환성을 위해 scheduleName으로 매핑
+    const formattedSchedules = schedules.map(schedule => ({
+      ...schedule,
+      scheduleName: schedule.title,
+    }));
+
     return res.status(200).json({
       success: true,
       total: schedules.length,
-      list: schedules,
+      list: formattedSchedules,
     });
   } catch (error) {
     console.error("일정 목록 조회 에러: ", error);
@@ -77,37 +165,57 @@ export const createSchedule = async (req, res) => {
     const currentUserId = req.user.userID;
     const user = await User.findById(req.user._id);
 
-    if (!user || !user.googleAccessToken) {
-      return res.status(403).json({ message: "Google 계정 연동이 필요합니다." });
+    // 날짜 유효성 검사
+    const start = new Date(startDate);
+    const end = new Date(endDate);
+    if (isNaN(start.getTime()) || isNaN(end.getTime())) {
+      return res.status(400).json({ success: false, message: "유효하지 않은 날짜 형식입니다." });
     }
 
-    const oauth2Client = createOAuth2Client(user);
-    const calendar = google.calendar({ version: "v3", auth: oauth2Client });
+    let googleEventId = null;
 
-    const event = buildGoogleEvent({
-      scheduleName,
-      startDate,
-      endDate,
-      alarm: alarm ?? 30,
-      alarmEnabled: alarmEnabled !== false,
-    });
+    // Google 계정이 연동되어 있으면 Google Calendar에 이벤트 생성
+    if (user && user.googleAccessToken) {
+      const oauth2Client = createOAuth2Client(user);
+      const calendar = google.calendar({ version: "v3", auth: oauth2Client });
 
-    const response = await calendar.events.insert({
-      calendarId: "primary",
-      resource: event,
-    });
+      const event = buildGoogleEvent({
+        title: scheduleName,
+        startDate: start,
+        endDate: end,
+        alarm: alarm ?? 1440,
+        alarmEnabled: alarmEnabled !== false,
+      });
+
+      const response = await calendar.events.insert({
+        calendarId: "primary",
+        resource: event,
+      });
+      googleEventId = response.data.id;
+    }
 
     const newSchedule = new Schedule({
-      scheduleName,
-      startDate,
-      endDate,
-      alarm: alarm ?? 30,
+      title: scheduleName,
+      startDate: start,
+      endDate: end,
+      alarm: alarm ?? 1440,
       alarmEnabled: alarmEnabled !== false,
-      googleEventId: response.data.id,
+      googleEventId,
       userId: currentUserId,
     });
 
     await newSchedule.save();
+
+    // 카카오톡 메시지 전송 (카카오 계정이 연동되어 있고 알림이 켜져 있으면)
+    if (user && user.kakaoAccessToken && alarmEnabled !== false) {
+      const message = `일정 알림: ${scheduleName}\n시작: ${new Date(startDate).toLocaleString()}\n종료: ${new Date(endDate).toLocaleString()}`;
+      const scheduleData = {
+        title: scheduleName,
+        scheduleId: newSchedule._id.toString(),
+        eventId: googleEventId,
+      };
+      await sendKakaoMessage(user, message, scheduleData);
+    }
 
     return res.status(201).json({
       success: true,
@@ -135,9 +243,25 @@ export const updateSchedule = async (req, res) => {
       return res.status(404).json({ success: false, message: "일정을 찾을 수 없습니다." });
     }
 
-    schedule.scheduleName = scheduleName ?? schedule.scheduleName;
-    schedule.startDate = startDate ? new Date(startDate) : schedule.startDate;
-    schedule.endDate = endDate ? new Date(endDate) : schedule.endDate;
+    // 날짜 유효성 검사 (제공된 경우)
+    let start = schedule.startDate;
+    let end = schedule.endDate;
+    if (startDate) {
+      start = new Date(startDate);
+      if (isNaN(start.getTime())) {
+        return res.status(400).json({ success: false, message: "유효하지 않은 시작 날짜 형식입니다." });
+      }
+    }
+    if (endDate) {
+      end = new Date(endDate);
+      if (isNaN(end.getTime())) {
+        return res.status(400).json({ success: false, message: "유효하지 않은 종료 날짜 형식입니다." });
+      }
+    }
+
+    schedule.title = scheduleName ?? schedule.title;
+    schedule.startDate = start;
+    schedule.endDate = end;
     schedule.alarm = alarm ?? schedule.alarm;
     schedule.alarmEnabled = alarmEnabled !== undefined ? alarmEnabled : schedule.alarmEnabled;
 

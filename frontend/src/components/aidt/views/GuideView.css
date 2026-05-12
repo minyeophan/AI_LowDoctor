@@ -15,7 +15,7 @@
   width: 794px;
   background: #e3f2fd;
   border: 1px solid #90caf9;
-  border-radius: 12px;
+  border-radius: 9px;
   overflow: hidden;
   transition: all 0.3s ease;
 }
@@ -419,6 +419,7 @@
   border: 1px solid #e0e0e0;
   margin: 20px auto;
   max-width: 800px;
+  overflow-x: auto;
 }
 
 .preview-content pre {
@@ -475,6 +476,8 @@
   box-shadow: 0 4px 12px rgba(25, 118, 210, 0.3);
 }
 
+
+
 /* 모달 오버레이 - 클릭 닫기 제거 */
 .preview-modal-overlay {
   position: fixed;
@@ -527,6 +530,8 @@
   border-radius: 2px;
   padding: 48px 56px;
   min-height: 400px;
+  overflow-x: auto;    
+  box-sizing: border-box;
 }
 
 .preview-document-content {
@@ -609,6 +614,7 @@
   border-collapse: collapse;
   width: 100%;
   margin: 12px 0;
+  table-layout: fixed;
 }
 
 .preview-doc-html table td,
@@ -616,6 +622,8 @@
   border: 1px solid #ccc;
   padding: 6px 10px;
   vertical-align: top;
+   word-break: break-word; 
+  overflow-wrap: break-word;
 }
 
 .preview-doc-html p {
@@ -629,4 +637,9 @@
   vertical-align: top;
   font-size: 13px;
   font-family: 'Noto Sans KR', 'Malgun Gothic', sans-serif;
+}
+
+.preview-doc-html img {
+  max-width: 100%;
+  height: auto;
 }

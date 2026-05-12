@@ -74,10 +74,16 @@ function Notification() {
     <div className="notification-container">
       {schedules.length === 0 ? (
         <div className="notification-empty">
-          <button className="auto-detect-btn" onClick={handleAutoDetect} disabled={isLoading}>
-            {isLoading ? '분석 중...' : '계약서에서 일정 찾기'}
-          </button>
-        </div>
+    <p className="notification-empty-title">계약서에서 일정을 찾아드려요</p>
+    <p className="notification-empty-desc">
+      계약 만료일, 잔금 납부일, 입주일 등<br/>
+      중요한 날짜를 자동으로 감지해서<br/>
+      일정으로 등록해드립니다.
+    </p>
+    <button className="auto-detect-btn" onClick={handleAutoDetect} disabled={isLoading}>
+      {isLoading ? '분석 중...' : '계약서에서 일정 찾기'}
+    </button>
+  </div>
       ) : isComplete ? (
         <div className="notification-complete">
           <p>일정이 등록되었습니다!</p>

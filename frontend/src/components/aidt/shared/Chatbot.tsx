@@ -22,6 +22,8 @@ interface ChatbotProps {
 
 const MESSAGE_VISIBLE_LIMIT = 30;
 
+const INITIAL_MESSAGE = "계약서 관련 법률 질문을 해보세요. 분석된 계약서가 있다면 해당 내용을 바탕으로 답변해 드려요.";
+
 function Chatbot({ documentId }: ChatbotProps) {
   const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState("");
@@ -44,29 +46,13 @@ function Chatbot({ documentId }: ChatbotProps) {
             role: (m.role === "user" ? "user" : "bot") as "user" | "bot",
             content: m.content,
           }));
-
           setMessages(loaded);
         } else {
-          setMessages([
-            {
-              id: 1,
-              role: "bot",
-              content:
-                "궁금한 법률 질문이나 사이트 사용법을 물어보세요. 업로드 문서를 기준으로 질문하려면 먼저 문서 분석을 완료해 주세요.",
-            },
-          ]);
+          setMessages([{ id: 1, role: "bot", content: INITIAL_MESSAGE }]);
         }
       } catch (error) {
         console.error("채팅 기록 불러오기 실패:", error);
-
-        setMessages([
-          {
-            id: 1,
-            role: "bot",
-            content:
-              "궁금한 법률 질문이나 사이트 사용법을 물어보세요. 업로드 문서를 기준으로 질문하려면 먼저 문서 분석을 완료해 주세요.",
-          },
-        ]);
+        setMessages([{ id: 1, role: "bot", content: INITIAL_MESSAGE }]);
       }
     };
 
@@ -78,10 +64,7 @@ function Chatbot({ documentId }: ChatbotProps) {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages, isLoading, showAllMessages]);
 
-  const hiddenMessageCount = Math.max(
-    messages.length - MESSAGE_VISIBLE_LIMIT,
-    0
-  );
+  const hiddenMessageCount = Math.max(messages.length - MESSAGE_VISIBLE_LIMIT, 0);
 
   const visibleMessages =
     showAllMessages || messages.length <= MESSAGE_VISIBLE_LIMIT
@@ -106,59 +89,41 @@ function Chatbot({ documentId }: ChatbotProps) {
 
   const handleSend = async () => {
     const text = input.trim();
-
     if (!text || isLoading) return;
 
-    const userMsg: Message = {
-      id: Date.now(),
-      role: "user",
-      content: text,
-    };
-
+    const userMsg: Message = { id: Date.now(), role: "user", content: text };
     setMessages((prev) => [...prev, userMsg]);
     setInput("");
     setIsLoading(true);
     setShowAllMessages(false);
 
     try {
-      const result = await sendChatMessage(
-        documentId,
-        text,
-        window.location.pathname
-      );
+      const result = await sendChatMessage(documentId, text, window.location.pathname);
 
-      const botMsg: Message = {
-        id: Date.now() + 1,
-        role: "bot",
-        content: result.answer || "응답이 없습니다.",
-      };
+      // MongoDB 오류 메시지 등 서버 오류 응답 필터링
+      const answer = result.answer;
+      const content =
+        !answer || answer.startsWith("오류:")
+          ? "일시적인 오류가 발생했어요. 다시 시도해주세요."
+          : answer;
 
+      const botMsg: Message = { id: Date.now() + 1, role: "bot", content };
       setMessages((prev) => [...prev, botMsg]);
     } catch (error: any) {
       console.error("챗봇 요청 실패:", error);
 
       const status = error?.status || error?.response?.status;
-
-      let message =
-        error?.message ||
-        error?.response?.data?.detail ||
-        error?.response?.data?.message ||
-        "챗봇 요청 실패";
+      let message = "일시적인 오류가 발생했어요. 다시 시도해주세요.";
 
       if (status === 401) {
-        message = "로그인이 필요합니다.";
+        message = "로그인 후 이용할 수 있어요.";
       } else if (status === 429) {
-        message = "AI 무료 요청 한도를 초과했어요. 잠시 후 다시 시도해 주세요.";
+        message = "요청이 많아 잠시 지연되고 있어요. 잠시 후 다시 시도해주세요.";
       } else if (status === 503) {
-        message = "현재 AI 요청이 많아요. 잠시 후 다시 시도해 주세요.";
+        message = "AI 서비스가 일시적으로 혼잡해요. 잠시 기다렸다가 다시 질문해주세요.";
       }
 
-      const errorMsg: Message = {
-        id: Date.now() + 1,
-        role: "bot",
-        content: `오류: ${message}`,
-      };
-
+      const errorMsg: Message = { id: Date.now() + 1, role: "bot", content: message };
       setMessages((prev) => [...prev, errorMsg]);
     } finally {
       setIsLoading(false);
@@ -174,10 +139,6 @@ function Chatbot({ documentId }: ChatbotProps) {
 
   return (
     <div className="chatbot-container">
-      <div className="chat-guide-text">
-        궁금한 법률 질문이나 사이트 사용법을 물어보세요.
-      </div>
-
       <div className={`chat-messages ${messages.length === 0 ? "empty" : ""}`}>
         {messages.length === 0 ? (
           <div className="empty-state">
@@ -195,7 +156,7 @@ function Chatbot({ documentId }: ChatbotProps) {
                   className="chat-more-button"
                   onClick={() => setShowAllMessages(true)}
                 >
-                  이전 대화 {hiddenMessageCount}개 더보기
+                  이전 대화 {hiddenMessageCount}개 보기
                 </button>
               </div>
             )}
@@ -207,14 +168,13 @@ function Chatbot({ documentId }: ChatbotProps) {
                   className="chat-more-button"
                   onClick={() => setShowAllMessages(false)}
                 >
-                  최근 대화만 보기
+                  최근 대화로 돌아가기
                 </button>
               </div>
             )}
 
             {visibleMessages.map((msg) => {
-              const siteGuide =
-                msg.role === "bot" ? parseSiteGuide(msg.content) : null;
+              const siteGuide = msg.role === "bot" ? parseSiteGuide(msg.content) : null;
 
               return (
                 <div key={msg.id} className={`message-row ${msg.role}`}>
@@ -227,18 +187,11 @@ function Chatbot({ documentId }: ChatbotProps) {
                       height={36}
                     />
                   )}
-
                   <div className={`message-bubble ${msg.role}`}>
                     {siteGuide && siteGuide.path ? (
                       <div className="site-guide-card">
-                        <div className="site-guide-title">
-                          {siteGuide.pageName}
-                        </div>
-
-                        <div className="site-guide-desc">
-                          {siteGuide.description}
-                        </div>
-
+                        <div className="site-guide-title">{siteGuide.pageName}</div>
+                        <div className="site-guide-desc">{siteGuide.description}</div>
                         <button
                           type="button"
                           className="site-guide-button"
@@ -287,7 +240,6 @@ function Chatbot({ documentId }: ChatbotProps) {
           onKeyDown={handleKeyDown}
           disabled={isLoading}
         />
-
         <button
           type="button"
           className="send-btn"

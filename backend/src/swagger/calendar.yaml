@@ -40,6 +40,7 @@ paths:
               properties:
                 scheduleName:
                   type: string
+                  description: "Schedule title"
                   example: "전세 계약 확정일자 신청"
                 startDate:
                   type: string
@@ -51,12 +52,14 @@ paths:
                   example: "2026-06-01T10:00:00Z"
                 alarm:
                   type: integer
-                  default: 30
-                  description: "알림 전 시간 (분 단위)"
+                  default: 1440
+                  description: "Alarm time in minutes before event"
+                  example: 1440
                 alarmEnabled:
                   type: boolean
                   default: true
-                  description: "알림 활성화 여부"
+                  description: "Whether alarm is enabled"
+                  example: true
       responses:
         201:
           description: "일정 생성 성공"
@@ -135,42 +138,79 @@ components:
         _id:
           type: string
           example: "60d...abc"
+        userRef:
+          type: string
+          description: "User ObjectId reference"
+          example: "507f1f77bcf86cd799439011"
         userId:
           type: string
-          example: "testUser01"
+          example: "user_1d688e04-85b4-47de-b729-69ea360702c5"
+        title:
+          type: string
+          example: "전세 계약 확정일자 신청"
         scheduleName:
           type: string
+          description: "Client compatibility field (same as title)"
+          example: "전세 계약 확정일자 신청"
+        description:
+          type: string
+          example: ""
         startDate:
           type: string
           format: date-time
+          example: "2026-06-01T09:00:00.000Z"
         endDate:
           type: string
           format: date-time
+          example: "2026-06-01T10:00:00.000Z"
+        location:
+          type: string
+          example: ""
+        category:
+          type: string
+          example: "general"
         alarm:
           type: integer
-          example: 30
+          default: 1440
+          example: 1440
         alarmEnabled:
           type: boolean
+          default: false
           example: true
         googleEventId:
           type: string
-          description: "Google Calendar API에서 발급받은 이벤트 ID"
+          example: "abc123@google.com"
+        isDeleted:
+          type: boolean
+          default: false
+          example: false
         createdAt:
           type: string
           format: date-time
+          example: "2026-05-02T11:42:24.000Z"
+        updatedAt:
+          type: string
+          format: date-time
+          example: "2026-05-02T11:42:24.000Z"
 
     ScheduleUpdate:
       type: object
       properties:
         scheduleName:
           type: string
+          description: "Schedule title (maps to title field)"
+          example: "전세 계약 확정일자 신청"
         startDate:
           type: string
           format: date-time
+          example: "2026-06-01T09:00:00.000Z"
         endDate:
           type: string
           format: date-time
+          example: "2026-06-01T10:00:00.000Z"
         alarm:
           type: integer
+          example: 1440
         alarmEnabled:
           type: boolean
+          example: true
