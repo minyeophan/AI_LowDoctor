@@ -74,7 +74,6 @@ function Notification() {
     <div className="notification-container">
       {schedules.length === 0 ? (
         <div className="notification-empty">
-    <div className="notification-empty-icon">📅</div>
     <p className="notification-empty-title">계약서에서 일정을 찾아드려요</p>
     <p className="notification-empty-desc">
       계약 만료일, 잔금 납부일, 입주일 등<br/>

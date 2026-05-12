@@ -12,6 +12,7 @@ import { BsFillPeopleFill } from "react-icons/bs";
 import { mypageAPI } from '../../../api/mypage';
 import { communityAPI } from '../../../api/community';
 import { RiskItem } from '../../../api/analyze';
+import type { ToastType } from '../../../hooks/useToast';
 
 type SidebarType = 'chatbot' | 'notification' | 'search' | null;
 
@@ -20,15 +21,13 @@ interface FloatingButtonsProps {
   onToggle: (type: 'chatbot' | 'notification' | 'search') => void;
   riskItems?: RiskItem[];
   documentFilename?: string;
+  // ✅ 공용 토스트 — AiPage에서 주입
+  onShowToast: (message: string, type?: ToastType) => void;
 }
 
 const SEVERITY_LABEL: Record<string, string> = {
-  high: '높음',
-  medium: '중간',
-  low: '낮음',
-  HIGH: '높음',
-  MEDIUM: '중간',
-  LOW: '낮음',
+  high: '높음', medium: '중간', low: '낮음',
+  HIGH: '높음', MEDIUM: '중간', LOW: '낮음',
 };
 
 const SEVERITY_ORDER: Record<string, number> = {
@@ -37,16 +36,15 @@ const SEVERITY_ORDER: Record<string, number> = {
   low: 2, LOW: 2,
 };
 
-// 선택된 항목들로 textarea 본문 생성 — 원래 순서 유지, 위험조항+이유만 표시
 const buildContentFromSelected = (items: RiskItem[], selectedIds: string[]): string => {
-  const selected = items.filter((item, idx) => selectedIds.includes(item.id ?? item.clauseText ?? String(idx)));
-
+  const selected = items.filter((item, idx) =>
+    selectedIds.includes(item.id ?? item.clauseText ?? String(idx))
+  );
   return selected
     .map((item, idx) => {
       const severity = item.severity ?? item.riskLevel ?? '';
       const clauseText = item.clauseText ?? item.description ?? '';
       const reason = item.reason ?? '';
-
       const lines = [
         `${idx + 1}. [${SEVERITY_LABEL[severity] ?? severity}]`,
         clauseText ? `위험 조항: ${clauseText}` : '',
@@ -57,7 +55,13 @@ const buildContentFromSelected = (items: RiskItem[], selectedIds: string[]): str
     .join('\n\n');
 };
 
-function FloatingButtons({ activeSidebar, onToggle, riskItems = [], documentFilename }: FloatingButtonsProps) {
+function FloatingButtons({
+  activeSidebar,
+  onToggle,
+  riskItems = [],
+  documentFilename,
+  onShowToast,
+}: FloatingButtonsProps) {
   const navigate = useNavigate();
   const { currentDocument, setCurrentDocument } = useDocument();
   const [showExitModal, setShowExitModal] = useState(false);
@@ -67,17 +71,11 @@ function FloatingButtons({ activeSidebar, onToggle, riskItems = [], documentFile
 
   const [showShareModal, setShowShareModal] = useState(false);
   const [isSharing, setIsSharing] = useState(false);
-  const [shareToast, setShareToast] = useState<string | null>(null);
   const [shareError, setShareError] = useState<string | null>(null);
   const [shareTitle, setShareTitle] = useState('');
   const [shareContent, setShareContent] = useState('');
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
   const [privacyAgreed, setPrivacyAgreed] = useState(false);
-
-  const showToast = (msg: string) => {
-    setShareToast(msg);
-    setTimeout(() => setShareToast(null), 3000);
-  };
 
   // 선택 항목 변경 시 textarea 자동 업데이트
   useEffect(() => {
@@ -86,16 +84,23 @@ function FloatingButtons({ activeSidebar, onToggle, riskItems = [], documentFile
     }
   }, [selectedIds, showShareModal]);
 
+  const handleSaveClick = () => {
+    if (!currentDocument) {
+      onShowToast('먼저 계약서를 업로드해주세요.', 'warning');
+      return;
+    }
+    setShowSaveModal(true);
+  };
+
   const handleShareClick = () => {
     if (!currentDocument) {
-      showToast('먼저 계약서를 업로드해주세요.');
+      onShowToast('먼저 계약서를 업로드해주세요.', 'warning');
       return;
     }
     if (!riskItems || riskItems.length === 0) {
-      showToast('위험 조항 분석 후 공유할 수 있습니다.');
+      onShowToast('위험 조항 분석 후 공유할 수 있습니다.', 'warning');
       return;
     }
-    // 모달 초기화
     setSelectedIds([]);
     setShareTitle('');
     setShareContent('');
@@ -112,11 +117,7 @@ function FloatingButtons({ activeSidebar, onToggle, riskItems = [], documentFile
 
   const handleSelectAll = () => {
     const allIds = riskItems.map((item, idx) => item.id ?? item.clauseText ?? String(idx));
-    if (selectedIds.length === allIds.length) {
-      setSelectedIds([]);
-    } else {
-      setSelectedIds(allIds);
-    }
+    setSelectedIds(selectedIds.length === allIds.length ? [] : allIds);
   };
 
   const handleExit = () => {
@@ -126,7 +127,7 @@ function FloatingButtons({ activeSidebar, onToggle, riskItems = [], documentFile
 
   const handleSaveConfirm = async () => {
     if (!currentDocument?.documentId) {
-      alert('문서 ID를 찾을 수 없습니다.');
+      onShowToast('문서 ID를 찾을 수 없습니다.', 'error');
       setShowSaveModal(false);
       return;
     }
@@ -142,7 +143,7 @@ function FloatingButtons({ activeSidebar, onToggle, riskItems = [], documentFile
       }, 2000);
     } catch (error) {
       console.error('저장 실패:', error);
-      alert(`저장 실패: ${error instanceof Error ? error.message : '알 수 없는 오류'}`);
+      onShowToast(`저장 실패: ${error instanceof Error ? error.message : '알 수 없는 오류'}`, 'error');
       setShowSaveModal(false);
     } finally {
       setIsSaving(false);
@@ -167,7 +168,7 @@ function FloatingButtons({ activeSidebar, onToggle, riskItems = [], documentFile
         content: shareContent,
       });
       setShowShareModal(false);
-      showToast('커뮤니티에 공유되었습니다 ✓');
+      onShowToast('커뮤니티에 공유되었습니다', 'success');
     } catch (error) {
       console.error('공유 실패:', error);
       setShareError(error instanceof Error ? error.message : '공유 중 오류가 발생했습니다.');
@@ -176,7 +177,6 @@ function FloatingButtons({ activeSidebar, onToggle, riskItems = [], documentFile
     }
   };
 
-  // 위험도 순 정렬 (높음 → 중간 → 낮음)
   const sortedRiskItems = [...riskItems].sort(
     (a, b) =>
       (SEVERITY_ORDER[a.severity ?? a.riskLevel ?? ''] ?? 9) -
@@ -225,8 +225,8 @@ function FloatingButtons({ activeSidebar, onToggle, riskItems = [], documentFile
           <button
             className="floating-btn save-btn"
             title="저장"
-            onClick={() => setShowSaveModal(true)}
-            disabled={!currentDocument || isSaving}
+            onClick={handleSaveClick}
+            disabled={isSaving}
           >
             <FaSave size={17} color="#FFFFFF" />
             <span className="fbtn-span">{isSaving ? '저장중...' : '저장'}</span>
@@ -294,15 +294,12 @@ function FloatingButtons({ activeSidebar, onToggle, riskItems = [], documentFile
       {showShareModal && (
         <div className="save-modal-overlay">
           <div className="share-modal">
-
-            {/* 헤더 */}
             <div className="share-modal-header">
               <IoMdShare size={20} color="#4099FD" />
               <p className="save-modal-text" style={{ margin: 0 }}>커뮤니티에 공유</p>
             </div>
 
             <div className="share-modal-body">
-              {/* 왼쪽: 조항 선택 */}
               <div className="share-left">
                 <div className="share-section-label">
                   <span>공유할 위험 조항 선택</span>
@@ -336,7 +333,7 @@ function FloatingButtons({ activeSidebar, onToggle, riskItems = [], documentFile
                             </span>
                           </div>
                           <p className="share-description">
-                            {((item.clauseText ?? item.description ?? '')).slice(0, 60)}
+                            {(item.clauseText ?? item.description ?? '').slice(0, 60)}
                             {(item.clauseText ?? item.description ?? '').length > 60 ? '...' : ''}
                           </p>
                         </div>
@@ -346,7 +343,6 @@ function FloatingButtons({ activeSidebar, onToggle, riskItems = [], documentFile
                 </div>
               </div>
 
-              {/* 오른쪽: 제목 + 본문 편집 */}
               <div className="share-right">
                 <div className="share-section-label">
                   <span>게시글 편집</span>
@@ -371,46 +367,36 @@ function FloatingButtons({ activeSidebar, onToggle, riskItems = [], documentFile
 
             {shareError && <p className="share-error">{shareError}</p>}
 
-             {/* 개인정보 동의 */}
-            
-              <div className='save-modal-buttons-wrap'>
-                <div className="share-privacy-check">
-              <input
-                type="checkbox"
-                id="share-privacy"
-                checked={privacyAgreed}
-                onChange={e => setPrivacyAgreed(e.target.checked)}
-              />
-              <label htmlFor="share-privacy">
-                개인정보(이름·주소·주민번호 등)가 포함되지 않았음을 확인했습니다.
-              </label>
-            </div>
-            <div className="save-modal-buttons">
-              <button
-                className="save-cancel-btn"
-                onClick={() => { setShowShareModal(false); setShareError(null); }}
-                disabled={isSharing}
-              >
-                취소
-              </button>
-              <button
-                className="save-confirm-btn"
-                onClick={handleShareConfirm}
-                disabled={isSharing || selectedIds.length === 0 || !shareTitle.trim() || !shareContent.trim() || !privacyAgreed}
-              >
-                {isSharing ? '공유중...' : `공유하기 (${selectedIds.length}건)`}
-              </button>
-            </div>
+            <div className='save-modal-buttons-wrap'>
+              <div className="share-privacy-check">
+                <input
+                  type="checkbox"
+                  id="share-privacy"
+                  checked={privacyAgreed}
+                  onChange={e => setPrivacyAgreed(e.target.checked)}
+                />
+                <label htmlFor="share-privacy">
+                  개인정보(이름·주소·주민번호 등)가 포함되지 않았음을 확인했습니다.
+                </label>
+              </div>
+              <div className="save-modal-buttons">
+                <button
+                  className="save-cancel-btn"
+                  onClick={() => { setShowShareModal(false); setShareError(null); }}
+                  disabled={isSharing}
+                >
+                  취소
+                </button>
+                <button
+                  className="save-confirm-btn"
+                  onClick={handleShareConfirm}
+                  disabled={isSharing || selectedIds.length === 0 || !shareTitle.trim() || !shareContent.trim() || !privacyAgreed}
+                >
+                  {isSharing ? '공유중...' : `공유하기 (${selectedIds.length}건)`}
+                </button>
+              </div>
             </div>
           </div>
-        </div>
-      )}
-
-      {/* 토스트 */}
-      {shareToast && (
-        <div className="share-toast">
-          <IoMdCheckmark size={16} color="#fff" />
-          {shareToast}
         </div>
       )}
     </>

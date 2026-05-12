@@ -2,6 +2,7 @@
    DocumentView.css
    ============================================= */
 
+
 /* ── 레이아웃 ─────────────────────────────── */
 
 .content-section {
@@ -27,7 +28,7 @@
   align-items: center;
   justify-content: space-between;
   gap: 8px;
-  padding: 7px 14px;
+  padding: 7px 9px;
   background-color: #ffffff;
   border-bottom: 1px solid rgb(239, 239, 239);
   box-sizing: border-box;
@@ -64,10 +65,6 @@
   color: #4099FD;
 }
 
-.icon-btn.bookmarked {
-  color: #f4a261;
-}
-
 .scroll-btn {
   width: 28px;
   height: 28px;
@@ -85,6 +82,63 @@
   background: #f5f5f5;
   color: #333;
   border-radius: 4px;
+}
+
+
+/* ── 마스킹 안내 아이콘 + 호버 툴팁 ─────────────────── */
+
+.mask-info-icon {
+  position: relative; 
+  flex-shrink: 0;
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  background: #f5f5f5;
+  border: 1px solid #e2e7fb;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 13px;
+  cursor: default;
+  transition: background 0.15s;
+}
+
+.mask-info-icon:hover {
+  background: #e0e7ff;
+}
+
+/* 툴팁 — absolute로 자리 차지 안 함 */
+.mask-info-tooltip {
+  display: none;
+  position: absolute;
+  top: calc(100% + 8px);
+  left: 0;
+  width: 240px;
+  background: #fff;
+  border: 1px solid #e9eeff;
+  border-radius: 8px;
+  padding: 10px 12px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+  font-size: 12px;
+  line-height: 1.6;
+  color: #4a5568;
+  white-space: normal;
+  z-index: 100;
+}
+
+.mask-info-icon:hover .mask-info-tooltip {
+  display: block;
+}
+
+.mask-info-tooltip__auto {
+  color: #3b5bdb;
+  font-weight: 500;
+  margin: 0 0 6px 0;
+}
+
+.mask-info-tooltip__manual {
+  color: #4a5568;
+  margin: 0;
 }
 
 
@@ -115,7 +169,6 @@
   color: #666;
 }
 
-/* 검색 결과 카운트 + 이전/다음 버튼 영역 */
 .search-results {
   display: flex;
   align-items: center;
@@ -141,7 +194,6 @@
   flex-shrink: 0;
 }
 
-/* 이전/다음 화살표 버튼만 좁게 — mask-btn-group 버튼에는 적용 안 됨 */
 .search-btn-wrap button {
   border: none;
   background: none;
@@ -160,7 +212,6 @@
   cursor: default;
 }
 
-/* 검색 하이라이트 */
 .search-highlight {
   background: #FFF3A3;
   border-radius: 2px;
@@ -203,7 +254,6 @@
   border-color: #bbb;
 }
 
-/* 줄 마스킹 — 파란 계열 */
 .search-mask-line-btn {
   border-color: #b8d0f5;
   background: #eef4ff;
@@ -215,7 +265,6 @@
   border-color: #4099FD;
 }
 
-/* 취소 — 회색 계열, 마스킹 이력 있을 때만 표시 */
 .search-mask-undo-btn {
   border-color: #ddd;
   background: #f5f5f5;
@@ -226,55 +275,6 @@
   background: #ebebeb;
   border-color: #bbb;
   color: #555;
-}
-
-
-/* ── 개인정보 마스킹 배너 ─────────────────── */
-
-.privacy-banner-wrapper {
-  padding: 0px;
-  width: 792px;
-  margin-bottom: 24px;
-}
-
-.privacy-banner {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 10px 16px;
-  border-radius: 8px;
-  font-size: 13px;
-  gap: 12px;
-}
-
-.banner-detected {
-  background-color: #fff3cd;
-  color: #856404;
-  border: 1px solid #ffc107;
-}
-
-.banner-masked {
-  width: 100%;
-  background-color: #b4f6d8;
-  color: #0a3622;
-  border: 1px solid #caeddd;
-}
-
-.banner-close-btn {
-  background: none;
-  border: none;
-  cursor: pointer;
-  font-size: 14px;
-  color: inherit;
-  padding: 2px 6px;
-  border-radius: 4px;
-  opacity: 0.7;
-  flex-shrink: 0;
-}
-
-.banner-close-btn:hover {
-  opacity: 1;
-  background-color: rgba(0, 0, 0, 0.08);
 }
 
 
@@ -304,7 +304,6 @@
   box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
   z-index: 100;
   overflow: hidden;
-  /* 화면 밖으로 나가지 않도록 */
   max-height: calc(100vh - 100px);
   max-width: calc(100vw - 20px);
 }
@@ -418,7 +417,45 @@
   padding: 20px 0;
 }
 
+.mask-info-tooltip__warning {
+  display: flex;
+  align-items: flex-start;
+  gap: 6px;
+  color: #d21c12;
+  margin: 0;
+  font-size: 11.5px;
+  line-height: 1.6;
+}
 
+.mask-info-tooltip__warning svg {
+  flex-shrink: 0;     
+  margin-top: 2px;     
+}
+
+.mask-info-tooltip__divider {
+  border-top: 1px solid #e8e8e8;
+  margin: 8px 0;
+}
+
+.mask-info-tooltip__guide {
+  display: flex;
+  align-items: flex-start;
+  gap: 6px;
+  color: #718096;
+  margin: 0;
+  font-size: 11.5px;
+  line-height: 1.7;
+}
+
+.mask-info-tooltip__guide svg {
+  flex-shrink: 0;
+  margin-top: 3px;
+}
+
+.document-body img {
+  max-width: 100%;
+  height: auto;
+}
 /* ── 반응형 ───────────────────────────────── */
 
 @media (max-width: 768px) {
@@ -436,3 +473,4 @@
     justify-content: flex-end;
   }
 }
+

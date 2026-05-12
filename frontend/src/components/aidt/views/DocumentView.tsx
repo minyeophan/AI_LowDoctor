@@ -5,6 +5,9 @@ import DocumentEditor, { DocumentEditorRef } from './DocumentEditor';
 import { FaCaretUp } from "react-icons/fa";
 import { FaCaretDown } from "react-icons/fa";
 import { IoMdSearch } from "react-icons/io";
+import { TbShieldLockFilled } from "react-icons/tb";
+import { MdWarning} from "react-icons/md";
+import { FaCheckCircle } from "react-icons/fa";
 import '../views/DocumentView.css';
 
 interface Memo {
@@ -48,11 +51,26 @@ function DocumentView({
   const isDragging = useRef(false);
   const [dragMaskMode, setDragMaskMode] = useState(false);
   const [htmlHistory, setHtmlHistory] = useState<string[]>([]);
-  const [showBanner, setShowBanner] = useState(true);
+  const [showMaskIcon, setShowMaskIcon] = useState(false);
+  const TOAST_DURATION = 4000;
 
   const [memos, setMemos] = useState<Memo[]>([]);
   const [showMemoPanel, setShowMemoPanel] = useState(false);
   const [memoInput, setMemoInput] = useState('');
+
+  // maskCounts 세팅되면 토스트 duration 후 아이콘 표시
+  useEffect(() => {
+  if (maskCounts === undefined) return;
+  setShowMaskIcon(true);
+}, [maskCounts]);
+
+  // 자동 마스킹 요약 텍스트
+  const maskedSummary =
+    maskCounts && Object.keys(maskCounts).length > 0
+      ? Object.entries(maskCounts)
+          .map(([label, count]) => `${label} ${count}건`)
+          .join(', ') + '이 자동 마스킹되었습니다.'
+      : null;
 
   useEffect(() => {
     if (!searchTerm.trim()) {
@@ -87,35 +105,20 @@ function DocumentView({
     if (!memoPanelRef.current) return;
     isDragging.current = true;
     const rect = memoPanelRef.current.getBoundingClientRect();
-    dragOffset.current = {
-      x: e.clientX - rect.left,
-      y: e.clientY - rect.top,
-    };
+    dragOffset.current = { x: e.clientX - rect.left, y: e.clientY - rect.top };
     e.preventDefault();
   };
 
   const handleDragMove = (e: MouseEvent) => {
     if (!isDragging.current || !memoPanelRef.current) return;
     const panel = memoPanelRef.current;
-    const panelW = panel.offsetWidth;
-    const panelH = panel.offsetHeight;
-
-    const newLeft = Math.min(
-      Math.max(0, e.clientX - dragOffset.current.x),
-      window.innerWidth - panelW
-    );
-    const newTop = Math.min(
-      Math.max(0, e.clientY - dragOffset.current.y),
-      window.innerHeight - panelH
-    );
-
+    const newLeft = Math.min(Math.max(0, e.clientX - dragOffset.current.x), window.innerWidth - panel.offsetWidth);
+    const newTop = Math.min(Math.max(0, e.clientY - dragOffset.current.y), window.innerHeight - panel.offsetHeight);
     panel.style.left = `${newLeft}px`;
     panel.style.top = `${newTop}px`;
   };
 
-  const handleDragEnd = () => {
-    isDragging.current = false;
-  };
+  const handleDragEnd = () => { isDragging.current = false; };
 
   const applyMask = (maskedHtml: string) => {
     const current = editorRef.current?.getHTML() || '';
@@ -142,12 +145,11 @@ function DocumentView({
 
   const handleAddMemo = () => {
     if (!memoInput.trim()) return;
-    const newMemo: Memo = {
+    setMemos(prev => [...prev, {
       id: Date.now().toString(),
       text: memoInput,
       createdAt: new Date().toLocaleString('ko-KR'),
-    };
-    setMemos(prev => [...prev, newMemo]);
+    }]);
     setMemoInput('');
   };
 
@@ -160,10 +162,7 @@ function DocumentView({
     document.body.innerHTML = `
       <html>
         <head><style>body { font-family: "Noto Sans KR", sans-serif; line-height: 1.8; padding: 20px; }</style></head>
-        <body>
-          <h2>${currentDocument.filename}</h2>
-          ${editedHtml}
-        </body>
+        <body><h2>${currentDocument.filename}</h2>${editedHtml}</body>
       </html>
     `;
     window.print();
@@ -173,13 +172,10 @@ function DocumentView({
 
   return (
     <>
-      {/* 메모 패널 — fixed로 화면 전체에서 자유롭게 드래그 */}
+      {/* 메모 패널 */}
       {showMemoPanel && (
         <div className="side-panel" ref={memoPanelRef}>
-          <div
-            className="panel-header draggable"
-            onMouseDown={handleDragStart}
-          >
+          <div className="panel-header draggable" onMouseDown={handleDragStart}>
             <span>메모</span>
             <button onClick={() => setShowMemoPanel(false)}>✕</button>
           </div>
@@ -211,38 +207,27 @@ function DocumentView({
       )}
 
       <div className="content-section">
-        {/* 개인정보 마스킹 배너 */}
-        {false && hasPersonalInfo && showBanner && (
-          <div className="privacy-banner-wrapper">
-            <div className={`privacy-banner ${isMasked ? 'banner-masked' : 'banner-detected'}`}>
-              <span>
-                {isMasked ? (
-                  <>
-                    ✅{' '}
-                    {Object.keys(maskCounts || {}).length > 0
-                      ? Object.entries(maskCounts || {})
-                          .map(([label, count]) => `${label} ${count}건`)
-                          .join(', ') + '이 자동 마스킹되었습니다. '
-                      : '개인정보가 자동 마스킹되었습니다. '}
-                    이름·주소는 검색창에 키워드 입력 후 🔒 마스킹을 클릭하세요.
-                  </>
-                ) : (
-                  '⚠️ 개인정보가 감지되었습니다.'
-                )}
-              </span>
-              <button
-                className="banner-close-btn"
-                onClick={() => setShowBanner(false)}
-              >
-                ✕
-              </button>
-            </div>
-          </div>
-        )}
-
         <div className="content-analysis-box">
+
           {/* 툴바 */}
           <div className="document-toolbar-new">
+            {showMaskIcon && (
+              <div className="mask-info-icon" aria-label="개인정보 마스킹 안내">
+                <TbShieldLockFilled color='#686868' />
+                <div className="mask-info-tooltip">
+                  <p className="mask-info-tooltip__warning">
+                    <MdWarning/> 일부 개인정보(이름, 주소 등)는 자동 마스킹이 누락될 수 있으니 직접 확인 후 마스킹해 주세요.
+                  </p>
+                  <div className="mask-info-tooltip__divider" />
+                  <p className="mask-info-tooltip__guide">
+                    <FaCheckCircle /> 마스킹 방법 <br/>
+                    검색창에 단어 입력 → 단어/줄 마스킹 클릭
+                  </p>
+                </div>
+              </div>
+            )} 
+          
+
             {/* 검색창 */}
             <div className="search-box-new">
               <IoMdSearch color='#666' />
@@ -266,8 +251,7 @@ function DocumentView({
                         className="search-mask-btn"
                         onClick={() => {
                           const currentHtml = editorRef.current?.getHTML() || '';
-                          const masked = currentHtml.replace(searchTerm, '***');
-                          applyMask(masked);
+                          applyMask(currentHtml.replace(searchTerm, '***'));
                         }}
                         title="검색어만 마스킹"
                       >

@@ -85,7 +85,7 @@ export default function StorageTableMUI({ sortOrder, categoryFilter, searchQuery
         <TableHead>
           <TableRow sx={{ backgroundColor: '#F9FAFB' }}>
             <TableCell width={columnWidths.category} sx={{ fontWeight: 600, color: '#6B7280', fontSize: '13px', borderBottom: '1px solid #E5E7EB' }}>
-              계약유형
+              계약 유형
             </TableCell>
             <TableCell width={columnWidths.title} sx={{ fontWeight: 600, color: '#6B7280', fontSize: '13px', borderBottom: '1px solid #E5E7EB' }}>
               계약서 제목
@@ -94,7 +94,7 @@ export default function StorageTableMUI({ sortOrder, categoryFilter, searchQuery
               업로드일
             </TableCell>
             <TableCell width={columnWidths.status} sx={{ fontWeight: 600, color: '#6B7280', fontSize: '13px', borderBottom: '1px solid #E5E7EB' }}>
-              분석상태
+              분석 상태
             </TableCell>
             <TableCell width={columnWidths.actions} sx={{ borderBottom: '1px solid #E5E7EB' }} />
           </TableRow>

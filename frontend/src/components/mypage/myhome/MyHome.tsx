@@ -220,6 +220,7 @@ export default function Dashboard() {
         <div className="analysis-grid">
 
           {/* 왼쪽 — 최근 계약서 위험도 분포 */}
+          {riskSummary.docTitle && (
           <div className="analysis-card gray">
             <div className="analysis-card-header">
               <div style={{ flex: 1, minWidth: 0 }}>
@@ -232,6 +233,7 @@ export default function Dashboard() {
                   </p>
                 )}
               </div>
+              
               {/* 3번 수정: 보관함 바로 이동 버튼 */}
               <button
                 className="analysis-card-link"
@@ -311,7 +313,7 @@ export default function Dashboard() {
               </div>
             )}
           </div>
-
+)}   
           {/* 오른쪽 — 다가오는 일정 */}
           <div className="analysis-card blue">
             <div className="analysis-card-header">

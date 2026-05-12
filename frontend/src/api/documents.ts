@@ -81,5 +81,23 @@ export const documentsAPI = {
       throw error;
     }
   },
+  
+  getUploadInfo: async (documentId: string): Promise<{
+    documentId: string;
+    originalname: string;
+    filePath: string;
+    mimetype: string;
+    fileSize: number;
+    createdAt: string;
+  }> => {
+    const token = localStorage.getItem('token');
+    const response = await fetch(`${API_BASE_URL}/api/upload/info/${documentId}`, {
+      headers: {
+        ...(token && { 'Authorization': `Bearer ${token}` }),
+      },
+    });
+    if (!response.ok) throw new Error('문서 정보를 불러오는데 실패했습니다.');
+    return response.json();
+  },
 };
 

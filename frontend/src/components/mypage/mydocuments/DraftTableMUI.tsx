@@ -1,30 +1,17 @@
 import { useState, useEffect } from 'react';
 import {
-  Table,
-  TableBody,
-  TableCell,
-  TableContainer,
-  TableHead,
-  TableRow,
-  Paper,
-  Chip,
-  LinearProgress,
-  IconButton,
-  Box,
-  Typography,
-  Menu,
-  MenuItem,
-  ListItemIcon,
-  ListItemText,
-  Divider,
+  Table, TableBody, TableCell, TableContainer, TableHead, TableRow,
+  Paper, Chip, IconButton, Box, Typography, Menu, MenuItem,
+  ListItemIcon, ListItemText, Divider,
 } from '@mui/material';
 import MoreVertIcon from '@mui/icons-material/MoreVert';
-import { categoryInfo, mockDrafts} from '../../../mock/mockDocuments';
-import { mypageAPI } from '../../../api/mypage';
 import DeleteIcon from '@mui/icons-material/Delete';
-import CreateRoundedIcon from '@mui/icons-material/CreateRounded';
-import ShareRoundedIcon from '@mui/icons-material/ShareRounded';
-import { DraftDocument } from '../../../types'; 
+import RemoveRedEyeIcon from '@mui/icons-material/RemoveRedEye';
+import AccessTimeFilledRoundedIcon from '@mui/icons-material/AccessTimeFilledRounded';
+import { useNavigate } from 'react-router-dom';
+import { categoryInfo, mockDrafts } from '../../../mock/mockDocuments';
+import { mypageAPI } from '../../../api/mypage';
+import { DraftDocument } from '../../../types';
 
 interface DraftTableProps {
   sortOrder: string;
@@ -48,14 +35,14 @@ export default function DraftTableMUI({ sortOrder, categoryFilter, searchQuery }
           category: 'real_estate',
           progress: item.progress || 0,
           statusText: item.statusText || '미분석',
-          lastEditedAt: item.updatedAt,
+          lastEditedAt: item.uploadDate ?? item.updatedAt ?? '',
         }));
         const filtered = searchQuery
           ? mapped.filter((d: DraftDocument) => d.title.toLowerCase().includes(searchQuery.toLowerCase()))
           : mapped;
         setDrafts(filtered);
       } catch (err) {
-        console.error('작성 중 목록 로딩 실패:', err);
+        console.error('미분석 목록 로딩 실패:', err);
         setDrafts(mockDrafts);
       } finally {
         setIsLoading(false);
@@ -65,81 +52,38 @@ export default function DraftTableMUI({ sortOrder, categoryFilter, searchQuery }
   }, [sortOrder, categoryFilter, searchQuery]);
 
   return (
-    <TableContainer 
-      component={Paper} 
-      sx={{ 
+    <TableContainer
+      component={Paper}
+      sx={{
         borderRadius: '12px',
         boxShadow: 'none',
         border: '1px solid #E5E7EB',
-
         '& .MuiTableCell-root': {
-        height: '38px',
-        maxHeight: '38px',  
-        minHeight: '38px',  
-        padding: '0px 16px',  
-        boxSizing: 'border-box', 
-        fontSize: '13px'
-    },
+          height: '38px',
+          maxHeight: '38px',
+          minHeight: '38px',
+          padding: '0px 16px',
+          boxSizing: 'border-box',
+          fontSize: '13px',
+        },
       }}
     >
       <Table>
-        {/* 테이블 헤더 */}
         <TableHead>
           <TableRow sx={{ backgroundColor: '#F9FAFB' }}>
-            <TableCell 
-              sx={{ 
-                fontWeight: 600, 
-                color: '#6B7280',
-                fontSize: '14px',
-                borderBottom: '1px solid #E5E7EB',
-              }}
-              width="15%"
-            >
-              계약유형
+            <TableCell width="15%" sx={{ fontWeight: 600, color: '#6B7280', fontSize: '13px', borderBottom: '1px solid #E5E7EB' }}>
+              계약 유형
             </TableCell>
-            <TableCell 
-              sx={{ 
-                fontWeight: 600, 
-                color: '#6B7280',
-                fontSize: '14px',
-                borderBottom: '1px solid #E5E7EB',
-              }}
-              width="40%"
-            >
+            <TableCell width="40%" sx={{ fontWeight: 600, color: '#6B7280', fontSize: '13px', borderBottom: '1px solid #E5E7EB' }}>
               계약서 제목
             </TableCell>
-            <TableCell 
-              sx={{ 
-                fontWeight: 600, 
-                color: '#6B7280',
-                fontSize: '14px',
-                borderBottom: '1px solid #E5E7EB',
-              }}
-              width="15%"
-            >
-              최종 수정일
+            <TableCell width="15%" sx={{ fontWeight: 600, color: '#6B7280', fontSize: '13px', borderBottom: '1px solid #E5E7EB' }}>
+              업로드일
             </TableCell>
-            <TableCell 
-              sx={{ 
-                fontWeight: 600, 
-                color: '#6B7280',
-                fontSize: '14px',
-                borderBottom: '1px solid #E5E7EB',
-              }}
-              width="35%"
-            >
-              진행률
+            <TableCell width="25%" sx={{ fontWeight: 600, color: '#6B7280', fontSize: '13px', borderBottom: '1px solid #E5E7EB' }}>
+              분석 상태
             </TableCell>
-            <TableCell 
-              sx={{ 
-                fontWeight: 600, 
-                color: '#6B7280',
-                fontSize: '14px',
-                borderBottom: '1px solid #E5E7EB',
-              }}
-              width="5%"
-            >
-            </TableCell>
+            <TableCell width="5%" sx={{ borderBottom: '1px solid #E5E7EB' }} />
           </TableRow>
         </TableHead>
 
@@ -150,54 +94,29 @@ export default function DraftTableMUI({ sortOrder, categoryFilter, searchQuery }
                 로딩 중...
               </TableCell>
             </TableRow>
+          ) : drafts.length === 0 ? (
+            <TableRow>
+              <TableCell colSpan={5} sx={{ padding: 0, border: 'none' }}>
+                <Box sx={{ padding: '60px 40px', textAlign: 'center', backgroundColor: '#fff' }}>
+                  <Typography sx={{ fontSize: '14px', color: '#6B7280' }}>
+                    미분석 계약서가 없습니다
+                  </Typography>
+                </Box>
+              </TableCell>
+            </TableRow>
           ) : (
             drafts.map((draft) => (
               <DraftRow key={draft.id} draft={draft} />
             ))
           )}
         </TableBody>
-        
       </Table>
-
-      {/* 빈 상태 */}
-      {drafts.length === 0 && (
-        <Box
-          sx={{
-            padding: '50px 40px',
-            textAlign: 'center',
-            backgroundColor: '#fff',
-          }}
-        >
-          <Typography sx={{ fontSize: '14px', fontWeight: 400, color: '#6B7280', marginBottom: '8px' }}>
-            작성 중인 계약서가 없습니다
-          </Typography>
-        </Box>
-      )}
     </TableContainer>
   );
 }
 
-function formatDate(dateString: string) {
-  const date = new Date(dateString);
-  const now = new Date();
-  const diff = now.getTime() - date.getTime();
-  const minutes = Math.floor(diff / 60000);
-  const hours = Math.floor(minutes / 60);
-  const days = Math.floor(hours / 24);
-
-  if (minutes < 60) return `${minutes}분 전`;
-  if (hours < 24) return `${hours}시간 전`;
-  if (days === 0) return '오늘';
-  if (days === 1) return '어제';
-  
-  const year = String(date.getFullYear()).slice(2);
-  const month = String(date.getMonth() + 1).padStart(2, '0');
-  const day = String(date.getDate()).padStart(2, '0');
-  return `${year}.${month}.${day}`;
-}
-
-// DraftRow 컴포넌트
-function DraftRow({ draft }: { draft: DraftDocument }){
+function DraftRow({ draft }: { draft: DraftDocument }) {
+  const navigate = useNavigate();
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
   const open = Boolean(anchorEl);
 
@@ -209,14 +128,12 @@ function DraftRow({ draft }: { draft: DraftDocument }){
     setAnchorEl(null);
   };
 
-  const handleEdit = () => {
-    console.log('수정:', draft.id);
+  // ✅ 보기 — 분석 페이지로 이동
+  const handleView = () => {
     handleClose();
-  };
-
-  const handleShare = () => {
-    console.log('공유:', draft.id);
-    handleClose();
+    navigate('/analysis', {
+      state: { documentId: draft.id, filename: draft.title, autoAnalyze: true },
+    });
   };
 
   const handleDelete = () => {
@@ -227,19 +144,17 @@ function DraftRow({ draft }: { draft: DraftDocument }){
   return (
     <TableRow
       sx={{
-        '&:hover': {
-          backgroundColor: '#FAFBFC',
-        },
+        '&:hover': { backgroundColor: '#FAFBFC' },
         borderBottom: '1px solid #F3F4F6',
       }}
     >
       {/* 계약유형 */}
       <TableCell sx={{ borderBottom: '1px solid #F3F4F6' }}>
         <Chip
-          label={categoryInfo[draft.category].label}
+          label={categoryInfo[draft.category]?.label ?? '부동산'}
           sx={{
             backgroundColor: '#dbeafe',
-            color: '#1d4ed8;',
+            color: '#1d4ed8',
             fontWeight: 600,
             fontSize: '11px',
             width: '55px',
@@ -250,65 +165,34 @@ function DraftRow({ draft }: { draft: DraftDocument }){
       </TableCell>
 
       {/* 계약서 제목 */}
-      <TableCell sx={{ borderBottom: '1px solid #F3F4F6' }}>
+      <TableCell sx={{ borderBottom: '1px solid #F3F4F6', maxWidth: 0 }}>
         <Typography
           sx={{
             fontSize: '14px',
             fontWeight: 500,
             color: '#111827',
-            lineHeight: '38px',
+            overflow: 'hidden',
+            whiteSpace: 'nowrap',
+            textOverflow: 'ellipsis',
           }}
         >
           {draft.title}
         </Typography>
       </TableCell>
 
-      {/* 최종 수정일 */}
+      {/* 업로드일 */}
       <TableCell sx={{ borderBottom: '1px solid #F3F4F6' }}>
-        <Typography
-          sx={{
-            fontSize: '14px',
-            color: '#6B7280',
-            lineHeight: '38px',
-          }}
-        >
+        <Typography sx={{ fontSize: '14px', color: '#6B7280' }}>
           {formatDateString(draft.lastEditedAt)}
         </Typography>
       </TableCell>
 
-      {/* 진행률 */}
+      {/* ✅ 분석 상태 */}
       <TableCell sx={{ borderBottom: '1px solid #F3F4F6' }}>
-        <Box sx={{ 
-          display: 'flex', 
-          alignItems: 'center', 
-          gap: 1.5,
-          height: '100%',
-        }}>
-          <Box sx={{ flex: 1 }}>
-            <LinearProgress
-              variant="determinate"
-              value={draft.progress}
-              sx={{
-                height: 6,
-                borderRadius: 3,
-                backgroundColor: '#E5E7EB',
-                '& .MuiLinearProgress-bar': {
-                  backgroundColor: '#4f617b',
-                  borderRadius: 3,
-                },
-              }}
-            />
-          </Box>
-          <Typography
-            sx={{
-              fontSize: '14px',
-              fontWeight: 600,
-              color: '#4f617b',
-              minWidth: '45px',
-              textAlign: 'right',
-            }}
-          >
-            {draft.statusText || `${draft.progress}%`}
+        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+          <AccessTimeFilledRoundedIcon sx={{ fontSize: '18px', color: '#F59E0B' }} />
+          <Typography sx={{ fontSize: '14px', fontWeight: 500, color: '#F59E0B' }}>
+            {draft.statusText || '미분석'}
           </Typography>
         </Box>
       </TableCell>
@@ -321,29 +205,18 @@ function DraftRow({ draft }: { draft: DraftDocument }){
           sx={{
             color: '#9CA3AF',
             padding: '6px',
-            '&:hover': {
-              backgroundColor: '#F3F4F6',
-              color: '#6B7280',
-              borderRadius: '5px'
-            },
+            '&:hover': { backgroundColor: '#F3F4F6', color: '#6B7280', borderRadius: '5px' },
           }}
         >
           <MoreVertIcon sx={{ fontSize: '18px' }} />
         </IconButton>
 
-        {/* 드롭다운 메뉴 */}
         <Menu
           anchorEl={anchorEl}
           open={open}
           onClose={handleClose}
-          anchorOrigin={{
-            vertical: 'bottom',
-            horizontal: 'right',
-          }}
-          transformOrigin={{
-            vertical: 'top',
-            horizontal: 'right',
-          }}
+          anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}
+          transformOrigin={{ vertical: 'top', horizontal: 'right' }}
           PaperProps={{
             sx: {
               borderRadius: '12px',
@@ -354,78 +227,27 @@ function DraftRow({ draft }: { draft: DraftDocument }){
             },
           }}
         >
-          {/* 수정 */}
-          <MenuItem 
-            onClick={handleEdit}
-            sx={{
-              padding: '12px 16px',
-              fontSize: '14px',
-              '&:hover': {
-                backgroundColor: '#F9FAFB',
-              },
-            }}
-          >
+          {/* ✅ 보기 — 분석 페이지로 이동 */}
+          <MenuItem onClick={handleView} sx={{ padding: '12px 16px', '&:hover': { backgroundColor: '#F9FAFB' } }}>
             <ListItemIcon>
-              <CreateRoundedIcon  sx={{ fontSize: '20px', color: '#374151' }} />
+              <RemoveRedEyeIcon sx={{ fontSize: '20px', color: '#374151' }} />
             </ListItemIcon>
-            <ListItemText 
-              primary="수정" 
-              primaryTypographyProps={{
-                fontSize: '14px',
-                fontWeight: 500,
-                color: '#374151',
-              }}
+            <ListItemText
+              primary="보기"
+              primaryTypographyProps={{ fontSize: '14px', fontWeight: 500, color: '#374151' }}
             />
           </MenuItem>
 
-          {/* 공유 */}
-          <MenuItem 
-            onClick={handleShare}
-            sx={{
-              padding: '12px 16px',
-              fontSize: '14px',
-              '&:hover': {
-                backgroundColor: '#F9FAFB',
-              },
-            }}
-          >
-            <ListItemIcon>
-              <ShareRoundedIcon sx={{ fontSize: '20px', color: '#374151' }} />
-            </ListItemIcon>
-            <ListItemText 
-              primary="공유" 
-              primaryTypographyProps={{
-                fontSize: '14px',
-                fontWeight: 500,
-                color: '#374151',
-              }}
-            />
-          </MenuItem>
-
-          {/* 구분선 */}
           <Divider sx={{ my: 0.5 }} />
 
           {/* 삭제 */}
-          <MenuItem 
-            onClick={handleDelete}
-            sx={{
-              padding: '12px 16px',
-              fontSize: '14px',
-              '&:hover': {
-                backgroundColor: '#FEF2F2',
-              },
-            }}
-          >
+          <MenuItem onClick={handleDelete} sx={{ padding: '12px 16px', '&:hover': { backgroundColor: '#FEF2F2' } }}>
             <ListItemIcon>
               <DeleteIcon sx={{ fontSize: '20px', color: '#DC2626' }} />
             </ListItemIcon>
-            <ListItemText 
-              primary="삭제" 
-              primaryTypographyProps={{
-                fontSize: '14px',
-                fontWeight: 500,
-                color: '#DC2626',
-              }}
+            <ListItemText
+              primary="삭제"
+              primaryTypographyProps={{ fontSize: '14px', fontWeight: 500, color: '#DC2626' }}
             />
           </MenuItem>
         </Menu>
@@ -433,20 +255,11 @@ function DraftRow({ draft }: { draft: DraftDocument }){
     </TableRow>
   );
 }
-  // 날짜 포맷 함수
-  function formatDateString(dateString: string) {  // ← 이름 변경!
-  const date = new Date(dateString);
-  const now = new Date();
-  const diff = now.getTime() - date.getTime();
-  const minutes = Math.floor(diff / 60000);
-  const hours = Math.floor(minutes / 60);
-  const days = Math.floor(hours / 24);
 
-  if (minutes < 60) return `${minutes}분 전`;
-  if (hours < 24) return `${hours}시간 전`;
-  if (days === 0) return '오늘';
-  if (days === 1) return '어제';
-  
+function formatDateString(dateString: string) {
+  if (!dateString) return '-';
+  const date = new Date(dateString);
+  if (isNaN(date.getTime())) return '-';
   const year = String(date.getFullYear()).slice(2);
   const month = String(date.getMonth() + 1).padStart(2, '0');
   const day = String(date.getDate()).padStart(2, '0');

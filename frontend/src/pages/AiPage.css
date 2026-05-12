@@ -101,7 +101,6 @@ align-items: center; justify-content: center;
   flex-wrap: wrap;
   background-color: #fff;
   padding: 24px 0px;  
-  
 }
 
 .content-analysis-box { width: 794px; 
@@ -129,6 +128,10 @@ align-items: center; justify-content: center;
 .upload-guide-privacy-warn {
   color: #856404;
   font-size: 12px;
+}
+
+.main-content.no-document {
+  border-radius: 8px;
 }
 
 @keyframes fadeIn {
