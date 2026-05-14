@@ -124,6 +124,7 @@ def search_legal_sources(
         "laws": [],
         "interpretations": [],
         "cases": [],
+        "expert_corrections": [],
         "others": [],
     }
 
@@ -160,6 +161,8 @@ def search_legal_sources(
             grouped["interpretations"].append(doc)
         elif doc_type == "case":
             grouped["cases"].append(doc)
+        elif doc_type == "expert_correction":
+            grouped["expert_corrections"].append(doc)
         else:
             grouped["others"].append(doc)
 
@@ -174,6 +177,81 @@ def search_legal_sources(
     return grouped
 
 
+def search_expert_corrections(query: str, top_k: int = 3, contract_type: str | None = None) -> list[dict]:
+    """계약 조항과 유사한 전문가 교정 사례를 검색. contract_type 지정 시 해당 유형 우선 검색."""
+    from qdrant_client import models as qdrant_models
+
+    dense_vector = _embed_dense(query)
+    sparse_vector = _embed_sparse(query)
+
+    qdrant = get_qdrant()
+    db = get_mongo_db()
+    col = db["law_chunks"]
+
+    type_condition = qdrant_models.FieldCondition(
+        key="type",
+        match=qdrant_models.MatchValue(value="expert_correction"),
+    )
+
+    def _query(extra_filter=None):
+        must = [type_condition]
+        if extra_filter:
+            must.append(extra_filter)
+        return qdrant.query_points(
+            collection_name=LAW_COLLECTION,
+            prefetch=[
+                qdrant_models.Prefetch(query=dense_vector, using=DENSE_VECTOR_NAME, limit=top_k * 2),
+                qdrant_models.Prefetch(query=sparse_vector, using=SPARSE_VECTOR_NAME, limit=top_k * 2),
+            ],
+            query=qdrant_models.FusionQuery(fusion=qdrant_models.Fusion.RRF),
+            query_filter=qdrant_models.Filter(must=must),
+            with_payload=True,
+            limit=top_k * 2,
+        )
+
+    # 계약 유형 필터 적용 → 결과 없으면 전체 검색으로 폴백
+    results = None
+    if contract_type:
+        results = _query(qdrant_models.FieldCondition(
+            key="contract_type",
+            match=qdrant_models.MatchText(text=contract_type),
+        ))
+    if not contract_type or not results.points:
+        results = _query()
+
+    mongo_ids = []
+    for hit in results.points:
+        mongo_id = (hit.payload or {}).get("mongo_id")
+        if mongo_id:
+            try:
+                from bson import ObjectId
+                mongo_ids.append(ObjectId(mongo_id))
+            except Exception:
+                pass
+
+    mongo_docs = {}
+    if mongo_ids:
+        for doc in col.find({"_id": {"$in": mongo_ids}}):
+            mongo_docs[str(doc["_id"])] = doc
+
+    corrections = []
+    for hit in results.points:
+        payload = hit.payload or {}
+        mongo_id = payload.get("mongo_id")
+        mongo_doc = mongo_docs.get(mongo_id) if mongo_id else {}
+
+        corrections.append({
+            "score": getattr(hit, "score", 0),
+            "contract_type": payload.get("contract_type") or (mongo_doc or {}).get("contract_type", ""),
+            "correction_type": payload.get("correction_type") or (mongo_doc or {}).get("correction_type", ""),
+            "clause_text": (mongo_doc or {}).get("clause_text", ""),
+            "ai_opinion": (mongo_doc or {}).get("ai_opinion", ""),
+            "expert_opinion": (mongo_doc or {}).get("expert_opinion", ""),
+        })
+
+    return corrections[:top_k]
+
+
 def build_context_text(grouped: Dict[str, List[Dict]]) -> str:
     parts = []
 
@@ -183,6 +261,7 @@ def build_context_text(grouped: Dict[str, List[Dict]]) -> str:
         "laws",
         "interpretations",
         "cases",
+        "expert_corrections",
         "others",
     ]:
         docs = grouped.get(section, [])
