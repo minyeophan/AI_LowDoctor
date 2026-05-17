@@ -220,15 +220,13 @@ DIRECT_PATTERN_RULES = [
 
 CHAT_BASE_PROMPT = """
 너는 한국 법률 문서 이해를 돕는 챗봇이다.
-업로드 문서 내용이 제공되면 반드시 업로드 문서 내용을 가장 우선으로 참고한다.
-업로드 문서 내용이 있으면 법률 검색 참고자료보다 업로드 문서 내용을 우선한다.
-검색 결과와 업로드 문서 내용이 있으면 그 범위 안에서만 답한다.
+현재 챗봇은 업로드 문서 원문을 직접 읽어 답변하지 않는다.
+법률 검색 참고자료가 제공되면 참고하되, 참고자료에 없는 내용을 단정하지 않는다.
 답변은 짧고 친절하게 작성하되, 불필요한 마무리 문구를 반복하지 않는다.
 "필요하면 더 쉽게 풀어드릴게요", "더 자세히 설명해드릴게요", "필요하면 알려드릴게요" 같은 문구는 사용자가 요청하지 않으면 붙이지 않는다.
 전문 용어는 쉬운 말로 풀어 쓴다.
-문서 내용만으로 확인이 어려우면 어렵다고 답한다.
 "한줄 답변:", "추가 안내:" 같은 라벨식 표현은 쓰지 않는다.
-이전 대화 내용이 함께 제공되면 현재 질문은 이전 대화의 후속 질문으로 이해하고 답한다.
+이전 챗봇 답변이 함께 제공되면 현재 질문은 이전 답변의 후속 질문으로 이해하고 답한다.
 """.strip()
 
 
@@ -237,6 +235,7 @@ CHAT_TASK_PROMPTS = {
     "clause_explanation": "조항이나 문장의 의미를 쉬운 말로 짧게 풀어 설명한다.",
     "risk_check": "위험 여부를 먼저 말하고, 이유를 짧게 설명한다.",
     "action_guide": "먼저 해야 할 행동을 짧고 구체적으로 안내한다.",
+    "follow_up": "이전 챗봇 답변을 기준으로 더 쉽게 다시 설명한다.",
     "general": "질문에 대해 쉬운 말로 짧게 답한다.",
 }
 
@@ -354,22 +353,78 @@ def format_answer_for_readability(answer: str, max_chars: int = 500) -> str:
 def extract_current_user_question(question: str) -> str:
     text = (question or "").strip()
 
+    if "[현재 질문]" in text:
+        current_part = text.split("[현재 질문]", 1)[1].strip()
+
+        end_markers = [
+            "위 이전 대화",
+            "위 이전 챗봇 답변",
+            "사용자가",
+            "새로운 주제로",
+        ]
+
+        for end_marker in end_markers:
+            if end_marker in current_part:
+                current_part = current_part.split(end_marker, 1)[0].strip()
+
+        return current_part.split("\n", 1)[0].strip()
+
     marker = "현재 사용자 질문:"
-    if marker not in text:
-        return text
+    if marker in text:
+        current_part = text.split(marker, 1)[1].strip()
 
-    current_part = text.split(marker, 1)[1].strip()
+        end_markers = [
+            "위 이전 대화의 맥락을 기준으로",
+            "위 이전 대화",
+        ]
 
-    end_markers = [
-        "위 이전 대화의 맥락을 기준으로",
-        "위 이전 대화",
+        for end_marker in end_markers:
+            if end_marker in current_part:
+                current_part = current_part.split(end_marker, 1)[0].strip()
+
+        return current_part.strip()
+
+    return text
+
+
+def is_follow_up_question(question: str) -> bool:
+    q = (question or "").strip()
+    normalized = "".join(q.split())
+
+    follow_up_keywords = [
+        "더 쉽게",
+        "쉽게 알려줘",
+        "쉽게알려줘",
+        "좀 더 쉽게",
+        "자세히",
+        "더 자세히",
+        "설명해줘",
+        "다시 설명",
+        "그게 무슨 뜻",
+        "그게 뭐야",
+        "무슨 말",
+        "예시",
+        "예를 들어",
     ]
 
-    for end_marker in end_markers:
-        if end_marker in current_part:
-            current_part = current_part.split(end_marker, 1)[0].strip()
+    normalized_keywords = [
+        "더쉽게",
+        "쉽게알려줘",
+        "좀더쉽게",
+        "자세히",
+        "더자세히",
+        "설명해줘",
+        "다시설명",
+        "그게무슨뜻",
+        "그게뭐야",
+        "무슨말",
+        "예시",
+        "예를들어",
+    ]
 
-    return current_part.strip()
+    return any(k in q for k in follow_up_keywords) or any(
+        k in normalized for k in normalized_keywords
+    )
 
 
 def is_site_help_question(question: str) -> bool:
@@ -478,6 +533,9 @@ def is_document_specific_question(question: str) -> bool:
 def classify_chat_intent(question: str) -> str:
     q = (question or "").strip()
 
+    if is_follow_up_question(q):
+        return "follow_up"
+
     if len(q.split()) == 1 or len(q) <= 6:
         return "term_explanation"
 
@@ -520,7 +578,7 @@ def build_prompt(question: str, context_text: str, document_text: str | None = N
     intent = classify_chat_intent(current_question)
     task_prompt = CHAT_TASK_PROMPTS.get(intent, CHAT_TASK_PROMPTS["general"])
 
-    doc_type = detect_doc_type_from_question(question)
+    doc_type = detect_doc_type_from_question(current_question)
     doc_type_instruction = DOC_TYPE_INSTRUCTIONS.get(doc_type, "")
 
     document_text = (document_text or "").strip()
@@ -687,24 +745,32 @@ def answer_chat(
         return "질문이 비어 있습니다."
 
     current_question = extract_current_user_question(question)
+    is_follow_up = "[이전 챗봇 답변]" in question and is_follow_up_question(current_question)
 
+    # 사이트 안내는 현재 질문만 기준으로 처리
     if is_site_help_question(current_question):
         return answer_site_help_direct(current_question, current_path)
 
+    # 기본 용어 직접 답변
     normalized_question = current_question.replace(" ", "")
     basic_answer = BASIC_DIRECT_MAP.get(current_question) or BASIC_DIRECT_MAP.get(normalized_question)
 
     if basic_answer:
         return add_followup_guide(basic_answer)
 
+    # 상황별 규칙 답변
     pattern_answer = get_direct_pattern_answer(current_question)
 
     if pattern_answer:
         return pattern_answer
 
+    # 실제 documentText가 들어온 경우만 문서 기반 답변
+    # 현재 백엔드 askChatbot()에서는 documentText를 보내지 않으므로 일반 시연에서는 실행되지 않음
     if document_text:
-        return answer_with_document_first(question, document_text)
+        return answer_with_document_first(current_question, document_text)
 
+    # 문서 분석 요청 안내
+    # 중요: 전체 question이 아니라 current_question만 검사
     if is_document_specific_question(current_question):
         return (
             "현재 챗봇은 업로드 문서 원문을 직접 읽어 답변하지 않습니다.\n\n"
@@ -722,13 +788,23 @@ def answer_chat(
     }
 
     try:
-        grouped = search_legal_sources(
-            question,
-            top_k=CHAT_TOP_K,
-            prefetch_limit=CHAT_PREFETCH_LIMIT,
-            rerank_top_n=CHAT_RERANK_TOP_N,
-            min_score=CHAT_MIN_SCORE,
-        )
+        if is_follow_up:
+            context_text = ""
+        else:
+            grouped = search_legal_sources(
+                current_question,
+                top_k=CHAT_TOP_K,
+                prefetch_limit=CHAT_PREFETCH_LIMIT,
+                rerank_top_n=CHAT_RERANK_TOP_N,
+                min_score=CHAT_MIN_SCORE,
+            )
+
+            context_text = build_context_text(grouped)[:MAX_CONTEXT_CHARS]
+
+            has_any_result = any(len(grouped[key]) > 0 for key in grouped)
+
+            if not has_any_result:
+                return "죄송합니다. 관련 정보를 찾지 못했습니다.\n\n다른 표현으로 다시 질문해 주세요."
 
     except Exception as e:
         error_text = str(e)
@@ -737,12 +813,6 @@ def answer_chat(
             return "현재 AI 검색 요청이 많아 자세한 검색 답변은 어렵습니다.\n\n잠시 후 다시 질문해 주세요."
 
         raise
-
-    context_text = build_context_text(grouped)[:MAX_CONTEXT_CHARS]
-    has_any_result = any(len(grouped[key]) > 0 for key in grouped)
-
-    if not has_any_result:
-        return "죄송합니다. 관련 정보를 찾지 못했습니다.\n\n다른 표현으로 다시 질문해 주세요."
 
     prompt = build_prompt(question, context_text, document_text=None)
 
