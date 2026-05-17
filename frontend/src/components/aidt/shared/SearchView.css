@@ -118,7 +118,7 @@ margin: 0 auto;
   font-size: 11px;
   font-weight: 600;
   padding: 1px 7px;
-  border-radius: 6px;
+  border-radius: 99px;
 }
 
 .search-tab-btn.active .search-tab-count {
@@ -176,7 +176,7 @@ margin: 0 auto;
   margin: 0;
   line-height: 1.5;
   display: -webkit-box;
-  -webkit-line-clamp: 2;
+  -webkit-line-clamp: 1;
   -webkit-box-orient: vertical;
   overflow: hidden;
 }

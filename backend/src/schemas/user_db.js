@@ -84,6 +84,19 @@ const userSchema = new Schema(
       type: Date,
       default: null,
     },
+
+    kakaoAccessToken: {
+      type: String,
+      default: null,
+    },
+    kakaoRefreshToken: {
+      type: String,
+      default: null,
+    },
+    kakaoTokenExpiry: {
+      type: Date,
+      default: null,
+    },
   },
   { collection: "users" }
 );

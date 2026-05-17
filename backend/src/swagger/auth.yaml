@@ -92,6 +92,32 @@
       302:
         description: "인증 성공 후 프론트엔드로 리다이렉트"
 
+/api/auth/kakao:
+  get:
+    summary: "카카오 로그인 시작"
+    description: "카카오 로그인 페이지로 리다이렉트합니다."
+    tags:
+      - Auth
+    responses:
+      302:
+        description: "카카오 로그인 페이지로 이동"
+
+/api/auth/kakao/callback:
+  get:
+    summary: "카카오 로그인 콜백"
+    description: "카카오 인증 후 서버로 돌아오는 엔드포인트입니다."
+    tags:
+      - Auth
+    parameters:
+      - in: query
+        name: code
+        schema:
+          type: string
+        description: "카카오에서 전달한 인증 코드"
+    responses:
+      302:
+        description: "인증 성공 후 프론트엔드로 리다이렉트"
+
 /api/auth/me:
   get:
     summary: "내 정보 조회"
@@ -139,7 +165,8 @@ components:
           example: ""
         provider:
           type: string
-          example: "google"
+          enum: [local, google, kakao]
+          example: "kakao"
 
     AuthResponse:
       type: object

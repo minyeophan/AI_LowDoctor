@@ -24,13 +24,7 @@
   margin: 0;
 }
 
-.notification-empty {
-  flex: 1;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: 24px;
-}
+
 
 .auto-detect-btn {
   width: 60%;
@@ -248,4 +242,32 @@
   font-size: 15px;
   font-weight: 600;
   color: #1e293b;
+}
+.notification-empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 40px 20px;
+  gap: 10px;
+  text-align: center;
+}
+
+.notification-empty-icon {
+  font-size: 32px;
+  margin-bottom: 4px;
+}
+
+.notification-empty-title {
+  font-size: 15px;
+  font-weight: 600;
+  color: #111827;
+  margin: 0;
+}
+
+.notification-empty-desc {
+  font-size: 13px;
+  color: #6B7280;
+  line-height: 1.7;
+  margin: 0 0 8px 0;
 }

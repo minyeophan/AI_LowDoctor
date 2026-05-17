@@ -1,6 +1,7 @@
 import jwt from "jsonwebtoken";
 import User from "../schemas/user_db.js";
 import { extractBearerToken } from "../service/auth_service.js";
+import passport from "passport";
 
 export const authMiddleware = async (req, res, next) => {
   try {
@@ -22,7 +23,12 @@ export const authMiddleware = async (req, res, next) => {
     }
 
     req.user = user;
-    next();
+    req.login(user, (err) => {
+      if (err) {
+        return next(err);
+      }
+      next();
+    });
   } catch (error) {
     return res.status(401).json({
       message: "유효하지 않은 토큰입니다.",

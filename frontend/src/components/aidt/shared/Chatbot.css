@@ -5,6 +5,7 @@
   overflow: hidden;
 }
 
+
 .chat-messages {
   flex: 1;
   overflow-y: auto;
@@ -78,6 +79,42 @@
   border-top-left-radius: 4px;
 }
 
+/* 사이트 안내 카드 */
+.site-guide-card {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.site-guide-title {
+  font-size: 14px;
+  font-weight: 700;
+  color: #111827;
+}
+
+.site-guide-desc {
+  font-size: 13px;
+  line-height: 1.5;
+  color: #374151;
+  white-space: pre-wrap;
+}
+
+.site-guide-button {
+  align-self: flex-start;
+  border: none;
+  border-radius: 10px;
+  background: #2563eb;
+  color: #ffffff;
+  padding: 8px 12px;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.site-guide-button:hover {
+  background: #1d4ed8;
+}
+
 /* 타이핑 인디케이터 */
 .message-bubble.typing {
   display: flex;
@@ -101,6 +138,27 @@
 @keyframes typingDot {
   0%, 60%, 100% { transform: translateY(0); opacity: 0.4; }
   30%            { transform: translateY(-5px); opacity: 1; }
+}
+
+/* 이전 대화 더보기 */
+.chat-more-wrapper {
+  display: flex;
+  justify-content: center;
+  margin: 2px 0 4px;
+}
+
+.chat-more-button {
+  border: 1px solid #d1d5db;
+  background: #ffffff;
+  color: #4b5563;
+  border-radius: 999px;
+  padding: 6px 12px;
+  font-size: 12px;
+  cursor: pointer;
+}
+
+.chat-more-button:hover {
+  background: #f3f4f6;
 }
 
 /* 입력 영역 */

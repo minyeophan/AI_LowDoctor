@@ -1,7 +1,7 @@
 // src/pages/auth/LoginPage.tsx
 import LogoImg from '../assets/img/logo.svg';
 import { useState } from 'react';
-import { useNavigate, Link as RouterLink, useLocation} from 'react-router-dom';
+import { useNavigate, Link as RouterLink, useLocation } from 'react-router-dom';
 
 import {
   Container,
@@ -15,64 +15,61 @@ import {
   IconButton,
   InputAdornment,
   FormHelperText,
+  Divider,
 } from '@mui/material';
 import { Visibility, VisibilityOff } from '@mui/icons-material';
 import { useAuth } from '../context/AuthContext';
 import { colors, buttonSizes, inputSizes, borderRadius } from '../styles/theme';
+import { FcGoogle } from 'react-icons/fc';
+import { RiKakaoTalkFill } from 'react-icons/ri';
 
 export default function LoginPage() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [rememberMe, setRememberMe] = useState(false);
-  const [errors, setErrors] = useState({
-    email: '',
-    password: '',
-  });
+  const [errors, setErrors] = useState({ email: '', password: '' });
   const [toast, setToast] = useState(false);
   const [loading, setLoading] = useState(false);
 
   const { login } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
-  const from = (location.state as { from?: string })?.from || '/'; 
+  const from = (location.state as { from?: string })?.from || '/';
+
+  const handleGoogleLogin = () => {
+    window.location.href = `${import.meta.env.VITE_API_URL}/api/auth/google`;
+  };
+
+  const handleKakaoLogin = () => {
+    window.location.href = `${import.meta.env.VITE_API_URL}/api/auth/kakao`;
+  };
 
   const validateEmail = (email: string) => {
-    if (!email.trim()) {
-      return '이메일을 입력해주세요.';
-    }
+    if (!email.trim()) return '이메일을 입력해주세요.';
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    if (!emailRegex.test(email)) {
-      return '올바른 이메일 형식이 아닙니다.';
-    }
+    if (!emailRegex.test(email)) return '올바른 이메일 형식이 아닙니다.';
     return '';
   };
 
   const validatePassword = (password: string) => {
-    if (!password) {
-      return '비밀번호를 입력해주세요.';
-    }
+    if (!password) return '비밀번호를 입력해주세요.';
     return '';
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-
     setErrors({ email: '', password: '' });
 
     const emailError = validateEmail(email);
     const passwordError = validatePassword(password);
 
     if (emailError || passwordError) {
-      setErrors({
-        email: emailError,
-        password: passwordError,
-      });
+      setErrors({ email: emailError, password: passwordError });
       return;
     }
 
     setLoading(true);
-
     try {
       await login({ email, password });
       navigate('/mypage');
@@ -87,21 +84,16 @@ export default function LoginPage() {
 
   const handleEmailChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setEmail(e.target.value);
-    if (errors.email) {
-      setErrors({ ...errors, email: '' });
-    }
+    if (errors.email) setErrors({ ...errors, email: '' });
   };
 
   const handlePasswordChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setPassword(e.target.value);
-    if (errors.password) {
-      setErrors({ ...errors, password: '' });
-    }
+    if (errors.password) setErrors({ ...errors, password: '' });
   };
 
   return (
     <>
-      {/* 상단 토스트 팝업 */}
       {toast && (
         <Box
           sx={{
@@ -136,14 +128,8 @@ export default function LoginPage() {
         }}
       >
         <Container maxWidth="xs">
-          <Box
-            sx={{
-              borderRadius: borderRadius.lg,
-              px: 4,
-              py: 5,
-            }}
-          >
-            {/* 로고 (클릭 시 홈으로) */}
+          <Box sx={{ borderRadius: borderRadius.lg, px: 4, py: 5 }}>
+            {/* 로고 */}
             <Box
               component={RouterLink}
               to="/"
@@ -158,29 +144,15 @@ export default function LoginPage() {
               }}
             >
               <img src={LogoImg} width={24} height={24} />
-              <Typography
-                sx={{
-                  fontSize: '24px',
-                  fontWeight: 700,
-                  color: colors.gray[800],
-                }}
-              >
+              <Typography sx={{ fontSize: '24px', fontWeight: 700, color: colors.gray[800] }}>
                 법닥
               </Typography>
             </Box>
 
-            {/* 로그인 폼 */}
             <form onSubmit={handleSubmit}>
               {/* 이메일 */}
               <Box sx={{ mb: 2 }}>
-                <Typography
-                  sx={{
-                    fontSize: '13px',
-                    fontWeight: 500,
-                    color: colors.gray[700],
-                    mb: 1,
-                  }}
-                >
+                <Typography sx={{ fontSize: '13px', fontWeight: 500, color: colors.gray[700], mb: 1 }}>
                   아이디
                 </Typography>
                 <TextField
@@ -196,16 +168,9 @@ export default function LoginPage() {
                       height: inputSizes.medium.height,
                       fontSize: inputSizes.medium.fontSize,
                       fontFamily: "'KoPub', sans-serif",
-                      '& fieldset': {
-                        borderColor: errors.email ? colors.error : colors.gray[300],
-                      },
-                      '&:hover fieldset': {
-                        borderColor: errors.email ? colors.error : colors.gray[400],
-                      },
-                      '&.Mui-focused fieldset': {
-                        borderColor: errors.email ? colors.error : colors.primary.main,
-                        borderWidth: '1px',
-                      },
+                      '& fieldset': { borderColor: errors.email ? colors.error : colors.gray[300] },
+                      '&:hover fieldset': { borderColor: errors.email ? colors.error : colors.gray[400] },
+                      '&.Mui-focused fieldset': { borderColor: errors.email ? colors.error : colors.primary.main, borderWidth: '1px' },
                     },
                   }}
                 />
@@ -218,14 +183,7 @@ export default function LoginPage() {
 
               {/* 비밀번호 */}
               <Box sx={{ mb: 1 }}>
-                <Typography
-                  sx={{
-                    fontSize: '13px',
-                    fontWeight: 500,
-                    color: colors.gray[700],
-                    mb: 1,
-                  }}
-                >
+                <Typography sx={{ fontSize: '13px', fontWeight: 500, color: colors.gray[700], mb: 1 }}>
                   비밀번호
                 </Typography>
                 <TextField
@@ -245,11 +203,10 @@ export default function LoginPage() {
                           size="small"
                           disabled={loading}
                         >
-                          {showPassword ? (
-                            <VisibilityOff sx={{ fontSize: '18px', color: colors.gray[400] }} />
-                          ) : (
-                            <Visibility sx={{ fontSize: '18px', color: colors.gray[400] }} />
-                          )}
+                          {showPassword
+                            ? <VisibilityOff sx={{ fontSize: '18px', color: colors.gray[400] }} />
+                            : <Visibility sx={{ fontSize: '18px', color: colors.gray[400] }} />
+                          }
                         </IconButton>
                       </InputAdornment>
                     ),
@@ -259,16 +216,9 @@ export default function LoginPage() {
                       background: '#ffffff',
                       height: inputSizes.medium.height,
                       fontSize: inputSizes.medium.fontSize,
-                      '& fieldset': {
-                        borderColor: errors.password ? colors.error : colors.gray[300],
-                      },
-                      '&:hover fieldset': {
-                        borderColor: errors.password ? colors.error : colors.gray[400],
-                      },
-                      '&.Mui-focused fieldset': {
-                        borderColor: errors.password ? colors.error : colors.primary.main,
-                        borderWidth: '1px',
-                      },
+                      '& fieldset': { borderColor: errors.password ? colors.error : colors.gray[300] },
+                      '&:hover fieldset': { borderColor: errors.password ? colors.error : colors.gray[400] },
+                      '&.Mui-focused fieldset': { borderColor: errors.password ? colors.error : colors.primary.main, borderWidth: '1px' },
                     },
                   }}
                 />
@@ -279,26 +229,19 @@ export default function LoginPage() {
                 )}
               </Box>
 
-              {/* 아이디 저장 체크박스 */}
-              <Box sx={{ mb: 1,borderRadius: '4px' }}>
+              {/* 아이디 저장 */}
+              <Box sx={{ mb: 1, borderRadius: '4px' }}>
                 <FormControlLabel
                   control={
                     <Checkbox
                       checked={rememberMe}
                       onChange={(e) => setRememberMe(e.target.checked)}
                       size="small"
-                      sx={{
-                        color: colors.gray[400],
-                        '&.Mui-checked': {
-                          color: colors.primary.main,
-                        },
-                      }}
+                      sx={{ color: colors.gray[400], '&.Mui-checked': { color: colors.primary.main } }}
                     />
                   }
                   label={
-                    <Typography sx={{ fontSize: '13px', color: colors.gray[600] }}>
-                      아이디 저장
-                    </Typography>
+                    <Typography sx={{ fontSize: '13px', color: colors.gray[600] }}>아이디 저장</Typography>
                   }
                 />
               </Box>
@@ -317,66 +260,80 @@ export default function LoginPage() {
                   borderRadius: borderRadius.md,
                   textTransform: 'none',
                   mb: 2,
-                  '&:hover': {
-                    background: colors.primary.hover,
-                  },
-                  '&:disabled': {
-                    background: colors.gray[300],
-                    color: colors.gray[500],
-                  },
+                  '&:hover': { background: colors.primary.hover },
+                  '&:disabled': { background: colors.gray[300], color: colors.gray[500] },
                 }}
               >
                 {loading ? '로그인 중...' : '로그인'}
               </Button>
 
-              {/* 하단 링크 */}
-              <Box
-                sx={{
-                  display: 'flex',
-                  justifyContent: 'center',
-                  gap: 2,
-                }}
-              >
-                <Link
-                  href="#"
-                  underline="none"
+              {/* 구분선 */}
+              <Divider sx={{ my: 2 }}>
+                <Typography sx={{ fontSize: '12px', color: colors.gray[400], px: 1 }}>
+                  또는
+                </Typography>
+              </Divider>
+
+              {/* ✅ 소셜 로그인 버튼 — 수평 반씩 배치 */}
+              <Box sx={{ display: 'flex', gap: 1, mb: 2 }}>
+                {/* 구글 */}
+                <Button
+                  fullWidth
+                  onClick={handleGoogleLogin}
+                  disabled={loading}
                   sx={{
+                    height: buttonSizes.medium.height,
                     fontSize: '13px',
-                    color: colors.gray[600],
-                    '&:hover': {
-                      color: colors.gray[800],
-                    },
+                    fontWeight: 500,
+                    background: '#ffffff',
+                    color: colors.gray[700],
+                    border: `1px solid ${colors.gray[300]}`,
+                    borderRadius: borderRadius.md,
+                    textTransform: 'none',
+                    display: 'flex',
+                    gap: 0.8,
+                    '&:hover': { background: colors.gray[50], borderColor: colors.gray[400] },
                   }}
                 >
+                  <FcGoogle size={17} />
+                  Google
+                </Button>
+
+                {/* 카카오 */}
+                <Button
+                  fullWidth
+                  onClick={handleKakaoLogin}
+                  disabled={loading}
+                  sx={{
+                    height: buttonSizes.medium.height,
+                    fontSize: '13px',
+                    fontWeight: 500,
+                    background: '#FEE500',
+                    color: '#3C1E1E',
+                    border: 'none',
+                    borderRadius: borderRadius.md,
+                    textTransform: 'none',
+                    display: 'flex',
+                    gap: 0.8,
+                    '&:hover': { background: '#F0D900' },
+                  }}
+                >
+                  <RiKakaoTalkFill size={17} color="#3C1E1E" />
+                  카카오
+                </Button>
+              </Box>
+
+              {/* 하단 링크 */}
+              <Box sx={{ display: 'flex', justifyContent: 'center', gap: 2 }}>
+                <Link href="#" underline="none" sx={{ fontSize: '13px', color: colors.gray[600], '&:hover': { color: colors.gray[800] } }}>
                   아이디 찾기
                 </Link>
                 <Box sx={{ color: colors.gray[300] }}>|</Box>
-                <Link
-                  href="#"
-                  underline="none"
-                  sx={{
-                    fontSize: '13px',
-                    color: colors.gray[600],
-                    '&:hover': {
-                      color: colors.gray[800],
-                    },
-                  }}
-                >
+                <Link href="#" underline="none" sx={{ fontSize: '13px', color: colors.gray[600], '&:hover': { color: colors.gray[800] } }}>
                   비밀번호 재설정
                 </Link>
                 <Box sx={{ color: colors.gray[300] }}>|</Box>
-                <Link
-                  component={RouterLink}
-                  to="/signup"
-                  underline="none"
-                  sx={{
-                    fontSize: '13px',
-                    color: colors.gray[600],
-                    '&:hover': {
-                      color: colors.gray[800],
-                    },
-                  }}
-                >
+                <Link component={RouterLink} to="/signup" underline="none" sx={{ fontSize: '13px', color: colors.gray[600], '&:hover': { color: colors.gray[800] } }}>
                   회원가입
                 </Link>
               </Box>

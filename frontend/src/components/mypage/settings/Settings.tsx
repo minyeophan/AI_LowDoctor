@@ -2,102 +2,152 @@ import { useState } from 'react';
 import { useAuth } from '../../../context/AuthContext';
 import { IoClose } from 'react-icons/io5';
 import { MdAccountCircle } from "react-icons/md";
+import { FcGoogle } from 'react-icons/fc';
+import { RiKakaoTalkFill } from 'react-icons/ri';
+import { IoMdCheckmark } from 'react-icons/io';
 import './Setting.css';
 
 export default function Settings() {
   const { user, updateUser, logout } = useAuth();
-  const [showProfileModal, setShowProfileModal] = useState(false);
   const [showPasswordModal, setShowPasswordModal] = useState(false);
   const [showWithdrawModal, setShowWithdrawModal] = useState(false);
   const [showTermsModal, setShowTermsModal] = useState(false);
   const [showPrivacyModal, setShowPrivacyModal] = useState(false);
-const [profileName, setProfileName] = useState(user?.name ?? '');
-  // 알림 설정 (백엔드 연동 시 API 호출로 교체)
+  const [profileName, setProfileName] = useState(user?.name ?? '');
+
   const [notifications, setNotifications] = useState({
     schedule: true,
     email: false,
-    marketing: false,
   });
+
+  // ✅ 구글 연동
+  const handleGoogleLink = () => {
+    window.location.href = `${import.meta.env.VITE_API_URL}/api/auth/google`;
+  };
+
+  // ✅ 카카오 연동
+  const handleKakaoLink = () => {
+    window.location.href = `${import.meta.env.VITE_API_URL}/api/auth/kakao?link=true`;
+  };
+
+  const isGoogleLinked = user?.isGoogleLinked || user?.provider === 'google';
+  const isKakaoLinked = user?.isKakaoLinked || user?.provider === 'kakao';
 
   return (
     <div className="settings-page">
       <div className="settings-container">
         <h1 className="settings-title">설정</h1>
 
-      {/* ===== 프로필 섹션 ===== */}
-      <div className="settings-section">
-        <p className="settings-section-title">프로필</p>
-        <div className="settings-card">
-          <div className="settings-profile-inner">
-            {/* 프로필 사진 - 클릭 시 파일 업로드 */}
-            <label className="settings-avatar-label">
-              <div className="settings-avatar">
-                {user?.avatar ? (
-                  <img src={user.avatar} alt="프로필" className="settings-avatar-img" />
-                ) : (
-                  <MdAccountCircle size={64} color="#d0d0d0" />
-                )}
-                <div className="settings-avatar-overlay">변경</div>
-              </div>
-              <input
-                type="file"
-                accept="image/*"
-                className="settings-avatar-input"
-                onChange={(e) => {
-                  const file = e.target.files?.[0];
-                  if (file) {
-                    const url = URL.createObjectURL(file);
-                    // 백엔드 연동 시: PATCH /api/auth/avatar
-                    updateUser({ avatar: url });
-                  }
-                }}
-              />
-            </label>
-
-            {/* 이름 + 저장 */}
-            <div className="settings-profile-name-wrap">
-              <p className="settings-profile-label">이름</p>
-              <div className="settings-profile-name-row">
+        {/* ===== 프로필 섹션 ===== */}
+        <div className="settings-section">
+          <p className="settings-section-title">프로필</p>
+          <div className="settings-card">
+            <div className="settings-profile-inner">
+              <label className="settings-avatar-label">
+                <div className="settings-avatar">
+                  {user?.avatar ? (
+                    <img src={user.avatar} alt="프로필" className="settings-avatar-img" />
+                  ) : (
+                    <MdAccountCircle size={64} color="#d0d0d0" />
+                  )}
+                  <div className="settings-avatar-overlay">변경</div>
+                </div>
                 <input
-                  className="settings-profile-name-input"
-                  value={profileName}
-                  onChange={e => setProfileName(e.target.value)}
-                />
-                <button
-                  className="settings-profile-save-btn"
-                  onClick={() => {
-                    // 백엔드 연동 시: PATCH /api/auth/profile
-                    updateUser({ name: profileName });
+                  type="file"
+                  accept="image/*"
+                  className="settings-avatar-input"
+                  onChange={(e) => {
+                    const file = e.target.files?.[0];
+                    if (file) {
+                      const url = URL.createObjectURL(file);
+                      updateUser({ avatar: url });
+                    }
                   }}
-                >
-                  저장
-                </button>
+                />
+              </label>
+
+              <div className="settings-profile-name-wrap">
+                <p className="settings-profile-label">이름</p>
+                <div className="settings-profile-name-row">
+                  <input
+                    className="settings-profile-name-input"
+                    value={profileName}
+                    onChange={e => setProfileName(e.target.value)}
+                  />
+                  <button
+                    className="settings-profile-save-btn"
+                    onClick={() => updateUser({ name: profileName })}
+                  >
+                    저장
+                  </button>
+                </div>
               </div>
             </div>
           </div>
         </div>
-      </div>
 
-
-        
         {/* ===== 계정 섹션 ===== */}
         <div className="settings-section">
           <p className="settings-section-title">계정</p>
           <div className="settings-card">
-            <button
-              className="settings-row"
-              onClick={() => setShowPasswordModal(true)}
-            >
+            <button className="settings-row" onClick={() => setShowPasswordModal(true)}>
               <span className="settings-row-label">비밀번호 변경</span>
               <span className="settings-row-arrow">›</span>
             </button>
-            <button
-              className="settings-row danger"
-              onClick={() => setShowWithdrawModal(true)}
-            >
+            <button className="settings-row danger" onClick={() => setShowWithdrawModal(true)}>
               <span className="settings-row-label">회원 탈퇴</span>
               <span className="settings-row-arrow">›</span>
             </button>
+          </div>
+        </div>
+
+        {/* ===== 연동 계정 섹션 ===== */}
+        <div className="settings-section">
+          <p className="settings-section-title">연동 계정</p>
+          <div className="settings-card">
+            {/* 구글 연동 */}
+            <div className="settings-row">
+              <div className="settings-social-info">
+                <FcGoogle size={22} />
+                <div>
+                  <p className="settings-row-label">Google</p>
+                  <p className="settings-row-sub">
+                    {isGoogleLinked ? '구글 캘린더 자동 동기화 활성화됨' : '연동 시 구글 캘린더 자동 동기화'}
+                  </p>
+                </div>
+              </div>
+              {isGoogleLinked ? (
+                <span className="settings-linked-badge">
+                  <IoMdCheckmark size={14} /> 연동됨
+                </span>
+              ) : (
+                <button className="settings-link-btn" onClick={handleGoogleLink}>
+                  연동하기
+                </button>
+              )}
+            </div>
+
+            {/* 카카오 연동 */}
+            <div className="settings-row">
+              <div className="settings-social-info">
+                <RiKakaoTalkFill size={22} color="#3C1E1E" />
+                <div>
+                  <p className="settings-row-label">카카오</p>
+                  <p className="settings-row-sub">
+                    {isKakaoLinked ? '카카오톡 알림 활성화됨' : '연동 시 카카오톡으로 일정 알림 수신'}
+                  </p>
+                </div>
+              </div>
+              {isKakaoLinked ? (
+                <span className="settings-linked-badge">
+                  <IoMdCheckmark size={14} /> 연동됨
+                </span>
+              ) : (
+                <button className="settings-link-btn" onClick={handleKakaoLink}>
+                  연동하기
+                </button>
+              )}
+            </div>
           </div>
         </div>
 
@@ -105,10 +155,11 @@ const [profileName, setProfileName] = useState(user?.name ?? '');
         <div className="settings-section">
           <p className="settings-section-title">알림</p>
           <div className="settings-card">
+            {/* 일정 알림 */}
             <div className="settings-row">
               <div>
                 <p className="settings-row-label">일정 알림</p>
-                <p className="settings-row-sub">D-day 하루 전 이메일 수신</p>
+                <p className="settings-row-sub">D-day 하루 전 알림 수신</p>
               </div>
               <button
                 className={`settings-toggle ${notifications.schedule ? 'on' : ''}`}
@@ -117,6 +168,8 @@ const [profileName, setProfileName] = useState(user?.name ?? '');
                 <span className="settings-toggle-thumb" />
               </button>
             </div>
+
+            {/* 이메일 알림 */}
             <div className="settings-row">
               <div>
                 <p className="settings-row-label">이메일 알림</p>
@@ -152,141 +205,24 @@ const [profileName, setProfileName] = useState(user?.name ?? '');
         </div>
       </div>
 
-      {/* ===== 프로필 수정 모달 ===== */}
-      {showProfileModal && (
-        <ProfileModal
-          user={user}
-          onSave={(data) => {
-            // 백엔드 연동 시: PATCH /api/auth/profile
-            updateUser(data);
-            setShowProfileModal(false);
-          }}
-          onClose={() => setShowProfileModal(false)}
-        />
-      )}
-
-      {/* ===== 비밀번호 변경 모달 ===== */}
       {showPasswordModal && (
         <PasswordModal onClose={() => setShowPasswordModal(false)} />
       )}
 
-      {/* ===== 회원 탈퇴 모달 ===== */}
       {showWithdrawModal && (
         <WithdrawModal
-          onConfirm={() => {
-            // 백엔드 연동 시: DELETE /api/auth/user
-            logout();
-          }}
+          onConfirm={() => logout()}
           onClose={() => setShowWithdrawModal(false)}
         />
       )}
 
-      {/* ===== 이용약관 모달 ===== */}
       {showTermsModal && (
-        <InfoModal
-          title="이용약관"
-          content={TERMS_CONTENT}
-          onClose={() => setShowTermsModal(false)}
-        />
+        <InfoModal title="이용약관" content={TERMS_CONTENT} onClose={() => setShowTermsModal(false)} />
       )}
 
-      {/* ===== 개인정보 처리방침 모달 ===== */}
       {showPrivacyModal && (
-        <InfoModal
-          title="개인정보 처리방침"
-          content={PRIVACY_CONTENT}
-          onClose={() => setShowPrivacyModal(false)}
-        />
+        <InfoModal title="개인정보 처리방침" content={PRIVACY_CONTENT} onClose={() => setShowPrivacyModal(false)} />
       )}
-    </div>
-  );
-}
-
-// ============================
-// 프로필 수정 모달
-// ============================
-function ProfileModal({
-  user,
-  onSave,
-  onClose,
-}: {
-  user: any;
-  onSave: (data: any) => void;
-  onClose: () => void;
-}) {
-  const [name, setName] = useState(user?.name ?? '');
-  const [birthYear, setBirthYear] = useState('');
-  const [email, setEmail] = useState(user?.email ?? '');
-
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!name.trim()) return;
-    onSave({ name, email });
-  };
-
-  return (
-    <div className="settings-modal-overlay" onClick={onClose}>
-      <div className="settings-modal" onClick={e => e.stopPropagation()}>
-        <div className="settings-modal-header">
-          <h2 className="settings-modal-title">프로필 수정</h2>
-          <button className="settings-modal-close" onClick={onClose}>
-            <IoClose size={20} />
-          </button>
-        </div>
-        <form onSubmit={handleSubmit} className="settings-modal-form">
-          {/* 프로필 사진 */}
-          <div className="settings-modal-avatar-wrap">
-            <div className="settings-modal-avatar">
-              {name.charAt(0) || '?'}
-            </div>
-            <button type="button" className="settings-avatar-change-btn">
-              사진 변경
-              {/* 백엔드 연동 시: input type="file" + PATCH /api/auth/avatar */}
-            </button>
-          </div>
-
-          <div className="settings-modal-field">
-            <label className="settings-modal-label">이름</label>
-            <input
-              className="settings-modal-input"
-              value={name}
-              onChange={e => setName(e.target.value)}
-              placeholder="이름을 입력하세요"
-              required
-            />
-          </div>
-
-          <div className="settings-modal-field">
-            <label className="settings-modal-label">생년월일</label>
-            <select
-              className="settings-modal-select"
-              value={birthYear}
-              onChange={e => setBirthYear(e.target.value)}
-            >
-              <option value="">선택하세요</option>
-              {Array.from({ length: 100 }, (_, i) => 2024 - i).map(y => (
-                <option key={y} value={y}>{y}년</option>
-              ))}
-            </select>
-          </div>
-
-          <div className="settings-modal-field">
-            <label className="settings-modal-label">이메일</label>
-            <input
-              className="settings-modal-input"
-              type="email"
-              value={email}
-              onChange={e => setEmail(e.target.value)}
-              placeholder="이메일을 입력하세요"
-            />
-          </div>
-
-          <div className="settings-modal-actions">
-            <button type="button" className="settings-modal-cancel" onClick={onClose}>취소</button>
-            <button type="submit" className="settings-modal-save">저장</button>
-          </div>
-        </form>
-      </div>
     </div>
   );
 }
@@ -310,7 +246,6 @@ function PasswordModal({ onClose }: { onClose: () => void }) {
       setError('비밀번호는 8자 이상이어야 합니다.');
       return;
     }
-    // 백엔드 연동 시: PATCH /api/auth/password
     alert('비밀번호가 변경됐습니다.');
     onClose();
   };
@@ -351,13 +286,7 @@ function PasswordModal({ onClose }: { onClose: () => void }) {
 // ============================
 // 회원 탈퇴 모달
 // ============================
-function WithdrawModal({
-  onConfirm,
-  onClose,
-}: {
-  onConfirm: () => void;
-  onClose: () => void;
-}) {
+function WithdrawModal({ onConfirm, onClose }: { onConfirm: () => void; onClose: () => void }) {
   const [password, setPassword] = useState('');
   const [step, setStep] = useState<1 | 2>(1);
 
@@ -370,7 +299,6 @@ function WithdrawModal({
             <IoClose size={20} />
           </button>
         </div>
-
         {step === 1 ? (
           <div className="settings-modal-form">
             <div className="settings-withdraw-warning">
@@ -404,11 +332,7 @@ function WithdrawModal({
             </div>
             <div className="settings-modal-actions">
               <button className="settings-modal-cancel" onClick={onClose}>취소</button>
-              <button
-                className="settings-modal-danger"
-                onClick={onConfirm}
-                disabled={!password}
-              >
+              <button className="settings-modal-danger" onClick={onConfirm} disabled={!password}>
                 탈퇴하기
               </button>
             </div>
@@ -422,15 +346,7 @@ function WithdrawModal({
 // ============================
 // 이용약관 / 개인정보 처리방침 모달
 // ============================
-function InfoModal({
-  title,
-  content,
-  onClose,
-}: {
-  title: string;
-  content: string;
-  onClose: () => void;
-}) {
+function InfoModal({ title, content, onClose }: { title: string; content: string; onClose: () => void }) {
   return (
     <div className="settings-modal-overlay" onClick={onClose}>
       <div className="settings-modal settings-modal-lg" onClick={e => e.stopPropagation()}>
@@ -450,9 +366,6 @@ function InfoModal({
   );
 }
 
-// ============================
-// 이용약관 내용
-// ============================
 const TERMS_CONTENT = `제1조 (목적)
 본 약관은 법닥(이하 "서비스")이 제공하는 AI 기반 부동산 계약서 분석 서비스의 이용에 관한 조건 및 절차, 기타 필요한 사항을 규정함을 목적으로 합니다.
 
@@ -472,13 +385,9 @@ const PRIVACY_CONTENT = `1. 수집하는 개인정보 항목
 - 서비스 제공 및 계약서 분석
 - 일정 관리 서비스 제공
 - 커뮤니티 서비스 제공
-- 고객 문의 응대
 
 3. 개인정보 보유 및 이용 기간
 회원 탈퇴 시까지 보관하며, 탈퇴 즉시 파기합니다.
 
 4. 개인정보 제3자 제공
-수집된 개인정보는 제3자에게 제공하지 않습니다.
-
-5. 문의
-개인정보 관련 문의사항은 서비스 내 문의하기를 통해 연락주세요.`;
+수집된 개인정보는 제3자에게 제공하지 않습니다.`;

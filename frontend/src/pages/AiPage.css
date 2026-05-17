@@ -101,7 +101,6 @@ align-items: center; justify-content: center;
   flex-wrap: wrap;
   background-color: #fff;
   padding: 24px 0px;  
-  
 }
 
 .content-analysis-box { width: 794px; 
@@ -119,6 +118,20 @@ align-items: center; justify-content: center;
 
 .tab-fade-in {
   animation: fadeIn 0.3s ease;
+}
+
+.upload-guide-privacy {
+  color: #4099FD;
+  font-size: 12px;
+}
+
+.upload-guide-privacy-warn {
+  color: #856404;
+  font-size: 12px;
+}
+
+.main-content.no-document {
+  border-radius: 8px;
 }
 
 @keyframes fadeIn {

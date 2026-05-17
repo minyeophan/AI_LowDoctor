@@ -6,7 +6,6 @@ import { load } from 'cheerio';
 import FormData from 'form-data';
 import axios from 'axios';
 import Upload from '../schemas/upload_db.js';
-import { maskPII } from '../utils/maskPII.js';
 
 const AI_SERVER_URL = process.env.AI_SERVER_URL || 'http://localhost:8000';
 
@@ -105,9 +104,7 @@ export const convertDocument = async (req, res, next) => {
 
         const cleanHtml = $('body').html() || $.html();
 
-        const maskedHtml = maskPII(cleanHtml);
-
-        res.status(200).json({ html: maskedHtml });
+        res.status(200).json({ html: cleanHtml });
 
     } catch (error) {
         console.error('변환 오류:', error);

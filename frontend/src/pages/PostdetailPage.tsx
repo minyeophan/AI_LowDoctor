@@ -33,7 +33,16 @@ export default function PostDetailPage() {
           communityAPI.getComments(id),
         ]);
         setPost(postData);
-        setInitialComments(commentsData);
+       const mappedComments = (Array.isArray(commentsData) ? commentsData : commentsData.comments ?? [])
+        .map((c: any) => ({
+          id: c._id ?? c.id,
+          author: c.author ?? c.userID ?? '익명',
+          date: c.createdAt ?? c.date ?? '',
+          body: c.content ?? c.body ?? '',
+          likes: c.likes?.length ?? c.likes ?? 0,
+          dislikes: c.dislikes ?? 0,
+        }));
+      setInitialComments(mappedComments); 
       } catch (err) {
         console.error('게시글 로딩 실패:', err);
       } finally {
@@ -116,10 +125,10 @@ const handleCommentDislike = (commentId: string) => {
     // 백엔드 연동
     const comment = await communityAPI.createComment(post.id, newComment);
     setComments(prev => [...prev, {
-      id: comment.id,
-      author: comment.author,
-      date: comment.date,
-      body: comment.content,
+      id: comment._id ?? comment.id,
+      author: comment.author ?? comment.userID ?? '익명',
+      date: comment.createdAt ?? comment.date ?? '',
+      body: comment.content ?? comment.body ?? '',
       likes: 0,
       dislikes: 0,
     }]);
@@ -160,7 +169,7 @@ const handleCommentDislike = (commentId: string) => {
             <span>·</span>
             <span>댓글 {comments.length}</span>
           </div>
-          <p className="post-detail-body">{post.content}</p>
+          <p className="post-detail-body" style={{ whiteSpace: 'pre-wrap' }}>{post.content}</p>
           <div className="post-detail-actions">
             <button className={`like-btn ${liked ? 'liked' : ''}`} onClick={handleLike}>
               ❤ {likes}

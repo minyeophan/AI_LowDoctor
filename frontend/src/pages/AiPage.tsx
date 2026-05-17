@@ -13,8 +13,11 @@ import SummaryView from '../components/aidt/views/SummaryView';
 import FileUploader from '../components/FileUploader';
 import { useDocument , DocumentData } from '../context/DocumentContext';
 import { documentsAPI, UploadResponse } from '../api/documents';
-import { analyzeAPI, AnalyzeResponse, AnalysisResult } from '../api/analyze';
-import { mockContractTip, mockImprovementGuides, mockRiskItems, mockSummaryData } from '../mock/mockData';
+import { analyzeAPI, AnalyzeResponse, AnalysisResult , RiskItem } from '../api/analyze';
+import { mockContractTip, mockImprovementGuides, mockSummaryData } from '../mock/mockData';
+import { useToast } from '../hooks/useToast';
+import Toast from '../components/common/Toast';
+
 import DocumentView from '../components/aidt/views/DocumentView';
 import { UploadResult } from '../types';
 import './AiPage.css';
@@ -37,29 +40,86 @@ function AnalysisPage() {
   const [analyzingType, setAnalyzingType] = useState<AnalysisType>(null);
   const [analyzedMenus, setAnalyzedMenus] = useState<Set<string>>(new Set());
   const [editedHtml, setEditedHtml] = useState<string>('');
+  const [hasPersonalInfo, setHasPersonalInfo] = useState(false);
+  const [isMasked, setIsMasked] = useState(false);
+  const [maskCounts, setMaskCounts] = useState<Record<string, number>>({});
   const [isConverting, setIsConverting] = useState(false);
+  const { toast, showToast, hideToast } = useToast();
   const editorRef = useRef<DocumentEditorRef>(null);
   const location = useLocation();
+  
+
+const maskPersonalInfo = (html: string): { masked: string; detected: boolean; counts: Record<string, number> } => {
+  const patterns = [
+    { regex: /\d{6}-\d{7}/g, replace: '******-*******', label: '주민번호' },
+    { regex: /01[0-9]-\d{3,4}-\d{4}/g, replace: '010-****-****', label: '전화번호' },
+    { regex: /\d{3,4}-\d{3,4}-\d{4,6}/g, replace: '****-****-****', label: '계좌번호' },
+    { regex: /\d{3}-\d{2}-\d{5}/g, replace: '***-**-*****', label: '사업자번호' },
+    { 
+      regex: /(서울|부산|대구|인천|광주|대전|울산|세종|경기도|강원도|충청북도|충청남도|전라북도|전라남도|경상북도|경상남도|제주도|충북|충남|전북|전남|경북|경남|제주)[^\s<]{2,80}(로|길|동|읍|면|리)(\s*\d+(-\d+)?(\s*\S+빌라|\s*\S+아파트|\s*\S+빌딩|\s*\d+호)?)?/g,
+      replace: '***',
+      label: '주소'
+    },
+  ];
+  let result = html;
+  let detected = false;
+  const counts: Record<string, number> = {};
+  patterns.forEach(({ regex, replace, label }) => {
+    const matches = result.match(regex);
+    if (matches && matches.length > 0) {
+      detected = true;
+      counts[label] = matches.length;
+    }
+    regex.lastIndex = 0;
+    result = result.replace(regex, replace);
+  });
+  console.log('🔍 마스킹 감지 결과:', detected, counts);
+  return { masked: result, detected, counts };
+};
+
 
 useEffect(() => {
-  if (location.state?.autoAnalyze && currentDocument?.documentId) {
-    // HomePage에서 넘어온 경우 - 이미 업로드됨, convert만 실행
-    const convertExisting = async () => {
-      setIsLoading(false);
-      setIsConverting(true);
+  if (!location.state?.autoAnalyze) return;
+
+  const convertExisting = async () => {
+    const docId = location.state?.documentId || currentDocument?.documentId;
+    if (!docId) return;
+
+    if (!currentDocument) {
       try {
-        const { html } = await documentsAPI.convertDocument(currentDocument.documentId!);
-        setEditedHtml(html);
+        const res = await documentsAPI.getUploadInfo(docId);
+        setCurrentDocument({
+          documentId: docId,
+          filename: res.originalname,
+          status: 'uploaded',
+          uploadDate: res.createdAt,
+          content: '',
+          size: res.fileSize,
+        } as any);
       } catch (e) {
-        console.error('HTML 변환 실패:', e);
-        setEditedHtml('<p>문서 변환에 실패했습니다. 텍스트를 직접 입력해주세요.</p>');
-      } finally {
-        setIsConverting(false);
+        console.error('문서 정보 로딩 실패:', e);
+        return;
       }
-      setSelectedMenu('document');
-    };
-    convertExisting();
-  }
+    }
+
+    setIsConverting(true);
+    try {
+      const { html } = await documentsAPI.convertDocument(docId);
+      const { masked, detected, counts } = maskPersonalInfo(html);
+      setEditedHtml(masked);
+      setHasPersonalInfo(detected);
+      setIsMasked(detected);
+      setMaskCounts(counts);
+    } catch (e) {
+      console.error('HTML 변환 실패:', e);
+      setEditedHtml('<p>문서 변환에 실패했습니다. 텍스트를 직접 입력해주세요.</p>');
+    } finally {
+      setIsConverting(false);
+    }
+    setSelectedMenu('document');
+  };
+
+  convertExisting();
 }, []);
 
 const navigate = useNavigate();
@@ -181,7 +241,20 @@ const API_ENABLED = import.meta.env.VITE_API_BASE_URL !== undefined &&
     setIsConverting(true);
     try {
       const { html } = await documentsAPI.convertDocument(documentId);
-      setEditedHtml(html);
+      const { masked, detected, counts } = maskPersonalInfo(html);
+      setEditedHtml(masked);
+      setHasPersonalInfo(detected);
+      setIsMasked(detected);
+      setMaskCounts(counts);
+
+            if (detected) {
+        const detectedList = Object.entries(counts)
+          .map(([label, count]) => `${label} ${count}건`)
+          .join(', ');
+        showToast(`${detectedList} 등 일부 개인정보가 자동 마스킹되었습니다.`, 'info');
+      } else {
+        showToast('이름·주소 등 민감 정보는 검색창에서 직접 마스킹해 주세요.', 'info');
+      }
     } catch (e) {
       console.error('HTML 변환 실패:', e);
       setEditedHtml('<p>문서 변환에 실패했습니다. 텍스트를 직접 입력해주세요.</p>');
@@ -207,7 +280,7 @@ const API_ENABLED = import.meta.env.VITE_API_BASE_URL !== undefined &&
 // handleMenuSelect 수정
 const handleMenuSelect = (menu: MenuItem) => {
   if (!currentDocument) {
-    alert('⚠️ 먼저 문서를 업로드해주세요!');
+    showToast('먼저 문서를 업로드해주세요.', 'warning');
     return;
   }
 
@@ -288,9 +361,11 @@ const getAnalysisKey = (type: AnalysisType) => {
               <div className="upload-guide">
                 <p className="upload-guide-title">계약서 업로드</p>
                 <ul className="upload-guide-list">
-                  <li>현재 부동산 계약서만 업로드 가능합니다.</li>
-                  <li>PDF, HWP, DOC, TXT 파일을 업로드할 수 있습니다.</li>
-                  
+                  <li>현재 부동산 계약서만 업로드 가능합니다. ( PDF, HWP, DOC, TXT )</li>
+                  <li className="upload-guide-privacy">
+                   계약서에 주민번호·계좌번호·연락처 등 개인정보가 포함되지 않도록 확인 후 업로드하세요.
+                  </li>
+                   <li>AI 분석 결과는 참고용이며 법적 효력이 없습니다. 중요한 계약 사항은 전문가와 상담하세요.</li>
                 </ul>
               </div>
               <FileUploader onUploadSuccess={handleFileUploadSuccess} />
@@ -355,6 +430,10 @@ const getAnalysisKey = (type: AnalysisType) => {
             editorRef={editorRef}
             onAnalyze={() => setPendingAnalysis('summary')}
             isAnalyzing={isAnalyzing}
+            hasPersonalInfo={hasPersonalInfo}
+            isMasked={isMasked}
+            onDragMask={(maskedHtml) => setEditedHtml(maskedHtml)}
+            maskCounts={maskCounts}
           />
         );
 
@@ -383,7 +462,7 @@ const getAnalysisKey = (type: AnalysisType) => {
       );
 
       case 'danger':
-    const riskData = analysisData?.riskItems || mockRiskItems;
+    const riskData = (analysisData?.riskItems ?? []) as RiskItem[];
     return (
       <DangerView
         currentDocument={currentDocument}
@@ -410,6 +489,7 @@ const getAnalysisKey = (type: AnalysisType) => {
           onZoomIn={handleZoomIn}
           onZoomOut={handleZoomOut}
           editedHtml={editedHtml}
+        
         />
       );
         
@@ -420,22 +500,23 @@ const getAnalysisKey = (type: AnalysisType) => {
   return (
     <div className="analysis-page-layout">
       <div className='ai-page-wrapper'>
-        {/* 왼쪽 영역 (TopMenu + Main Content) */}
         <div className="left-area">
-          <TopMenu 
-            selectedMenu={selectedMenu}
-            onMenuSelect={handleMenuSelect}
-            isSidebarOpen={activeSidebar !== null}
-            isDisabled={!currentDocument}
-          />
+          {currentDocument && (
+            <TopMenu 
+              selectedMenu={selectedMenu}
+              onMenuSelect={handleMenuSelect}
+              isSidebarOpen={activeSidebar !== null}
+              isDisabled={!currentDocument}
+            />
+          )}
 
-          <main className={`main-content ${activeSidebar ? 'sidebar-open' : 'sidebar-closed'}`}>
+          <main className={`main-content ${activeSidebar ? 'sidebar-open' : 'sidebar-closed'} ${!currentDocument ? 'no-document' : ''}`}>
             {renderContent()}
           </main>
         </div>
 
      {/* 로딩 오버레이 */}
-      {isLoading && <LoadingOverlay message="문서를 처리하는 중입니다..." />}
+      {isLoading && !isConverting && <LoadingOverlay message="문서를 처리하는 중입니다..." />}
 
         {/* 오른쪽 플로팅 버튼 */}
         <RightSidebar 
@@ -447,9 +528,12 @@ const getAnalysisKey = (type: AnalysisType) => {
         <FloatingButtons 
           activeSidebar={activeSidebar}
           onToggle={toggleSidebar}
+          riskItems={(analysisData?.riskItems ?? []) as RiskItem[]}
+          documentFilename={currentDocument?.filename}
+          onShowToast={showToast}
         />
       </div>
-     
+      <Toast {...toast} onClose={hideToast} />
     </div>
   );
 }

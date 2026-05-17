@@ -5,6 +5,9 @@ export interface User {
   name: string;
   email: string;
   avatar?: string;
+  provider?: 'local' | 'google' | 'kakao';  
+  isGoogleLinked?: boolean;                
+  isKakaoLinked?: boolean;  
 }
 
 export interface AuthState {
